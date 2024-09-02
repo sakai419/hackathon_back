@@ -6,39 +6,22 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func EnvLoad() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
-
 func ConnectToDB(db *sql.DB) (_db *sql.DB) {
-	// ①-1
-	EnvLoad()
-	mysqlUser, ok := os.LookupEnv("MYSQL_USER")
-	if !ok {
-		log.Fatal("MYSQL_USER env variable not set")
-	}
-	mysqlUserPwd, ok := os.LookupEnv("MYSQL_PASSWORD")
-	if !ok {
-		log.Fatal("MYSQL_PASSWORD env variable not set")
-	}
-	mysqlDatabase, ok := os.LookupEnv("MYSQL_DATABASE")
-	if !ok {
-		log.Fatal("MYSQL_DATABASE env variable not set")
-	}
+    mysqlUser := os.Getenv("MYSQL_USER")
+    mysqlPwd := os.Getenv("MYSQL_PWD")
+    mysqlHost := os.Getenv("MYSQL_HOST")
+    mysqlDatabase := os.Getenv("MYSQL_DATABASE")
 
-	// ①-2
-	_db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@(localhost:3306)/%s", mysqlUser, mysqlUserPwd, mysqlDatabase))
+    connStr := fmt.Sprintf("%s:%s@%s/%s", mysqlUser, mysqlPwd, mysqlHost, mysqlDatabase)
+
+    _db, err := sql.Open("mysql", connStr)
 	if err != nil {
 		log.Fatalf("fail: sql.Open, %v\n", err)
 	}
-	// ①-3
+
 	if err := _db.Ping(); err != nil {
 		log.Fatalf("fail: _db.Ping, %v\n", err)
 	}
