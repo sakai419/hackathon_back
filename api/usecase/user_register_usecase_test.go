@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"db/model"
+	"api/model"
 	"testing"
 )
 
