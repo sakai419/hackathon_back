@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS accounts;
 
 CREATE TABLE accounts (
     id CHAR(28) PRIMARY KEY,
