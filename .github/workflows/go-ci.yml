@@ -2,10 +2,8 @@ name: Go
 
 on:
     push:
-        branches:
-            - "hackathon"
         paths:
-            - "ut/**/*.go"
+            - "api/**/*.go"
 
 jobs:
     build:
