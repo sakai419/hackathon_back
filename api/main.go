@@ -11,8 +11,6 @@ import (
 	"syscall"
 )
 
-// please ci
-
 var db *sql.DB
 
 func init() {
