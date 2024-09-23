@@ -2,8 +2,8 @@ package controller
 
 import (
 	"database/sql"
-	"db/dao"
-	"db/usecase"
+	"api/dao"
+	"api/usecase"
 	"encoding/json"
 	"log"
 	"net/http"

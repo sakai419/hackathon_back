@@ -1,4 +1,4 @@
-module db
+module api
 
 go 1.23.0
 

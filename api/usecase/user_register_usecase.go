@@ -3,8 +3,8 @@ package usecase
 import (
 	"crypto/rand"
 	"database/sql"
-	"db/dao"
-	"db/model"
+	"api/dao"
+	"api/model"
 	"encoding/json"
 	"errors"
 	"fmt"

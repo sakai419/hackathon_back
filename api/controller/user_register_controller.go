@@ -2,7 +2,7 @@ package controller
 
 import (
 	"database/sql"
-	"db/usecase"
+	"api/usecase"
 	"io"
 	"log"
 	"net/http"

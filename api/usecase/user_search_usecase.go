@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"database/sql"
-	"db/model"
+	"api/model"
 	"errors"
 	"net/url"
 )

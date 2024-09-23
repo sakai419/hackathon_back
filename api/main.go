@@ -2,8 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"db/controller"
-	"db/dao"
+	"api/controller"
+	"api/dao"
 	"log"
 	"net/http"
 	"os"
