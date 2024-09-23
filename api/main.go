@@ -11,6 +11,8 @@ import (
 	"syscall"
 )
 
+// test comment
+
 var db *sql.DB
 
 func init() {
