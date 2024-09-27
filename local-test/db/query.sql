@@ -1,3 +1,7 @@
+-- name: CreateAccount :exec
+INSERT INTO accounts (id, user_id, user_name)
+VALUES (?, ?, ?);
+
 -- name: GetAccountById :one
 SELECT * FROM accounts
 WHERE id = ?;
@@ -6,26 +10,9 @@ WHERE id = ?;
 SELECT * FROM accounts
 WHERE user_id = ?;
 
--- name: SearchAccountsByUserId :many
-SELECT * FROM accounts
-WHERE user_id LIKE "%?%";
-
 -- name: GetAccountByUserName :one
 SELECT * FROM accounts
 WHERE user_name = ?;
-
--- name: SearchAccountsByUserName :many
-SELECT * FROM accounts
-WHERE user_name LIKE "%?%";
-
--- name: CreateAccount :exec
-INSERT INTO accounts (id, user_id, user_name)
-VALUES (?, ?, ?);
-
--- name: UpdateAccountUserId :exec
-UPDATE accounts
-SET user_id = ?
-WHERE id = ?;
 
 -- name: UpdateAccountUserName :exec
 UPDATE accounts
@@ -36,6 +23,25 @@ WHERE id = ?;
 DELETE FROM accounts
 WHERE id = ?;
 
+-- name: SearchAccountsByUserName :many
+SELECT * FROM accounts
+WHERE user_name LIKE ?
+ORDER BY user_name
+LIMIT ? OFFSET ?;
+
+-- name: GetAccountCreationDate :one
+SELECT created_at FROM accounts
+WHERE id = ?;
+
+-- name: CountAccounts :one
+SELECT COUNT(*) FROM accounts;
+
+-- name: CheckUserNameExists :one
+SELECT EXISTS(SELECT 1 FROM accounts WHERE user_name = ?);
+
+-- name: CheckUserIdExists :one
+SELECT EXISTS(SELECT 1 FROM accounts WHERE user_id = ?);
+
 -- name: GetProfileByAccountId :one
 SELECT * FROM profiles
 WHERE account_id = ?;
@@ -44,17 +50,21 @@ WHERE account_id = ?;
 INSERT INTO profiles (account_id, bio, profile_image_url, banner_image_url)
 VALUES (?, ?, ?, ?);
 
+-- name: GetProfileByAccountId :one
+SELECT * FROM profiles
+WHERE account_id = ?;
+
 -- name: UpdateProfileBio :exec
 UPDATE profiles
 SET bio = ?
 WHERE account_id = ?;
 
--- name: UpdateProfileProfileImageUrl :exec
+-- name: UpdateProfileImageUrl :exec
 UPDATE profiles
 SET profile_image_url = ?
 WHERE account_id = ?;
 
--- name: UpdateProfileBannerImageUrl :exec
+-- name: UpdateBannerImageUrl :exec
 UPDATE profiles
 SET banner_image_url = ?
 WHERE account_id = ?;
@@ -63,22 +73,28 @@ WHERE account_id = ?;
 DELETE FROM profiles
 WHERE account_id = ?;
 
--- name: GetSettingByAccountId :one
-SELECT * FROM settings
-WHERE account_id = ?;
+-- name: CheckProfileExists :one
+SELECT EXISTS(SELECT 1 FROM profiles WHERE account_id = ?);
 
--- name: CreateSetting :exec
+-- name: CreateSettings :exec
 INSERT INTO settings (account_id, is_private)
 VALUES (?, ?);
 
--- name: UpdateSettingIsPrivate :exec
+-- name: GetSettingsByAccountId :one
+SELECT * FROM settings
+WHERE account_id = ?;
+
+-- name: UpdateSettingsPrivacy :exec
 UPDATE settings
 SET is_private = ?
 WHERE account_id = ?;
 
--- name: DeleteSetting :exec
+-- name: DeleteSettings :exec
 DELETE FROM settings
 WHERE account_id = ?;
+
+-- name: CheckSettingsExist :one
+SELECT EXISTS(SELECT 1 FROM settings WHERE account_id = ?);
 
 -- name: GetInterestByAccountId :one
 SELECT * FROM interests
@@ -197,41 +213,196 @@ WHERE account_id = ?;
 DELETE FROM interests
 WHERE account_id = ?;
 
--- name: GetNotificationByAccountId :many
-SELECT * FROM notifications
-WHERE recipient_account_id = ?
-ORDER BY created_at DESC
-LIMIT ?
-OFFSET ?;
-
--- name: GetUnreadNotificationsByAccountId :many
-SELECT * FROM notifications
-WHERE recipient_account_id = ? AND is_read = FALSE
-ORDER BY created_at DESC
-LIMIT ?
-OFFSET ?;
-
--- name: GetUnreadNotificationCount :one
-SELECT COUNT(*) FROM notifications
-WHERE recipient_account_id = ? AND is_read = FALSE;
-
 -- name: CreateNotification :exec
-INSERT INTO notifications (recipient_account_id, sender_account_id, type, content, is_read)
-VALUES (?, ?, ?, ?, ?);
-
--- name: UpdateNotificationsIsRead :exec
-UPDATE notifications
-SET is_read = ?
-WHERE id IN (?) AND recipient_account_id = ?;
-
--- name: DeleteNotification :exec
-DELETE FROM notifications
-WHERE id = ?;
+INSERT INTO notifications (sender_account_id, recipient_account_id, type, content)
+VALUES (?, ?, ?, ?);
 
 -- name: GetNotificationById :one
 SELECT * FROM notifications
+WHERE id = ?;
+
+-- name: GetNotificationsByRecipientId :many
+SELECT * FROM notifications
+WHERE recipient_account_id = ?
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: GetUnreadNotificationsByRecipientId :many
+SELECT * FROM notifications
+WHERE recipient_account_id = ? AND is_read = FALSE
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: MarkNotificationAsRead :exec
+UPDATE notifications
+SET is_read = TRUE
 WHERE id = ? AND recipient_account_id = ?;
 
--- name: DeleteOldNotifications :exec
+-- name: MarkAllNotificationsAsRead :exec
+UPDATE notifications
+SET is_read = TRUE
+WHERE recipient_account_id = ? AND is_read = FALSE;
+
+-- name: DeleteNotification :exec
 DELETE FROM notifications
+WHERE id = ? AND recipient_account_id = ?;
+
+-- name: DeleteAllNotificationsForRecipient :exec
+DELETE FROM notifications
+WHERE recipient_account_id = ?;
+
+-- name: GetNotificationCountByRecipientId :one
+SELECT COUNT(*) FROM notifications
+WHERE recipient_account_id = ?;
+
+-- name: GetUnreadNotificationCountByRecipientId :one
+SELECT COUNT(*) FROM notifications
+WHERE recipient_account_id = ? AND is_read = FALSE;
+
+-- name: GetNotificationsByType :many
+SELECT * FROM notifications
+WHERE recipient_account_id = ? AND type = ?
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: DeleteOldReadNotifications :exec
+DELETE FROM notifications
+WHERE recipient_account_id = ? AND is_read = TRUE AND created_at < ?;
+
+-- name: CreateMessage :exec
+INSERT INTO messages (sender_account_id, recipient_account_id, content)
+VALUES (?, ?, ?);
+
+-- name: GetMessageById :one
+SELECT * FROM messages
+WHERE id = ?;
+
+-- name: GetMessagesBetweenUsers :many
+SELECT * FROM messages
+WHERE (sender_account_id = ? AND recipient_account_id = ?)
+    OR (sender_account_id = ? AND recipient_account_id = ?)
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: GetUnreadMessagesForUser :many
+SELECT * FROM messages
+WHERE recipient_account_id = ? AND is_read = FALSE
+ORDER BY created_at DESC;
+
+-- name: MarkMessageAsRead :exec
+UPDATE messages
+SET is_read = TRUE
+WHERE id = ? AND recipient_account_id = ?;
+
+-- name: MarkAllMessagesAsRead :exec
+UPDATE messages
+SET is_read = TRUE
+WHERE recipient_account_id = ? AND is_read = FALSE;
+
+-- name: DeleteMessage :exec
+DELETE FROM messages
+WHERE id = ? AND (sender_account_id = ? OR recipient_account_id = ?);
+
+-- name: GetMessageCountForUser :one
+SELECT COUNT(*) FROM messages
+WHERE sender_account_id = ? OR recipient_account_id = ?;
+
+-- name: GetUnreadMessageCountForUser :one
+SELECT COUNT(*) FROM messages
+WHERE recipient_account_id = ? AND is_read = FALSE;
+
+-- name: GerUnreadMessageCountBetweenUsers :one
+SELECT COUNT(*) FROM messages
+WHERE recipient_account_id = ? AND sender_account_id = ? AND is_read = FALSE;
+
+-- name: GetLatestMessageForEachConversation :many
+SELECT m.*
+FROM messages m
+INNER JOIN (
+    SELECT
+        CASE
+            WHEN sender_account_id < recipient_account_id
+            THEN sender_account_id
+            ELSE recipient_account_id
+        END AS user1,
+        CASE
+            WHEN sender_account_id < recipient_account_id
+            THEN recipient_account_id
+            ELSE sender_account_id
+        END AS user2,
+        MAX(created_at) AS max_created_at
+    FROM messages
+    WHERE sender_account_id = ? OR recipient_account_id = ?
+    GROUP BY user1, user2
+) latest ON (
+    (m.sender_account_id = latest.user1 AND m.recipient_account_id = latest.user2) OR
+    (m.sender_account_id = latest.user2 AND m.recipient_account_id = latest.user1)
+) AND m.created_at = latest.max_created_at
+ORDER BY m.created_at DESC;
+
+-- name: SearchMessages :many
+SELECT * FROM messages
+WHERE (sender_account_id = ? OR recipient_account_id = ?)
+    AND content LIKE ?
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: DeleteOldMessages :exec
+DELETE FROM messages
 WHERE created_at < ? AND is_read = TRUE;
+
+-- name: CreateFollow :exec
+INSERT INTO follows (follower_account_id, following_account_id)
+VALUES (?, ?);
+
+-- name: DeleteFollow :exec
+DELETE FROM follows
+WHERE follower_account_id = ? AND following_account_id = ?;
+
+-- name: CheckFollowExists :one
+SELECT EXISTS(
+    SELECT 1 FROM follows
+    WHERE follower_account_id = ? AND following_account_id = ?
+) AS is_following;
+
+-- name: GetFollowers: :many
+SELECT follower_account_id
+FROM follows
+WHERE following_account_id = ?
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: GetFollowing :many
+SELECT following_account_id
+FROM follows
+WHERE follower_account_id = ?
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+
+-- name: GetFollowerCount :one
+SELECT COUNT(*) FROM follows
+WHERE following_account_id = ?;
+
+-- name: GetFollowingCount :one
+SELECT COUNT(*) FROM follows
+WHERE follower_account_id = ?;
+
+-- name: GetMutualFollows :many
+SELECT f1.following_account_id,
+FROM follows f1
+JOIN follows f2 ON f1.following_account_id = f2.follower_account_id
+WHERE f1.follower_account_id = ? AND f2.following_account_id = ?
+LIMIT ? OFFSET ?;
+
+-- name: GetFollowSuggestions :many
+SELECT DISTINCT f2.following_account_id
+FROM follows f1
+JOIN follows f2 ON f1.following_account_id = f2.follower_account_id
+WHERE f1.follower_account_id = ?
+    AND f2.following_account_id != f1.follower_account_id
+    AND NOT EXISTS (
+        SELECT 1 FROM follows f3
+        WHERE f3.follower_account_id = f1.follower_account_id
+            AND f3.following_account_id = f2.following_account_id
+    )
+LIMIT ?;
