@@ -6,7 +6,7 @@ CREATE TABLE accounts (
     user_name VARCHAR(50) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY idx_accounts_user_name (user_name)
+    INDEX idx_accounts_user_name (user_name)
 );
 
 DROP TABLE IF EXISTS profiles;
@@ -18,7 +18,7 @@ CREATE TABLE profiles (
     banner_image_url VARCHAR(2083),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_profiles_account FOREIGN KEY (account_id)
+    CONSTRAINT fk_profiles_account_id FOREIGN KEY (account_id)
         REFERENCES accounts(id) ON DELETE CASCADE
 );
 
@@ -29,7 +29,7 @@ CREATE TABLE settings (
     is_private BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_settings_account FOREIGN KEY (account_id)
+    CONSTRAINT fk_settings_account_id FOREIGN KEY (account_id)
         REFERENCES accounts(id) ON DELETE CASCADE
 );
 
@@ -137,7 +137,7 @@ CREATE TABLE interests (
     version_control_score TINYINT UNSIGNED DEFAULT 0,
     api_design_score TINYINT UNSIGNED DEFAULT 0,
     performance_optimization_score TINYINT UNSIGNED DEFAULT 0,
-    CONSTRAINT fk_interests_account FOREIGN KEY (account_id)
+    CONSTRAINT fk_interests_account_id FOREIGN KEY (account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
     CHECK (news_score BETWEEN 0 AND 100),
     CHECK (politics_score BETWEEN 0 AND 100),
@@ -252,11 +252,11 @@ CREATE TABLE notifications (
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_notifications_resipient FOREIGN KEY (recipient_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_notifications_sender FOREIGN KEY (sender_account_id)
+    CONSTRAINT fk_notifications_sender_account_id FOREIGN KEY (sender_account_id)
         REFERENCES accounts(id) ON DELETE SET NULL,
-    INDEX idx_notifications_recipient (recipient_account_id),
+    CONSTRAINT fk_notifications_recipient_account_id FOREIGN KEY (recipient_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    INDEX idx_notifications_recipient_account_id (recipient_account_id),
     INDEX idx_notifications_created_at (created_at)
 );
 
@@ -270,13 +270,13 @@ CREATE TABLE messages (
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_messages_sender FOREIGN KEY (sender_account_id)
+    CONSTRAINT fk_messages_sender_account_id FOREIGN KEY (sender_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_messages_recipient FOREIGN KEY (recipient_account_id)
+    CONSTRAINT fk_messages_recipient_account_id FOREIGN KEY (recipient_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    INDEX idx_messages_sender (sender_account_id),
-    INDEX idx_messages_recipient (recipient_account_id),
-    INDEX idx_messages_created_at (created_at)
+    INDEX idx_messages_sender_account_id (sender_account_id),
+    INDEX idx_messages_recipient_account_id (recipient_account_id),
+    INDEX idx_messages_created_at_account_id (created_at)
 );
 
 DROP TABLE IF EXISTS follows;
@@ -287,9 +287,9 @@ CREATE TABLE follows (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (follower_account_id, following_account_id),
-    CONSTRAINT fk_follows_follower FOREIGN KEY (follower_account_id)
+    CONSTRAINT fk_follows_follower_account_id FOREIGN KEY (follower_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_follows_following FOREIGN KEY (following_account_id)
+    CONSTRAINT fk_follows_following_account_id FOREIGN KEY (following_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
     INDEX idx_follows_created_at (created_at)
 );
@@ -302,9 +302,9 @@ CREATE TABLE follow_requests (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (requester_account_id, requestee_account_id),
-    CONSTRAINT fk_follow_requests_requester FOREIGN KEY (requester_account_id)
+    CONSTRAINT fk_follow_requests_requester_account_id FOREIGN KEY (requester_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_follow_requests_requestee FOREIGN KEY (requestee_account_id)
+    CONSTRAINT fk_follow_requests_requestee_account_id FOREIGN KEY (requestee_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
     INDEX idx_follow_requests_created_at (created_at)
 );
@@ -317,9 +317,9 @@ CREATE TABLE blocks (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (blocker_account_id, blocked_account_id),
-    CONSTRAINT fk_blocks_blocker FOREIGN KEY (blocker_account_id)
+    CONSTRAINT fk_blocks_blocker_account_id FOREIGN KEY (blocker_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_blocks_blocked FOREIGN KEY (blocked_account_id)
+    CONSTRAINT fk_blocks_blocked_account_id FOREIGN KEY (blocked_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
     INDEX idx_blocks_created_at (created_at)
 );
@@ -337,27 +337,17 @@ CREATE TABLE tweets (
     retweets_count INT UNSIGNED NOT NULL DEFAULT 0,
     is_retweet BOOLEAN NOT NULL DEFAULT FALSE,
     is_reply BOOLEAN NOT NULL DEFAULT FALSE,
+    is_quote BOOLEAN NOT NULL DEFAULT FALSE,
     engagement_score INT UNSIGNED NOT NULL DEFAULT 0,
-    original_tweet_id BIGINT UNSIGNED,
-    quoted_tweet_id BIGINT UNSIGNED,
-    reply_to_tweet_id BIGINT UNSIGNED,
-    reply_to_account_id CHAR(28),
     media JSON,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_tweets_account FOREIGN KEY (account_id)
+    CONSTRAINT fk_tweets_account_id FOREIGN KEY (account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_tweets_original_tweet FOREIGN KEY (original_tweet_id)
-        REFERENCES tweets(id) ON DELETE SET NULL,
-    CONSTRAINT fk_tweets_quoted_tweet FOREIGN KEY (quoted_tweet_id)
-        REFERENCES tweets(id) ON DELETE SET NULL,
-    CONSTRAINT fk_tweets_reply_to_tweet FOREIGN KEY (reply_to_tweet_id)
-        REFERENCES tweets(id) ON DELETE SET NULL,
-    CONSTRAINT fk_tweets_reply_to_account FOREIGN KEY (reply_to_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    INDEX idx_tweets_account (account_id),
+    INDEX idx_tweets_account_id (account_id),
     INDEX idx_tweets_engagement_score (engagement_score),
     INDEX idx_tweets_created_at (created_at),
+    INDEX idx_tweets_type (is_retweet, is_reply, is_quote),
     CHECK (JSON_VALID(media))
 );
 
@@ -369,60 +359,62 @@ CREATE TABLE labels (
     label2 VARCHAR(50),
     label3 VARCHAR(50),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_labels_tweet FOREIGN KEY (tweet_id)
+    CONSTRAINT fk_labels_tweet_id FOREIGN KEY (tweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS likes;
 
 CREATE TABLE likes (
-    account_id CHAR(28) NOT NULL,
-    tweet_id BIGINT UNSIGNED NOT NULL,
+    liking_account_id CHAR(28) NOT NULL,
+    original_tweet_id BIGINT UNSIGNED NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (account_id, tweet_id),
-    CONSTRAINT fk_likes_account FOREIGN KEY (account_id)
+    PRIMARY KEY (liking_account_id, original_tweet_id),
+    CONSTRAINT fk_likes_liking_account_id FOREIGN KEY (liking_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_likes_tweet FOREIGN KEY (tweet_id)
+    CONSTRAINT fk_likes_original_tweet_id FOREIGN KEY (original_tweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
-    INDEX idx_tweets_id (tweet_id)
+    INDEX idx_likes_original_tweet_id (original_tweet_id)
 );
 
-DROP TABLE IF EXISTS retweets;
+DROP TABLE IF EXISTS retweets_and_quotes;
 
-CREATE TABLE retweets (
-    account_id CHAR(28) NOT NULL,
-    tweet_id BIGINT UNSIGNED NOT NULL,
+CREATE TABLE retweets_and_quotes (
+    retweet_id BIGINT UNSIGNED NOT NULL,
+    retweeting_account_id CHAR(28) NOT NULL,
+    original_tweet_id BIGINT UNSIGNED NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (account_id, tweet_id),
-    CONSTRAINT fk_retweets_account FOREIGN KEY (account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_retweets_tweet FOREIGN KEY (tweet_id)
+    PRIMARY KEY (retweet_id),
+    CONSTRAINT fk_retweets_and_quotes_retweet_id FOREIGN KEY (retweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
-    INDEX idx_retweets_tweets_id (tweet_id)
+    CONSTRAINT fk_retweets_and_quotes_retweeting_account_id FOREIGN KEY (retweeting_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_retweets_and_quotes_original_tweet_id FOREIGN KEY (original_tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE,
+    INDEX idx_retweets_retweet_id (retweet_id)
 );
 
 DROP TABLE IF EXISTS replies;
 
 CREATE TABLE replies (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    tweet_id BIGINT UNSIGNED NOT NULL,
-    reply_tweet_id BIGINT UNSIGNED NOT NULL,
+    reply_id BIGINT UNSIGNED NOT NULL,
+    original_tweet_id BIGINT UNSIGNED NOT NULL,
     parent_reply_id BIGINT UNSIGNED,
-    account_id CHAR(28) NOT NULL,
+    replying_account_id CHAR(28) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_reply_tweet (reply_tweet_id),
-    INDEX idx_tweet_id (tweet_id),
-    INDEX idx_parent_reply_id (parent_reply_id),
-    INDEX idx_account_id (account_id),
-    INDEX idx_created_at (created_at),
-    CONSTRAINT fk_replies_tweet FOREIGN KEY (tweet_id)
+    PRIMARY KEY (reply_id),
+    CONSTRAINT fk_replies_reply_id FOREIGN KEY (reply_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_replies_reply_tweet FOREIGN KEY (reply_tweet_id)
+    CONSTRAINT fk_replies_original_tweet_id FOREIGN KEY (original_tweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_replies_parent_reply FOREIGN KEY (parent_reply_id)
+    CONSTRAINT fk_replies_parent_reply_id FOREIGN KEY (parent_reply_id)
         REFERENCES replies(id) ON DELETE SET NULL,
-    CONSTRAINT fk_replies_account FOREIGN KEY (account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    CONSTRAINT fk_replies_replying_account_id FOREIGN KEY (replying_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    INDEX idx_replies_original_tweet_id (original_tweet_id),
+    INDEX idx_replies_parent_reply_id (parent_reply_id),
+    INDEX idx_replies_replying_account_id (replying_account_id),
+    INDEX idx_replies_created_at (created_at)
 );
 
 DROP TABLE IF EXISTS hashtags;
@@ -438,9 +430,9 @@ CREATE TABLE tweet_hashtags (
     tweet_id BIGINT UNSIGNED NOT NULL,
     hashtag_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (tweet_id, hashtag_id),
-    CONSTRAINT fk_tweet_hashtags_tweet FOREIGN KEY (tweet_id)
+    CONSTRAINT fk_tweet_hashtags_twee_id FOREIGN KEY (tweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_tweet_hashtags_hashtag FOREIGN KEY (hashtag_id)
+    CONSTRAINT fk_tweet_hashtags_hashtag_id FOREIGN KEY (hashtag_id)
         REFERENCES hashtags(id) ON DELETE CASCADE,
     INDEX idx_tweet_hashtags_hashtag_id (hashtag_id)
 );
