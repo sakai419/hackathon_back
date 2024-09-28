@@ -493,10 +493,15 @@ WHERE blocker_account_id = ? OR blocked_account_id = ?;
 
 -- name: CreateTweet :exec
 INSERT INTO tweets (
-    account_id, content, code, is_retweet, is_reply,
-    original_tweet_id, quoted_tweet_id, reply_to_tweet_id,
-    reply_to_account_id, media
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    account_id, content, code, media
+) VALUES (?, ?, ?, ?);
+
+-- name: CreateRetweet :exec
+INSERT INTO tweets (
+    account_id, is_retweet
+) VALUES (?, TRUE);
+
+-- name: CreateReply :exec
 
 -- name: GetTweetById :one
 SELECT * FROM tweets WHERE id = ?;
@@ -509,12 +514,12 @@ LIMIT ? OFFSET ?;
 
 -- name: UpdateTweetContent :exec
 UPDATE tweets
-SET content = ?, updated_at = CURRENT_TIMESTAMP
+SET content = ?
 WHERE id = ? AND account_id = ?;
 
 -- name: UpdateTweetCode :exec
 UPDATE tweets
-SET code = ?, updated_at = CURRENT_TIMESTAMP
+SET code = ?
 WHERE id = ? AND account_id = ?;
 
 -- name: DeleteTweet :exec
@@ -533,24 +538,6 @@ UPDATE tweets SET retweets_count = retweets_count + 1 WHERE id = ?;
 UPDATE tweets
 SET engagement_score = likes_count + replies_count + retweets_count
 WHERE id = ?;
-
--- name: GetRepliesForTweet :many
-SELECT * FROM tweets
-WHERE reply_to_tweet_id = ?
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?;
-
--- name: GetRetweetsForTweet :many
-SELECT * FROM tweets
-WHERE original_tweet_id = ? AND is_retweet = TRUE
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?;
-
--- name: GetQuotesForTweet :many
-SELECT * FROM tweets
-WHERE quoted_tweet_id = ?
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?;
 
 -- name: GetTrendingTweets :many
 SELECT * FROM tweets
