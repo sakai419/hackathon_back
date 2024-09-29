@@ -33,7 +33,7 @@ SET
     philosophy_score = COALESCE(?, philosophy_score),
     religion_score = COALESCE(?, religion_score),
     culture_score = COALESCE(?, culture_score),
-    volunteer_score = COALESCE(?, volunteer_score),
+    volunteering_score = COALESCE(?, volunteer_score),
     social_issues_score = COALESCE(?, social_issues_score),
     law_score = COALESCE(?, law_score),
     taxes_score = COALESCE(?, taxes_score),
@@ -108,7 +108,7 @@ SET
     open_source_score = COALESCE(?, open_source_score),
     version_control_score = COALESCE(?, version_control_score),
     api_design_score = COALESCE(?, api_design_score),
-    performance_optimization_score = COALESCE(?, performance_optimization_score),
+    performance_optimization_score = COALESCE(?, performance_optimization_score)
 WHERE account_id = ?;
 
 -- name: DeleteInterests :exec

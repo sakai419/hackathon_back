@@ -12,7 +12,7 @@ SELECT EXISTS(
     WHERE follower_account_id = ? AND following_account_id = ?
 ) AS is_following;
 
--- name: GetFollowers: :many
+-- name: GetFollowers :many
 SELECT follower_account_id
 FROM follows
 WHERE following_account_id = ?
@@ -35,7 +35,7 @@ SELECT COUNT(*) FROM follows
 WHERE follower_account_id = ?;
 
 -- name: GetMutualFollows :many
-SELECT f1.following_account_id,
+SELECT f1.following_account_id
 FROM follows f1
 JOIN follows f2 ON f1.following_account_id = f2.follower_account_id
 WHERE f1.follower_account_id = ? AND f2.following_account_id = ?

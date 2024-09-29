@@ -1,3 +1,4 @@
+CREATE TABLE notifications (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     sender_account_id CHAR(28),
     recipient_account_id CHAR(28) NOT NULL,

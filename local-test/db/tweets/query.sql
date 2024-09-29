@@ -3,20 +3,20 @@ INSERT INTO tweets (
     account_id, content, code, media
 ) VALUES (?, ?, ?, ?);
 
--- name: CreateRetweet :exec
+-- name: CreateTweetAsRetweet :exec
 INSERT INTO tweets (
     account_id, is_retweet
 ) VALUES (?, TRUE);
 
--- name: CreateReply :exec
+-- name: CreateTweetAsReply :exec
 INSERT INTO tweets (
-    account_id, is_reply, original_tweet_id, content, code, media
-) VALUES (?, TRUE, ?, ?, ?, ?);
+    account_id, is_reply, content, code, media
+) VALUES (?, TRUE, ?, ?, ?);
 
--- name: CreateQuote :exec
+-- name: CreateTweetAsQuote :exec
 INSERT INTO tweets (
-    account_id, is_quote, original_tweet_id, content, code, media
-) VALUES (?, TRUE, ?, ?, ?, ?);
+    account_id, is_quote, content, code, media
+) VALUES (?, TRUE, ?, ?, ?);
 
 -- name: GetTweetById :one
 SELECT * FROM tweets WHERE id = ?;

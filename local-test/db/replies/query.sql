@@ -40,12 +40,12 @@ SELECT COUNT(*) FROM replies WHERE original_tweet_id = ?;
 
 -- name: GetReplyThread :many
 WITH RECURSIVE reply_thread AS (
-    SELECT * FROM replies WHERE reply_id = ?
+    SELECT * FROM replies r0 WHERE r0.reply_id = ?
     UNION ALL
     SELECT r.* FROM replies r
     JOIN reply_thread rt ON r.parent_reply_id = rt.reply_id
 )
-SELECT rt.*, t.* AS reply_content
+SELECT rt.*, t.*
 FROM reply_thread rt
 JOIN tweets t ON rt.reply_id = t.id
 ORDER BY rt.created_at ASC;

@@ -1,7 +1,3 @@
--- name: GetProfileByAccountId :one
-SELECT * FROM profiles
-WHERE account_id = ?;
-
 -- name: CreateProfile :exec
 INSERT INTO profiles (account_id, bio, profile_image_url, banner_image_url)
 VALUES (?, ?, ?, ?);
