@@ -23,9 +23,15 @@ WHERE id = ?;
 DELETE FROM accounts
 WHERE id = ?;
 
+-- name: SearchAccountsByUserId :many
+SELECT * FROM accounts
+WHERE user_id LIKE CONCAT('%', ?, '%')
+ORDER BY user_id
+LIMIT ? OFFSET ?;
+
 -- name: SearchAccountsByUserName :many
 SELECT * FROM accounts
-WHERE user_name LIKE ?
+WHERE user_name LIKE CONCAT('%', ?, '%')
 ORDER BY user_name
 LIMIT ? OFFSET ?;
 
@@ -36,6 +42,7 @@ WHERE id = ?;
 -- name: CountAccounts :one
 SELECT COUNT(*) FROM accounts;
 
+-- name: CheckUserNameExists :one
 SELECT EXISTS(SELECT 1 FROM accounts WHERE user_name = ?);
 
 -- name: CheckUserIdExists :one
