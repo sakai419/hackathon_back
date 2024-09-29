@@ -9,6 +9,14 @@ INSERT INTO tweets (
 ) VALUES (?, TRUE);
 
 -- name: CreateReply :exec
+INSERT INTO tweets (
+    account_id, is_reply, original_tweet_id, content, code, media
+) VALUES (?, TRUE, ?, ?, ?, ?);
+
+-- name: CreateQuote :exec
+INSERT INTO tweets (
+    account_id, is_quote, original_tweet_id, content, code, media
+) VALUES (?, TRUE, ?, ?, ?, ?);
 
 -- name: GetTweetById :one
 SELECT * FROM tweets WHERE id = ?;
