@@ -19,6 +19,21 @@ UPDATE accounts
 SET user_name = ?
 WHERE id = ?;
 
+-- name: UpdateAccountUserId :exec
+UPDATE accounts
+SET user_id = ?
+WHERE id = ?;
+
+-- name: SuspendAccount :exec
+UPDATE accounts
+SET is_suspended = TRUE
+WHERE id = ?;
+
+-- name: UnsuspendAccount :exec
+UPDATE accounts
+SET is_suspended = FALSE
+WHERE id = ?;
+
 -- name: DeleteAccount :exec
 DELETE FROM accounts
 WHERE id = ?;

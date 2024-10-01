@@ -70,7 +70,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) error {
 }
 
 const getAccountById = `-- name: GetAccountById :one
-SELECT id, user_id, user_name, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
 WHERE id = ?
 `
 
@@ -81,6 +81,7 @@ func (q *Queries) GetAccountById(ctx context.Context, id string) (Account, error
 		&i.ID,
 		&i.UserID,
 		&i.UserName,
+		&i.IsSuspended,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -88,7 +89,7 @@ func (q *Queries) GetAccountById(ctx context.Context, id string) (Account, error
 }
 
 const getAccountByUserId = `-- name: GetAccountByUserId :one
-SELECT id, user_id, user_name, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
 WHERE user_id = ?
 `
 
@@ -99,6 +100,7 @@ func (q *Queries) GetAccountByUserId(ctx context.Context, userID string) (Accoun
 		&i.ID,
 		&i.UserID,
 		&i.UserName,
+		&i.IsSuspended,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -106,7 +108,7 @@ func (q *Queries) GetAccountByUserId(ctx context.Context, userID string) (Accoun
 }
 
 const getAccountByUserName = `-- name: GetAccountByUserName :one
-SELECT id, user_id, user_name, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
 WHERE user_name = ?
 `
 
@@ -117,6 +119,7 @@ func (q *Queries) GetAccountByUserName(ctx context.Context, userName string) (Ac
 		&i.ID,
 		&i.UserID,
 		&i.UserName,
+		&i.IsSuspended,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -136,7 +139,7 @@ func (q *Queries) GetAccountCreationDate(ctx context.Context, id string) (time.T
 }
 
 const searchAccountsByUserId = `-- name: SearchAccountsByUserId :many
-SELECT id, user_id, user_name, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
 WHERE user_id LIKE CONCAT('%', ?, '%')
 ORDER BY user_id
 LIMIT ? OFFSET ?
@@ -161,6 +164,7 @@ func (q *Queries) SearchAccountsByUserId(ctx context.Context, arg SearchAccounts
 			&i.ID,
 			&i.UserID,
 			&i.UserName,
+			&i.IsSuspended,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -178,7 +182,7 @@ func (q *Queries) SearchAccountsByUserId(ctx context.Context, arg SearchAccounts
 }
 
 const searchAccountsByUserName = `-- name: SearchAccountsByUserName :many
-SELECT id, user_id, user_name, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
 WHERE user_name LIKE CONCAT('%', ?, '%')
 ORDER BY user_name
 LIMIT ? OFFSET ?
@@ -203,6 +207,7 @@ func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccoun
 			&i.ID,
 			&i.UserID,
 			&i.UserName,
+			&i.IsSuspended,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -217,6 +222,44 @@ func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccoun
 		return nil, err
 	}
 	return items, nil
+}
+
+const suspendAccount = `-- name: SuspendAccount :exec
+UPDATE accounts
+SET is_suspended = TRUE
+WHERE id = ?
+`
+
+func (q *Queries) SuspendAccount(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, suspendAccount, id)
+	return err
+}
+
+const unsuspendAccount = `-- name: UnsuspendAccount :exec
+UPDATE accounts
+SET is_suspended = FALSE
+WHERE id = ?
+`
+
+func (q *Queries) UnsuspendAccount(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, unsuspendAccount, id)
+	return err
+}
+
+const updateAccountUserId = `-- name: UpdateAccountUserId :exec
+UPDATE accounts
+SET user_id = ?
+WHERE id = ?
+`
+
+type UpdateAccountUserIdParams struct {
+	UserID string
+	ID     string
+}
+
+func (q *Queries) UpdateAccountUserId(ctx context.Context, arg UpdateAccountUserIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateAccountUserId, arg.UserID, arg.ID)
+	return err
 }
 
 const updateAccountUserName = `-- name: UpdateAccountUserName :exec

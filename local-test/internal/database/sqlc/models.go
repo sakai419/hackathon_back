@@ -11,11 +11,12 @@ import (
 )
 
 type Account struct {
-	ID        string
-	UserID    string
-	UserName  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID          string
+	UserID      string
+	UserName    string
+	IsSuspended bool
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type Block struct {
