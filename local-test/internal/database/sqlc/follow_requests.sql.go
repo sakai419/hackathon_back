@@ -3,7 +3,7 @@
 //   sqlc v1.27.0
 // source: follow_requests.sql
 
-package database
+package sqlc
 
 import (
 	"context"

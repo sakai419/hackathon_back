@@ -17,11 +17,12 @@ func ConnectToMysql(c DBConfig) (db *sql.DB, err error) {
 
     db, err = sql.Open("mysql", connStr)
 	if err != nil {
-		err = fmt.Errorf("fail: sql.Open, %v\n", err)
+		err = fmt.Errorf("fail: sql.Open, %v", err)
 	}
 
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("fail: db.Ping, %v\n", err)
+		return nil, fmt.Errorf("fail: db.Ping, %v", err)
 	}
-	return db, err
+
+	return
 }
