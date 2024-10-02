@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"local-test/internal/config"
+	"local-test/pkg/database"
 	"log"
 )
 
@@ -12,5 +13,11 @@ func main() {
 		log.Fatalf("error loading config: %v", err)
 	}
 
-	fmt.Println(cfg.FirebaseAuthClient)
+	db, err := database.ConnectToDB(cfg.DBConfig)
+	if err != nil {
+		log.Fatalf("error connecting to db: %v", err)
+	}
+
+	fmt.Println("connected to db")
+	defer db.Close()
 }
