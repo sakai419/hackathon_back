@@ -7,8 +7,16 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+func MakeConnStr(c config.DBConfig) string{
+	if (c.Type == "mysql") {
+		return fmt.Sprintf("%s:%s@tcp(%s)/%s", c.User, c.Pwd, c.Host, c.Database)
+	} else {
+		return ""
+	}
+}
+
 func ConnectToDB(c config.DBConfig) (db *sql.DB, err error) {
-    connStr := fmt.Sprintf("%s:%s@tcp(%s)/%s", c.User, c.Pwd, c.Host, c.Database)
+    connStr := MakeConnStr(c)
 
     db, err = sql.Open(c.Type, connStr)
 	if err != nil {
