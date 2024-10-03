@@ -9,7 +9,7 @@ import (
 	"firebase.google.com/go/v4/auth"
 )
 
-// AuthMiddleware creates a new middleware for authentication
+// AuthMiddleware is a middleware that authenticates the user
 func AuthMiddleware(client *auth.Client) func(http.Handler) http.Handler {
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -26,7 +26,7 @@ type DBConfig struct {
 	Database string
 }
 
-func InitFirebaseClient(v *viper.Viper) (*auth.Client, error) {
+func initFirebaseClient(v *viper.Viper) (*auth.Client, error) {
 	// Create a map of Firebase credentials
 	firebaseCredentials := map[string]string{
         "type":                        v.GetString("firebase.type"),
@@ -83,7 +83,7 @@ func LoadConfig() (*Config, error) {
 	}
 
 	// Initialize Firebase Auth client
-	authClient, err := InitFirebaseClient(v)
+	authClient, err := initFirebaseClient(v)
 	if err != nil {
 		return nil, err
 	}
