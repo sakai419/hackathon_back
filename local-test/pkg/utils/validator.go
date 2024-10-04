@@ -88,8 +88,8 @@ func checkUserPermissions(db *sql.DB, db_type string) error {
 }
 
 func ValidateDBConfig(c *config.DBConfig) error {
-	if c.Type == "" {
-		return fmt.Errorf("database type is required")
+	if c.Driver == "" {
+		return fmt.Errorf("database driver is required")
 	} else if c.User == "" {
 		return fmt.Errorf("database user is required")
 	} else if c.Pwd == "" {
@@ -107,7 +107,7 @@ func ValidateDB(db *sql.DB, c config.DBConfig) error {
 	if err := checkRequiredTables(db); err != nil {
 		return fmt.Errorf("fail: checkRequiredTables, %v", err)
 	}
-	if err := checkUserPermissions(db, c.Type); err != nil {
+	if err := checkUserPermissions(db, c.Driver); err != nil {
 		return fmt.Errorf("fail: checkUserPermissions, %v", err)
 	}
 	return nil

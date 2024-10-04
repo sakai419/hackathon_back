@@ -11,7 +11,7 @@ firebase:
     client_x509_cert_url: ${FIREBASE_CLIENT_X509_CERT_URL}
     universe_domain: gogoleapis.com
 db:
-    type: mysql
+    driver: mysql
     user: user
     password: ${DB_PASSWORD}
     host: localhost:3306

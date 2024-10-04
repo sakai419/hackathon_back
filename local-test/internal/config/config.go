@@ -19,7 +19,7 @@ type Config struct {
 }
 
 type DBConfig struct {
-	Type string
+	Driver string
 	User string
 	Pwd string
 	Host string
@@ -65,7 +65,7 @@ func initFirebaseClient(v *viper.Viper) (*auth.Client, error) {
 
 func generateDBConfig(v *viper.Viper) (DBConfig, error) {
 	return DBConfig{
-		Type:     v.GetString("db.type"),
+		Driver:   v.GetString("db.driver"),
 		User:     v.GetString("db.user"),
 		Pwd:      v.GetString("db.password"),
 		Host:     v.GetString("db.host"),

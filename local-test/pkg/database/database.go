@@ -10,7 +10,7 @@ import (
 )
 
 func generateConnStr(c config.DBConfig) string {
-	switch c.Type {
+	switch c.Driver {
 	case "mysql":
 		return fmt.Sprintf("%s:%s@tcp(%s)/%s", c.User, c.Pwd, c.Host, c.Database)
 	default:
@@ -28,7 +28,7 @@ func ConnectToDB(c config.DBConfig) (db *sql.DB, err error) {
     connStr := generateConnStr(c)
 
 	// Open database connection
-    db, err = sql.Open(c.Type, connStr)
+    db, err = sql.Open(c.Driver, connStr)
 	if err != nil {
 		err = fmt.Errorf("fail: sql.Open, %v", err)
 	}
