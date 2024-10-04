@@ -92,7 +92,7 @@ func generateDBConfig(v *viper.Viper) (DBConfig, error) {
 func LoadConfig() (*Config, error) {
     // Load environment variables from .env file
     if err := godotenv.Load(".env"); err != nil {
-        return nil, fmt.Errorf("error loading .env file: %v", err)
+        return nil, fmt.Errorf("config: fail to load .env file: %v", err)
     }
 
 	// Initialize Viper
@@ -105,19 +105,19 @@ func LoadConfig() (*Config, error) {
 	v.SetConfigType("yaml")
 	v.AddConfigPath("configs/")
 	if err := v.MergeInConfig(); err != nil {
-		return nil, fmt.Errorf("error reading config file: %v", err)
+		return nil, fmt.Errorf("config: fail to read config file: %v", err)
 	}
 
 	// Initialize Firebase Auth client
 	authClient, err := initFirebaseClient(v)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("config: %v", err)
 	}
 
 	// Generate DB config
 	DBConfig, err := generateDBConfig(v)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("config: %v", err)
 	}
 
 	return &Config{

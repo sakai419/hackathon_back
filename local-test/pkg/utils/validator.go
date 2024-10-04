@@ -157,7 +157,7 @@ func ValidateDBConfig(c *config.DBConfig) error {
 	// Validate each field
     for fieldName, fieldValue := range fields {
         if err := validateField(fieldName, fieldValue); err != nil {
-            return err
+            return fmt.Errorf("validation: %v", err)
         }
     }
 
@@ -167,10 +167,10 @@ func ValidateDBConfig(c *config.DBConfig) error {
 func ValidateDB(db *sql.DB, c config.DBConfig) error {
     // Validate database configuration
 	if err := checkRequiredTables(db); err != nil {
-		return fmt.Errorf("fail: checkRequiredTables, %v", err)
+		return fmt.Errorf("validation: %v", err)
 	}
 	if err := checkUserPermissions(db, c.Driver); err != nil {
-		return fmt.Errorf("fail: checkUserPermissions, %v", err)
+		return fmt.Errorf("validation: %v", err)
 	}
 	return nil
 }
