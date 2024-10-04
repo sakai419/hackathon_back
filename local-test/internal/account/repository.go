@@ -19,7 +19,7 @@ func NewAccountRepository(db *sql.DB) *AccountRepository {
 
 func (r *AccountRepository) CreateAccount(ctx context.Context, arg *sqlc.CreateAccountParams) (error) {
 	if err := r.q.CreateAccount(ctx, *arg); err != nil {
-		return fmt.Errorf("repository: error creating account: %v", err)
+		return fmt.Errorf("repository: failed to create account: %v", err)
 	}
 	return nil
 }

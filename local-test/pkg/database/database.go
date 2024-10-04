@@ -31,7 +31,7 @@ func ConnectToDB(c config.DBConfig) (db *sql.DB, err error) {
 	// Open database connection
     db, err = sql.Open(c.Driver, connStr)
 	if err != nil {
-		err = fmt.Errorf("database: fail to open db: %v", err)
+		err = fmt.Errorf("database: failed to open db: %v", err)
 	}
 
 	// Set database connection pool settings
@@ -42,7 +42,7 @@ func ConnectToDB(c config.DBConfig) (db *sql.DB, err error) {
 
 	// Check if the database is alive
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("database: fail to ping db: %v", err)
+		return nil, fmt.Errorf("database: failed to ping db: %v", err)
 	}
 
 	// Check user permissions
