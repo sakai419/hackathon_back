@@ -63,6 +63,16 @@ func initFirebaseClient(v *viper.Viper) (*auth.Client, error) {
 	return authClient, nil
 }
 
+func generateDBConfig(v *viper.Viper) (DBConfig, error) {
+	return DBConfig{
+		Type:     v.GetString("db.type"),
+		User:     v.GetString("db.user"),
+		Pwd:      v.GetString("db.password"),
+		Host:     v.GetString("db.host"),
+		Database: v.GetString("db.database"),
+	}, nil
+}
+
 func LoadConfig() (*Config, error) {
     // Load environment variables from .env file
     if err := godotenv.Load(".env"); err != nil {
@@ -88,14 +98,14 @@ func LoadConfig() (*Config, error) {
 		return nil, err
 	}
 
+	// Generate DB config
+	DBConfig, err := generateDBConfig(v)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Config{
 		FirebaseAuthClient: authClient,
-		DBConfig: DBConfig{
-			Type:     v.GetString("db.type"),
-			User:     v.GetString("db.user"),
-			Pwd:      v.GetString("db.password"),
-			Host:     v.GetString("db.host"),
-			Database: v.GetString("db.database"),
-		},
+		DBConfig: DBConfig,
 	}, nil
 }
