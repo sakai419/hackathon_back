@@ -77,6 +77,7 @@ func generateQueries(db_type string) (*Queries) {
 }
 
 func checkUserPermissions(db *sql.DB, dbType string) error {
+	// Generate queries based on database type
     queries := generateQueries(dbType)
     permissions := map[string]string{
         "create tables": queries.createTableQuery,
@@ -87,19 +88,21 @@ func checkUserPermissions(db *sql.DB, dbType string) error {
         "drop tables":   queries.dropTableQuery,
     }
 
+	// Begin transaction
     tx, err := db.Begin()
     if err != nil {
         return fmt.Errorf("failed to begin transaction: %v", err)
     }
 
+	// Defer rollback if panic
     defer func() {
         if p := recover(); p != nil {
             tx.Rollback()
-            panic(p) // re-throw panic after Rollback
+            panic(p)
         } else if err != nil {
-            tx.Rollback() // err is non-nil; don't change it
+            tx.Rollback()
         } else {
-            err = tx.Commit() // err is nil; if Commit returns error update err
+            err = tx.Commit()
         }
     }()
 
@@ -151,6 +154,7 @@ func ValidateDBConfig(c *config.DBConfig) error {
         "write timeout":     c.WriteTimeout,
     }
 
+	// Validate each field
     for fieldName, fieldValue := range fields {
         if err := validateField(fieldName, fieldValue); err != nil {
             return err
