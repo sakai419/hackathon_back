@@ -24,6 +24,14 @@ type DBConfig struct {
 	Pwd string
 	Host string
 	Database string
+	Charset string
+	MaxOpenConns int
+	MaxIdleConns int
+	ConnMaxLifetime int
+	ConnMaxIdleTime int
+	Timeout int
+	ReadTimeout int
+	WriteTimeout int
 }
 
 func initFirebaseClient(v *viper.Viper) (*auth.Client, error) {
@@ -70,6 +78,14 @@ func generateDBConfig(v *viper.Viper) (DBConfig, error) {
 		Pwd:      v.GetString("db.password"),
 		Host:     v.GetString("db.host"),
 		Database: v.GetString("db.database"),
+		Charset:  v.GetString("db.charset"),
+		MaxOpenConns: v.GetInt("db.max_open_conns"),
+		MaxIdleConns: v.GetInt("db.max_idle_conns"),
+		ConnMaxLifetime: v.GetInt("db.conn_max_lifetime"),
+		ConnMaxIdleTime: v.GetInt("db.conn_max_idle_time"),
+		Timeout: v.GetInt("db.timeout"),
+		ReadTimeout: v.GetInt("db.read_timeout"),
+		WriteTimeout: v.GetInt("db.write_timeout"),
 	}, nil
 }
 

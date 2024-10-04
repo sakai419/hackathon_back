@@ -16,3 +16,11 @@ db:
     password: ${DB_PASSWORD}
     host: localhost:3306
     database: mydatabase
+    charset: utf8mb4
+    timeout: 30
+    max_open_conns: 10
+    max_idle_conns: 10
+    conn_max_idle_time: 5
+    conn_max_lifetime: 5
+    read_timeout: 30
+    write_timeout: 30

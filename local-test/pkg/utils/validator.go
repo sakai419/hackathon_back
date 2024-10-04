@@ -8,6 +8,33 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+type Queries struct {
+    createTableQuery string
+    dropTableQuery   string
+    insertQuery      string
+    selectQuery      string
+    deleteQuery      string
+    updateQuery      string
+}
+
+func validateField(fieldName string, fieldValue interface{}) error {
+	switch v := fieldValue.(type) {
+	case string:
+		if v == "" {
+			return fmt.Errorf("database %s is required", fieldName)
+		}
+	case int:
+		if v == 0 {
+			return fmt.Errorf("database %s is required", fieldName)
+		}
+	default:
+		if fieldValue == nil {
+			return fmt.Errorf("database %s is required", fieldName)
+		}
+	}
+	return nil
+}
+
 func checkRequiredTables(db *sql.DB) error {
 	requiredTables := []string{
         "accounts",
@@ -33,73 +60,104 @@ func checkRequiredTables(db *sql.DB) error {
 	return nil
 }
 
-func generateQueries(db_type string) (create_table_query, drop_table_query, insert_query, select_query, delete_query, update_query string) {
+func generateQueries(db_type string) (*Queries) {
     switch db_type {
     case "mysql":
-        create_table_query = "CREATE TABLE test_table (id INT)"
-        drop_table_query = "DROP TABLE test_table"
-        insert_query = "INSERT INTO test_table (id) VALUES (1)"
-        select_query = "SELECT * FROM test_table"
-        delete_query = "DELETE FROM test_table"
-        update_query = "UPDATE test_table SET id = 2"
+		return &Queries{
+			createTableQuery: "CREATE TABLE test_table (id INT)",
+			dropTableQuery:   "DROP TABLE test_table",
+			insertQuery:      "INSERT INTO test_table (id) VALUES (1)",
+			selectQuery:      "SELECT * FROM test_table",
+			deleteQuery:      "DELETE FROM test_table",
+			updateQuery:      "UPDATE test_table SET id = 2",
+		}
     default:
-        create_table_query = ""
-        drop_table_query = ""
-        insert_query = ""
-        select_query = ""
-        delete_query = ""
-        update_query = ""
+		return nil
     }
-
-    return
 }
 
-func checkUserPermissions(db *sql.DB, db_type string) error {
-    // generate queries for testing user permissions
-    create_table_query, drop_table_query, insert_query, select_query, delete_query, update_query := generateQueries(db_type)
+func checkUserPermissions(db *sql.DB, dbType string) error {
+    queries := generateQueries(dbType)
+    permissions := map[string]string{
+        "create tables": queries.createTableQuery,
+        "insert data":   queries.insertQuery,
+        "select data":   queries.selectQuery,
+        "update data":   queries.updateQuery,
+        "delete data":   queries.deleteQuery,
+        "drop tables":   queries.dropTableQuery,
+    }
 
-    // check user permissions
-    _, err := db.Exec(create_table_query)
+    tx, err := db.Begin()
     if err != nil {
-        return fmt.Errorf("user does not have permission to create tables: %v", err)
+        return fmt.Errorf("failed to begin transaction: %v", err)
     }
-    _, err = db.Exec(insert_query)
-    if err != nil {
-        return fmt.Errorf("user does not have permission to insert data: %v", err)
+
+    defer func() {
+        if p := recover(); p != nil {
+            tx.Rollback()
+            panic(p) // re-throw panic after Rollback
+        } else if err != nil {
+            tx.Rollback() // err is non-nil; don't change it
+        } else {
+            err = tx.Commit() // err is nil; if Commit returns error update err
+        }
+    }()
+
+    // create tables
+    if err = executeQuery(tx, queries.createTableQuery, "create tables"); err != nil {
+        return err
     }
-    _, err = db.Exec(select_query)
-    if err != nil {
-        return fmt.Errorf("user does not have permission to select data: %v", err)
+
+    // other operations
+    for action, query := range permissions {
+        if action == "create tables" || action == "drop tables" {
+            continue
+        }
+        if err = executeQuery(tx, query, action); err != nil {
+            return err
+        }
     }
-    _, err = db.Exec(update_query)
-    if err != nil {
-        return fmt.Errorf("user does not have permission to update data: %v", err)
-    }
-    _, err = db.Exec(delete_query)
-    if err != nil {
-        return fmt.Errorf("user does not have permission to delete data: %v", err)
-    }
-    _, err = db.Exec(drop_table_query)
-    if err != nil {
-        return fmt.Errorf("user does not have permission to drop tables: %v", err)
+
+    // drop tables
+    if err = executeQuery(tx, queries.dropTableQuery, "drop tables"); err != nil {
+        return err
     }
 
     return nil
 }
 
+func executeQuery(tx *sql.Tx, query, action string) error {
+    _, err := tx.Exec(query)
+    if err != nil {
+        return fmt.Errorf("user does not have permission to %s: %v", action, err)
+    }
+    return nil
+}
+
 func ValidateDBConfig(c *config.DBConfig) error {
-	if c.Driver == "" {
-		return fmt.Errorf("database driver is required")
-	} else if c.User == "" {
-		return fmt.Errorf("database user is required")
-	} else if c.Pwd == "" {
-		return fmt.Errorf("database password is required")
-	} else if c.Host == "" {
-		return fmt.Errorf("database host is required")
-	} else if c.Database == "" {
-		return fmt.Errorf("database name is required")
-	}
-	return nil
+    fields := map[string]interface{}{
+        "driver":            c.Driver,
+        "user":              c.User,
+        "password":          c.Pwd,
+        "host":              c.Host,
+        "database":          c.Database,
+        "charset":           c.Charset,
+        "max open conns":    c.MaxOpenConns,
+        "max idle conns":    c.MaxIdleConns,
+        "conn max lifetime": c.ConnMaxLifetime,
+        "conn max idle time": c.ConnMaxIdleTime,
+        "timeout":           c.Timeout,
+        "read timeout":      c.ReadTimeout,
+        "write timeout":     c.WriteTimeout,
+    }
+
+    for fieldName, fieldValue := range fields {
+        if err := validateField(fieldName, fieldValue); err != nil {
+            return err
+        }
+    }
+
+    return nil
 }
 
 func ValidateDB(db *sql.DB, c config.DBConfig) error {
