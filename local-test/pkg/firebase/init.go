@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"local-test/configs"
+	"local-test/internal/config"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 )
 
-func InitFirebaseClient(c config.FirebaseConfig) (*auth.Client, error) {
+func InitFirebaseClient(c *config.FirebaseConfig) (*auth.Client, error) {
 	// Create a map of Firebase credentials
 	firebaseCredentials := map[string]string{
 		"type":                        c.Type,

@@ -14,8 +14,8 @@ import (
 )
 
 type Config struct {
-	FirebaseConfig FirebaseConfig
-	DBConfig DBConfig
+	FirebaseConfig *FirebaseConfig
+	DBConfig *DBConfig
 	Port int
 }
 
@@ -153,8 +153,8 @@ func LoadConfig() (*Config, error) {
 	Port := v.GetInt("server.port")
 
 	return &Config{
-		FirebaseConfig: FirebaseConfig,
-		DBConfig: DBConfig,
+		FirebaseConfig: &FirebaseConfig,
+		DBConfig: &DBConfig,
 		Port: Port,
 	}, nil
 }

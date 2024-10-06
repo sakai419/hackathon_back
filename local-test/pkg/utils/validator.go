@@ -3,7 +3,7 @@ package utils
 import (
 	"database/sql"
 	"fmt"
-	"local-test/configs"
+	"local-test/internal/config"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -164,7 +164,7 @@ func ValidateDBConfig(c *config.DBConfig) error {
     return nil
 }
 
-func ValidateDB(db *sql.DB, c config.DBConfig) error {
+func ValidateDB(db *sql.DB, c *config.DBConfig) error {
     // Validate database configuration
 	if err := checkRequiredTables(db); err != nil {
 		return fmt.Errorf("validation: %v", err)
