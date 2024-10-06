@@ -3,7 +3,7 @@ package utils
 import (
 	"database/sql"
 	"fmt"
-	"local-test/internal/config"
+	"local-test/configs"
 
 	_ "github.com/go-sql-driver/mysql"
 )

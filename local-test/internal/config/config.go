@@ -14,9 +14,22 @@ import (
 )
 
 type Config struct {
-	FirebaseAuthClient *auth.Client
+	FirebaseConfig FirebaseConfig
 	DBConfig DBConfig
 	Port int
+}
+
+type FirebaseConfig struct {
+	Type string
+	ProjectID string
+	PrivateKeyID string
+	PrivateKey string
+	ClientEmail string
+	ClientID string
+	AuthURI string
+	TokenURI string
+	AuthProviderX509CertURL string
+	ClientX509CertURL string
 }
 
 type DBConfig struct {
@@ -72,6 +85,21 @@ func initFirebaseClient(v *viper.Viper) (*auth.Client, error) {
 	return authClient, nil
 }
 
+func generateFirebaseConfig(v *viper.Viper) (FirebaseConfig, error) {
+	return FirebaseConfig{
+		Type: v.GetString("firebase.type"),
+		ProjectID: v.GetString("firebase.project_id"),
+		PrivateKeyID: v.GetString("firebase.private_key_id"),
+		PrivateKey: v.GetString("firebase.private_key"),
+		ClientEmail: v.GetString("firebase.client_email"),
+		ClientID: v.GetString("firebase.client_id"),
+		AuthURI: v.GetString("firebase.auth_uri"),
+		TokenURI: v.GetString("firebase.token_uri"),
+		AuthProviderX509CertURL: v.GetString("firebase.auth_provider_x509_cert_url"),
+		ClientX509CertURL: v.GetString("firebase.client_x509_cert_url"),
+	}, nil
+}
+
 func generateDBConfig(v *viper.Viper) (DBConfig, error) {
 	return DBConfig{
 		Driver:   v.GetString("db.driver"),
@@ -109,8 +137,8 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("config: fail to read config file: %v", err)
 	}
 
-	// Initialize Firebase Auth client
-	authClient, err := initFirebaseClient(v)
+	// Generate Firebase config
+	FirebaseConfig, err := generateFirebaseConfig(v)
 	if err != nil {
 		return nil, fmt.Errorf("config: %v", err)
 	}
@@ -121,9 +149,12 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("config: %v", err)
 	}
 
+	// Get server port
+	Port := v.GetInt("server.port")
+
 	return &Config{
-		FirebaseAuthClient: authClient,
+		FirebaseConfig: FirebaseConfig,
 		DBConfig: DBConfig,
-		Port: v.GetInt("server.port"),
+		Port: Port,
 	}, nil
 }

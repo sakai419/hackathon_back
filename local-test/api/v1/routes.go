@@ -3,11 +3,14 @@ package v1
 import (
 	"database/sql"
 	"fmt"
-	"local-test/internal/account"
-	"local-test/internal/middleware"
+	"local-test/internal/handlers"
+	"local-test/internal/middlewares"
+	"local-test/internal/repositories"
+	"local-test/internal/services"
 	"log"
 	"net/http"
 
+	"firebase.google.com/go/v4/auth"
 	"github.com/gorilla/mux"
 )
 
@@ -15,8 +18,8 @@ type Server struct {
 	router *mux.Router
 }
 
-func NewServer(db *sql.DB) *Server {
-	r := SetupRoutes(db)
+func NewServer(db *sql.DB, client *auth.Client) *Server {
+	r := SetupRoutes(db, client)
 	return &Server{router: r}
 }
 
@@ -30,11 +33,7 @@ func (s *Server) Start(port int) error {
 	return http.ListenAndServe(addr, s.router)
 }
 
-func setupAccountRoutes(r *mux.Router, db *sql.DB) {
-	// Create a new account service
-	repo := account.NewAccountRepository(db)
-	svc := account.NewAccountService(repo)
-	handler := account.NewAccountHandler(svc)
+func setupAccountRoutes(r *mux.Router, handler *handlers.Handler) {
 
 	// Create a new router for the /accounts path
 	accounts := r.PathPrefix("/accounts").Subrouter()
@@ -46,15 +45,19 @@ func setupAccountRoutes(r *mux.Router, db *sql.DB) {
 	accounts.HandleFunc("/{account_id}/unsuspend", handler.UnsuspendAccount).Methods("POST")
 }
 
-func SetupRoutes(db *sql.DB) *mux.Router {
+func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
 	// Create a new router for the /api/v1 path
 	apiV1 := r.PathPrefix("/api/v1").Subrouter()
 	apiV1.Use(middleware.LoggingMiddleware)
 
+	repo := repositories.NewRepository(db)
+	svc := services.NewService(repo)
+	handler := handlers.NewHandler(svc)
+
 	// Register the account routes
-	setupAccountRoutes(apiV1, db)
+	setupAccountRoutes(apiV1, handler)
 
 	return apiV1
 }
