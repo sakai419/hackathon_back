@@ -19,7 +19,7 @@ func generateConnStr(c config.DBConfig) string {
 	}
 }
 
-func ConnectToDB(c config.DBConfig) (db *sql.DB, err error) {
+func ConnectToDB(c config.DBConfig) (*sql.DB, error) {
 	// Validate database configuration
 	if err := utils.ValidateDBConfig(&c); err != nil {
 		return nil, fmt.Errorf("database: invalid config: %w", err)
@@ -29,9 +29,9 @@ func ConnectToDB(c config.DBConfig) (db *sql.DB, err error) {
     connStr := generateConnStr(c)
 
 	// Open database connection
-    db, err = sql.Open(c.Driver, connStr)
+    db, err := sql.Open(c.Driver, connStr)
 	if err != nil {
-		err = fmt.Errorf("database: failed to open db: %w", err)
+		return nil, fmt.Errorf("database: failed to open db: %w", err)
 	}
 
 	// Set database connection pool settings
@@ -50,5 +50,5 @@ func ConnectToDB(c config.DBConfig) (db *sql.DB, err error) {
 		return nil, fmt.Errorf("database: invalid user permissions: %w", err)
 	}
 
-	return
+	return db, nil
 }
