@@ -24,17 +24,17 @@ UPDATE accounts
 SET user_id = ?
 WHERE id = ?;
 
--- name: SuspendAccount :exec
+-- name: SuspendAccount :execresult
 UPDATE accounts
 SET is_suspended = TRUE
 WHERE id = ?;
 
--- name: UnsuspendAccount :exec
+-- name: UnsuspendAccount :execresult
 UPDATE accounts
 SET is_suspended = FALSE
 WHERE id = ?;
 
--- name: DeleteAccount :exec
+-- name: DeleteAccount :execresult
 DELETE FROM accounts
 WHERE id = ?;
 

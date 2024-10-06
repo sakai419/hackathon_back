@@ -16,6 +16,7 @@ import (
 type Config struct {
 	FirebaseAuthClient *auth.Client
 	DBConfig DBConfig
+	Port int
 }
 
 type DBConfig struct {
@@ -123,5 +124,6 @@ func LoadConfig() (*Config, error) {
 	return &Config{
 		FirebaseAuthClient: authClient,
 		DBConfig: DBConfig,
+		Port: v.GetInt("server.port"),
 	}, nil
 }

@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -59,14 +60,13 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) er
 	return err
 }
 
-const deleteAccount = `-- name: DeleteAccount :exec
+const deleteAccount = `-- name: DeleteAccount :execresult
 DELETE FROM accounts
 WHERE id = ?
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, deleteAccount, id)
-	return err
+func (q *Queries) DeleteAccount(ctx context.Context, id string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteAccount, id)
 }
 
 const getAccountById = `-- name: GetAccountById :one
@@ -224,26 +224,24 @@ func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccoun
 	return items, nil
 }
 
-const suspendAccount = `-- name: SuspendAccount :exec
+const suspendAccount = `-- name: SuspendAccount :execresult
 UPDATE accounts
 SET is_suspended = TRUE
 WHERE id = ?
 `
 
-func (q *Queries) SuspendAccount(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, suspendAccount, id)
-	return err
+func (q *Queries) SuspendAccount(ctx context.Context, id string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, suspendAccount, id)
 }
 
-const unsuspendAccount = `-- name: UnsuspendAccount :exec
+const unsuspendAccount = `-- name: UnsuspendAccount :execresult
 UPDATE accounts
 SET is_suspended = FALSE
 WHERE id = ?
 `
 
-func (q *Queries) UnsuspendAccount(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, unsuspendAccount, id)
-	return err
+func (q *Queries) UnsuspendAccount(ctx context.Context, id string) (sql.Result, error) {
+	return q.db.ExecContext(ctx, unsuspendAccount, id)
 }
 
 const updateAccountUserId = `-- name: UpdateAccountUserId :exec

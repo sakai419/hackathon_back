@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	v1 "local-test/api/v1"
 	"local-test/internal/config"
 	"local-test/pkg/database"
+	"local-test/pkg/utils"
 	"log"
 )
 
@@ -20,6 +21,14 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	fmt.Println("connected to db")
-	defer db.Close()
+	// Close DB connection on syscall
+	utils.CloseDBWithSysCall(db)
+
+	// Setup server
+	server := v1.NewServer(db)
+
+	// Start server
+	if err := server.Start(cfg.Port); err != nil {
+		log.Fatalf("Error: %v", err)
+	}
 }
