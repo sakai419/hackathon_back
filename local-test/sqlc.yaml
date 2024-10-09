@@ -5,5 +5,5 @@ sql:
       schema: "./pkg/database/schema/"
       gen:
           go:
-              package: "queries"
+              package: "sqlcgen"
               out: "./pkg/database/generated/"

@@ -2,15 +2,15 @@ package repositories
 
 import (
 	"database/sql"
-	"local-test/pkg/database/generated"
+	"local-test/internal/sqlc/generated"
 )
 
 type Repository struct {
-	q *queries.Queries
+	q *sqlcgen.Queries
 }
 
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
-		q: queries.New(db),
+		q: sqlcgen.New(db),
 	}
 }

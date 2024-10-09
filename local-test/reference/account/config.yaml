@@ -1,0 +1,5 @@
+package: account
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handlers/account/schema.gen.go

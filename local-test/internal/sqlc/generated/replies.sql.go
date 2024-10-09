@@ -3,7 +3,7 @@
 //   sqlc v1.27.0
 // source: replies.sql
 
-package queries
+package sqlcgen
 
 import (
 	"context"

@@ -3,7 +3,7 @@ package v1
 import (
 	"database/sql"
 	"fmt"
-	"local-test/internal/handlers"
+	"local-test/internal/handlers/account"
 	"local-test/internal/middlewares"
 	"local-test/internal/repositories"
 	"local-test/internal/services"
@@ -33,16 +33,21 @@ func (s *Server) Start(port int) error {
 	return http.ListenAndServe(addr, s.router)
 }
 
-func setupAccountRoutes(r *mux.Router, handler *handlers.Handler) {
+func setupAccountRoutes(r *mux.Router, svc *services.Service, client *auth.Client) {
+	// Register the account handlers
+	h := account.NewAccountHandler(svc)
 
-	// Create a new router for the /accounts path
-	accounts := r.PathPrefix("/accounts").Subrouter()
+	// Create options for the account handlers
+	opts := account.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []account.MiddlewareFunc{
+			middleware.AuthMiddleware(client),
+		},
+	}
 
-	// Register the handler functions for the different HTTP methods
-	accounts.HandleFunc("", handler.CreateAccount).Methods("POST")
-	accounts.HandleFunc("/{account_id}", handler.DeleteAccount).Methods("DELETE")
-	accounts.HandleFunc("/{account_id}/suspend", handler.SuspendAccount).Methods("POST")
-	accounts.HandleFunc("/{account_id}/unsuspend", handler.UnsuspendAccount).Methods("POST")
+	// Register the account handlers
+	account.HandlerWithOptions(h, opts)
 }
 
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
@@ -54,10 +59,9 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 
 	repo := repositories.NewRepository(db)
 	svc := services.NewService(repo)
-	handler := handlers.NewHandler(svc)
 
 	// Register the account routes
-	setupAccountRoutes(apiV1, handler)
+	setupAccountRoutes(apiV1, svc, client)
 
 	return apiV1
 }

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
+	contextKey "local-test/internal/context"
 	"net/http"
 	"strings"
 
@@ -27,9 +28,7 @@ func AuthMiddleware(client *auth.Client) func(http.Handler) http.Handler {
             }
 
             // Add the user ID to the request context
-            type contextKey string
-            const userIDKey contextKey = "user_id"
-            ctx := context.WithValue(r.Context(), userIDKey, uid)
+            ctx := context.WithValue(r.Context(), contextKey.UserIDKey, uid)
             next.ServeHTTP(w, r.WithContext(ctx))
         })
     }
