@@ -10,56 +10,44 @@ import (
 	"database/sql"
 )
 
-const checkProfileExists = `-- name: CheckProfileExists :one
+const checkProfilesExists = `-- name: CheckProfilesExists :one
 SELECT EXISTS(SELECT 1 FROM profiles WHERE account_id = ?)
 `
 
-func (q *Queries) CheckProfileExists(ctx context.Context, accountID string) (bool, error) {
-	row := q.db.QueryRowContext(ctx, checkProfileExists, accountID)
+func (q *Queries) CheckProfilesExists(ctx context.Context, accountID string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkProfilesExists, accountID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
-const createProfile = `-- name: CreateProfile :exec
-INSERT INTO profiles (account_id, bio, profile_image_url, banner_image_url)
-VALUES (?, ?, ?, ?)
+const createProfilesWithDefaultValues = `-- name: CreateProfilesWithDefaultValues :exec
+INSERT INTO profiles (account_id)
+VALUES (?)
 `
 
-type CreateProfileParams struct {
-	AccountID       string
-	Bio             sql.NullString
-	ProfileImageUrl sql.NullString
-	BannerImageUrl  sql.NullString
-}
-
-func (q *Queries) CreateProfile(ctx context.Context, arg CreateProfileParams) error {
-	_, err := q.db.ExecContext(ctx, createProfile,
-		arg.AccountID,
-		arg.Bio,
-		arg.ProfileImageUrl,
-		arg.BannerImageUrl,
-	)
+func (q *Queries) CreateProfilesWithDefaultValues(ctx context.Context, accountID string) error {
+	_, err := q.db.ExecContext(ctx, createProfilesWithDefaultValues, accountID)
 	return err
 }
 
-const deleteProfile = `-- name: DeleteProfile :exec
+const deleteProfiles = `-- name: DeleteProfiles :exec
 DELETE FROM profiles
 WHERE account_id = ?
 `
 
-func (q *Queries) DeleteProfile(ctx context.Context, accountID string) error {
-	_, err := q.db.ExecContext(ctx, deleteProfile, accountID)
+func (q *Queries) DeleteProfiles(ctx context.Context, accountID string) error {
+	_, err := q.db.ExecContext(ctx, deleteProfiles, accountID)
 	return err
 }
 
-const getProfileByAccountId = `-- name: GetProfileByAccountId :one
+const getProfilesByAccountId = `-- name: GetProfilesByAccountId :one
 SELECT account_id, bio, profile_image_url, banner_image_url, created_at, updated_at FROM profiles
 WHERE account_id = ?
 `
 
-func (q *Queries) GetProfileByAccountId(ctx context.Context, accountID string) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, getProfileByAccountId, accountID)
+func (q *Queries) GetProfilesByAccountId(ctx context.Context, accountID string) (Profile, error) {
+	row := q.db.QueryRowContext(ctx, getProfilesByAccountId, accountID)
 	var i Profile
 	err := row.Scan(
 		&i.AccountID,
@@ -88,34 +76,34 @@ func (q *Queries) UpdateBannerImageUrl(ctx context.Context, arg UpdateBannerImag
 	return err
 }
 
-const updateProfileBio = `-- name: UpdateProfileBio :exec
+const updateProfilesBio = `-- name: UpdateProfilesBio :exec
 UPDATE profiles
 SET bio = ?
 WHERE account_id = ?
 `
 
-type UpdateProfileBioParams struct {
+type UpdateProfilesBioParams struct {
 	Bio       sql.NullString
 	AccountID string
 }
 
-func (q *Queries) UpdateProfileBio(ctx context.Context, arg UpdateProfileBioParams) error {
-	_, err := q.db.ExecContext(ctx, updateProfileBio, arg.Bio, arg.AccountID)
+func (q *Queries) UpdateProfilesBio(ctx context.Context, arg UpdateProfilesBioParams) error {
+	_, err := q.db.ExecContext(ctx, updateProfilesBio, arg.Bio, arg.AccountID)
 	return err
 }
 
-const updateProfileImageUrl = `-- name: UpdateProfileImageUrl :exec
+const updateProfilesImageUrl = `-- name: UpdateProfilesImageUrl :exec
 UPDATE profiles
 SET profile_image_url = ?
 WHERE account_id = ?
 `
 
-type UpdateProfileImageUrlParams struct {
+type UpdateProfilesImageUrlParams struct {
 	ProfileImageUrl sql.NullString
 	AccountID       string
 }
 
-func (q *Queries) UpdateProfileImageUrl(ctx context.Context, arg UpdateProfileImageUrlParams) error {
-	_, err := q.db.ExecContext(ctx, updateProfileImageUrl, arg.ProfileImageUrl, arg.AccountID)
+func (q *Queries) UpdateProfilesImageUrl(ctx context.Context, arg UpdateProfilesImageUrlParams) error {
+	_, err := q.db.ExecContext(ctx, updateProfilesImageUrl, arg.ProfileImageUrl, arg.AccountID)
 	return err
 }

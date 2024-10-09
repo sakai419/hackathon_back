@@ -20,18 +20,13 @@ func (q *Queries) CheckSettingsExist(ctx context.Context, accountID string) (boo
 	return exists, err
 }
 
-const createSettings = `-- name: CreateSettings :exec
-INSERT INTO settings (account_id, is_private)
-VALUES (?, ?)
+const createSettingsWithDefaultValues = `-- name: CreateSettingsWithDefaultValues :exec
+INSERT INTO settings (account_id)
+VALUES (?)
 `
 
-type CreateSettingsParams struct {
-	AccountID string
-	IsPrivate bool
-}
-
-func (q *Queries) CreateSettings(ctx context.Context, arg CreateSettingsParams) error {
-	_, err := q.db.ExecContext(ctx, createSettings, arg.AccountID, arg.IsPrivate)
+func (q *Queries) CreateSettingsWithDefaultValues(ctx context.Context, accountID string) error {
+	_, err := q.db.ExecContext(ctx, createSettingsWithDefaultValues, accountID)
 	return err
 }
 

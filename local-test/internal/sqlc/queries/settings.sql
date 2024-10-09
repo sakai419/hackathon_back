@@ -1,6 +1,6 @@
--- name: CreateSettings :exec
-INSERT INTO settings (account_id, is_private)
-VALUES (?, ?);
+-- name: CreateSettingsWithDefaultValues :exec
+INSERT INTO settings (account_id)
+VALUES (?);
 
 -- name: GetSettingsByAccountId :one
 SELECT * FROM settings

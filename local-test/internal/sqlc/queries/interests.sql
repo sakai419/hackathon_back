@@ -1,12 +1,12 @@
--- name: GetInterestByAccountId :one
+-- name: GetInterestsByAccountId :one
 SELECT * FROM interests
 WHERE account_id = ?;
 
--- name: CreateInterestsWithDefaultScores :exec
+-- name: CreateInterestsWithDefaultValues :exec
 INSERT INTO interests (account_id)
 VALUES (?);
 
--- name: UpdateInterestScore :exec
+-- name: UpdateInterestsScore :exec
 UPDATE interests
 SET
     news_score = COALESCE(?, news_score),
