@@ -1,9 +1,9 @@
 version: "2"
 sql:
     - engine: "mysql"
-      queries: "./pkg/database/queries/"
-      schema: "./pkg/database/schema/"
+      queries: "./internal/sqlc/queries/"
+      schema: "./internal/sqlc/schema/"
       gen:
           go:
               package: "sqlcgen"
-              out: "./pkg/database/generated/"
+              out: "./internal/sqlc/generated/"

@@ -328,13 +328,12 @@ CREATE TABLE profiles (
 );
 
 CREATE TABLE replies (
-    reply_id BIGINT UNSIGNED NOT NULL,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     original_tweet_id BIGINT UNSIGNED NOT NULL,
     parent_reply_id BIGINT UNSIGNED,
     replying_account_id CHAR(28) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (reply_id),
-    CONSTRAINT fk_replies_reply_id FOREIGN KEY (reply_id)
+    CONSTRAINT fk_replies_reply_id FOREIGN KEY (id)
         REFERENCES tweets(id) ON DELETE CASCADE,
     CONSTRAINT fk_replies_original_tweet_id FOREIGN KEY (original_tweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
@@ -348,19 +347,33 @@ CREATE TABLE replies (
     INDEX idx_replies_created_at (created_at)
 );
 
+CREATE TABLE reports (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reporter_account_id CHAR(28) NOT NULL,
+    reported_account_id CHAR(28) NOT NULL,
+    reason ENUM('spam', 'harassment', 'inappropriate_content', 'other') NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reports_reporter_account_id FOREIGN KEY (reporter_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_reports_reported_account_id FOREIGN KEY (reported_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    INDEX idx_reports_created_at (created_at),
+    INDEX idx_reports_reported_account_id (reported_account_id)
+);
+
+
 CREATE TABLE retweets_and_quotes (
-    retweet_id BIGINT UNSIGNED NOT NULL,
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     retweeting_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT UNSIGNED NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (retweet_id),
-    CONSTRAINT fk_retweets_and_quotes_retweet_id FOREIGN KEY (retweet_id)
+    CONSTRAINT fk_retweets_and_quotes_retweet_id FOREIGN KEY (d)
         REFERENCES tweets(id) ON DELETE CASCADE,
     CONSTRAINT fk_retweets_and_quotes_retweeting_account_id FOREIGN KEY (retweeting_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
     CONSTRAINT fk_retweets_and_quotes_original_tweet_id FOREIGN KEY (original_tweet_id)
-        REFERENCES tweets(id) ON DELETE CASCADE,
-    INDEX idx_retweets_retweet_id (retweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE
 );
 
 CREATE TABLE settings (

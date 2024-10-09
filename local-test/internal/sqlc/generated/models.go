@@ -6,9 +6,55 @@ package sqlcgen
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"time"
 )
+
+type ReportsReason string
+
+const (
+	ReportsReasonSpam                 ReportsReason = "spam"
+	ReportsReasonHarassment           ReportsReason = "harassment"
+	ReportsReasonInappropriateContent ReportsReason = "inappropriate_content"
+	ReportsReasonOther                ReportsReason = "other"
+)
+
+func (e *ReportsReason) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReportsReason(s)
+	case string:
+		*e = ReportsReason(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReportsReason: %T", src)
+	}
+	return nil
+}
+
+type NullReportsReason struct {
+	ReportsReason ReportsReason
+	Valid         bool // Valid is true if ReportsReason is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReportsReason) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReportsReason, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReportsReason.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReportsReason) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReportsReason), nil
+}
 
 type Account struct {
 	ID          string
@@ -195,15 +241,24 @@ type Profile struct {
 }
 
 type Reply struct {
-	ReplyID           uint64
+	ID                uint64
 	OriginalTweetID   uint64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 	CreatedAt         time.Time
 }
 
+type Report struct {
+	ID                uint64
+	ReporterAccountID string
+	ReportedAccountID string
+	Reason            ReportsReason
+	Content           sql.NullString
+	CreatedAt         time.Time
+}
+
 type RetweetsAndQuote struct {
-	RetweetID           uint64
+	ID                  uint64
 	RetweetingAccountID string
 	OriginalTweetID     uint64
 	CreatedAt           time.Time

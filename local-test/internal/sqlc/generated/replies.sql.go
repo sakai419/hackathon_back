@@ -13,45 +13,39 @@ import (
 )
 
 const createReply = `-- name: CreateReply :exec
-INSERT INTO replies (reply_id, original_tweet_id, parent_reply_id, replying_account_id)
-VALUES (?, ?, ?, ?)
+INSERT INTO replies (original_tweet_id, parent_reply_id, replying_account_id)
+VALUES (?, ?, ?)
 `
 
 type CreateReplyParams struct {
-	ReplyID           uint64
 	OriginalTweetID   uint64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 }
 
 func (q *Queries) CreateReply(ctx context.Context, arg CreateReplyParams) error {
-	_, err := q.db.ExecContext(ctx, createReply,
-		arg.ReplyID,
-		arg.OriginalTweetID,
-		arg.ParentReplyID,
-		arg.ReplyingAccountID,
-	)
+	_, err := q.db.ExecContext(ctx, createReply, arg.OriginalTweetID, arg.ParentReplyID, arg.ReplyingAccountID)
 	return err
 }
 
 const deleteReply = `-- name: DeleteReply :exec
-DELETE FROM replies WHERE reply_id = ?
+DELETE FROM replies WHERE id = ?
 `
 
-func (q *Queries) DeleteReply(ctx context.Context, replyID uint64) error {
-	_, err := q.db.ExecContext(ctx, deleteReply, replyID)
+func (q *Queries) DeleteReply(ctx context.Context, id uint64) error {
+	_, err := q.db.ExecContext(ctx, deleteReply, id)
 	return err
 }
 
 const getReplyById = `-- name: GetReplyById :one
-SELECT reply_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies WHERE reply_id = ?
+SELECT id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies WHERE id = ?
 `
 
-func (q *Queries) GetReplyById(ctx context.Context, replyID uint64) (Reply, error) {
-	row := q.db.QueryRowContext(ctx, getReplyById, replyID)
+func (q *Queries) GetReplyById(ctx context.Context, id uint64) (Reply, error) {
+	row := q.db.QueryRowContext(ctx, getReplyById, id)
 	var i Reply
 	err := row.Scan(
-		&i.ReplyID,
+		&i.ID,
 		&i.OriginalTweetID,
 		&i.ParentReplyID,
 		&i.ReplyingAccountID,
@@ -100,24 +94,24 @@ func (q *Queries) GetReplyCount(ctx context.Context, originalTweetID uint64) (in
 
 const getReplyThread = `-- name: GetReplyThread :many
 WITH RECURSIVE reply_thread AS (
-    SELECT reply_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.reply_id = ?
+    SELECT id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.id = ?
     UNION ALL
-    SELECT r.reply_id, r.original_tweet_id, r.parent_reply_id, r.replying_account_id, r.created_at FROM replies r
-    JOIN reply_thread rt ON r.parent_reply_id = rt.reply_id
+    SELECT r.id, r.original_tweet_id, r.parent_reply_id, r.replying_account_id, r.created_at FROM replies r
+    JOIN reply_thread rt ON r.parent_reply_id = rt.id
 )
-SELECT rt.reply_id, rt.original_tweet_id, rt.parent_reply_id, rt.replying_account_id, rt.created_at, t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
+SELECT rt.id, rt.original_tweet_id, rt.parent_reply_id, rt.replying_account_id, rt.created_at, t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
 FROM reply_thread rt
 JOIN tweets t ON rt.reply_id = t.id
 ORDER BY rt.created_at ASC
 `
 
 type GetReplyThreadRow struct {
-	ReplyID           uint64
+	ID                uint64
 	OriginalTweetID   uint64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 	CreatedAt         time.Time
-	ID                uint64
+	ID_2              uint64
 	AccountID         string
 	IsPinned          bool
 	Content           sql.NullString
@@ -134,8 +128,8 @@ type GetReplyThreadRow struct {
 	UpdatedAt         time.Time
 }
 
-func (q *Queries) GetReplyThread(ctx context.Context, replyID uint64) ([]GetReplyThreadRow, error) {
-	rows, err := q.db.QueryContext(ctx, getReplyThread, replyID)
+func (q *Queries) GetReplyThread(ctx context.Context, id uint64) ([]GetReplyThreadRow, error) {
+	rows, err := q.db.QueryContext(ctx, getReplyThread, id)
 	if err != nil {
 		return nil, err
 	}
@@ -144,12 +138,12 @@ func (q *Queries) GetReplyThread(ctx context.Context, replyID uint64) ([]GetRepl
 	for rows.Next() {
 		var i GetReplyThreadRow
 		if err := rows.Scan(
-			&i.ReplyID,
+			&i.ID,
 			&i.OriginalTweetID,
 			&i.ParentReplyID,
 			&i.ReplyingAccountID,
 			&i.CreatedAt,
-			&i.ID,
+			&i.ID_2,
 			&i.AccountID,
 			&i.IsPinned,
 			&i.Content,

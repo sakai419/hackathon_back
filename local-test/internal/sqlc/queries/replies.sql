@@ -1,12 +1,12 @@
 -- name: CreateReply :exec
-INSERT INTO replies (reply_id, original_tweet_id, parent_reply_id, replying_account_id)
-VALUES (?, ?, ?, ?);
+INSERT INTO replies (original_tweet_id, parent_reply_id, replying_account_id)
+VALUES (?, ?, ?);
 
 -- name: GetReplyById :one
-SELECT * FROM replies WHERE reply_id = ?;
+SELECT * FROM replies WHERE id = ?;
 
 -- name: DeleteReply :exec
-DELETE FROM replies WHERE reply_id = ?;
+DELETE FROM replies WHERE id = ?;
 
 -- -- name: GetRepliesByOriginalTweetId :many
 -- SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
@@ -40,10 +40,10 @@ SELECT COUNT(*) FROM replies WHERE original_tweet_id = ?;
 
 -- name: GetReplyThread :many
 WITH RECURSIVE reply_thread AS (
-    SELECT * FROM replies r0 WHERE r0.reply_id = ?
+    SELECT * FROM replies r0 WHERE r0.id = ?
     UNION ALL
     SELECT r.* FROM replies r
-    JOIN reply_thread rt ON r.parent_reply_id = rt.reply_id
+    JOIN reply_thread rt ON r.parent_reply_id = rt.id
 )
 SELECT rt.*, t.*
 FROM reply_thread rt

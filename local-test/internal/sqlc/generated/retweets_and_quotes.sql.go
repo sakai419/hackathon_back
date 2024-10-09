@@ -12,28 +12,27 @@ import (
 )
 
 const createRetweetOrQuote = `-- name: CreateRetweetOrQuote :exec
-INSERT INTO retweets_and_quotes (retweet_id, retweeting_account_id, original_tweet_id)
-VALUES (?, ?, ?)
+INSERT INTO retweets_and_quotes (retweeting_account_id, original_tweet_id)
+VALUES (?, ?)
 `
 
 type CreateRetweetOrQuoteParams struct {
-	RetweetID           uint64
 	RetweetingAccountID string
 	OriginalTweetID     uint64
 }
 
 func (q *Queries) CreateRetweetOrQuote(ctx context.Context, arg CreateRetweetOrQuoteParams) error {
-	_, err := q.db.ExecContext(ctx, createRetweetOrQuote, arg.RetweetID, arg.RetweetingAccountID, arg.OriginalTweetID)
+	_, err := q.db.ExecContext(ctx, createRetweetOrQuote, arg.RetweetingAccountID, arg.OriginalTweetID)
 	return err
 }
 
 const deleteRetweetOrQuote = `-- name: DeleteRetweetOrQuote :exec
 DELETE FROM retweets_and_quotes
-WHERE retweet_id = ?
+WHERE id = ?
 `
 
-func (q *Queries) DeleteRetweetOrQuote(ctx context.Context, retweetID uint64) error {
-	_, err := q.db.ExecContext(ctx, deleteRetweetOrQuote, retweetID)
+func (q *Queries) DeleteRetweetOrQuote(ctx context.Context, id uint64) error {
+	_, err := q.db.ExecContext(ctx, deleteRetweetOrQuote, id)
 	return err
 }
 
@@ -50,15 +49,15 @@ func (q *Queries) GetRetweetAndQuoteCount(ctx context.Context, originalTweetID u
 }
 
 const getRetweetOrQuoteById = `-- name: GetRetweetOrQuoteById :one
-SELECT retweet_id, retweeting_account_id, original_tweet_id, created_at FROM retweets_and_quotes
-WHERE retweet_id = ?
+SELECT id, retweeting_account_id, original_tweet_id, created_at FROM retweets_and_quotes
+WHERE id = ?
 `
 
-func (q *Queries) GetRetweetOrQuoteById(ctx context.Context, retweetID uint64) (RetweetsAndQuote, error) {
-	row := q.db.QueryRowContext(ctx, getRetweetOrQuoteById, retweetID)
+func (q *Queries) GetRetweetOrQuoteById(ctx context.Context, id uint64) (RetweetsAndQuote, error) {
+	row := q.db.QueryRowContext(ctx, getRetweetOrQuoteById, id)
 	var i RetweetsAndQuote
 	err := row.Scan(
-		&i.RetweetID,
+		&i.ID,
 		&i.RetweetingAccountID,
 		&i.OriginalTweetID,
 		&i.CreatedAt,
@@ -67,7 +66,7 @@ func (q *Queries) GetRetweetOrQuoteById(ctx context.Context, retweetID uint64) (
 }
 
 const getRetweetsAndQuotesByAccountId = `-- name: GetRetweetsAndQuotesByAccountId :many
-SELECT r.retweet_id, r.retweeting_account_id, r.original_tweet_id, r.created_at, t.content AS original_tweet_content
+SELECT r.id, r.retweeting_account_id, r.original_tweet_id, r.created_at, t.content AS original_tweet_content
 FROM retweets_and_quotes r
 JOIN tweets t ON r.original_tweet_id = t.id
 WHERE r.retweeting_account_id = ?
@@ -82,7 +81,7 @@ type GetRetweetsAndQuotesByAccountIdParams struct {
 }
 
 type GetRetweetsAndQuotesByAccountIdRow struct {
-	RetweetID            uint64
+	ID                   uint64
 	RetweetingAccountID  string
 	OriginalTweetID      uint64
 	CreatedAt            time.Time
@@ -99,7 +98,7 @@ func (q *Queries) GetRetweetsAndQuotesByAccountId(ctx context.Context, arg GetRe
 	for rows.Next() {
 		var i GetRetweetsAndQuotesByAccountIdRow
 		if err := rows.Scan(
-			&i.RetweetID,
+			&i.ID,
 			&i.RetweetingAccountID,
 			&i.OriginalTweetID,
 			&i.CreatedAt,
@@ -119,9 +118,9 @@ func (q *Queries) GetRetweetsAndQuotesByAccountId(ctx context.Context, arg GetRe
 }
 
 const getRetweetsAndQuotesByOriginalTweetId = `-- name: GetRetweetsAndQuotesByOriginalTweetId :many
-SELECT r.retweet_id, r.retweeting_account_id, r.original_tweet_id, r.created_at, t.content AS retweet_content
+SELECT r.id, r.retweeting_account_id, r.original_tweet_id, r.created_at, t.content AS retweet_content
 FROM retweets_and_quotes r
-JOIN tweets t ON r.retweet_id = t.id
+JOIN tweets t ON r.id = t.id
 WHERE r.original_tweet_id = ?
 ORDER BY r.created_at DESC
 LIMIT ? OFFSET ?
@@ -134,7 +133,7 @@ type GetRetweetsAndQuotesByOriginalTweetIdParams struct {
 }
 
 type GetRetweetsAndQuotesByOriginalTweetIdRow struct {
-	RetweetID           uint64
+	ID                  uint64
 	RetweetingAccountID string
 	OriginalTweetID     uint64
 	CreatedAt           time.Time
@@ -151,7 +150,7 @@ func (q *Queries) GetRetweetsAndQuotesByOriginalTweetId(ctx context.Context, arg
 	for rows.Next() {
 		var i GetRetweetsAndQuotesByOriginalTweetIdRow
 		if err := rows.Scan(
-			&i.RetweetID,
+			&i.ID,
 			&i.RetweetingAccountID,
 			&i.OriginalTweetID,
 			&i.CreatedAt,
