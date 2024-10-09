@@ -3,20 +3,29 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 	"local-test/internal/models"
-	"local-test/internal/repositories"
 	"local-test/pkg/utils"
 	"net/http"
 )
 
 func (s *Service) CreateAccount(ctx context.Context, arg *models.CreateAccountParams) error {
     if err := s.repo.CreateAccount(ctx, arg); err != nil {
+		// Check if the error is a duplicate entry error
+		var duplicateErr *utils.ErrDuplicateEntry
+		if errors.As(err, &duplicateErr) {
+			return &utils.AppError{
+				Status:  http.StatusConflict,
+				Code:    "DUPLICATE_ENTRY",
+				Message: "Account already exists",
+				Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "create account", Err: duplicateErr}),
+			}
+		}
+
         return &utils.AppError{
             Status:  http.StatusInternalServerError,
             Code:    "DATABASE_ERROR",
             Message: "Failed to create account",
-            Err:     fmt.Errorf("service: failed to create account: %w", err),
+            Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "create account", Err: err}),
         }
     }
 
@@ -25,19 +34,22 @@ func (s *Service) CreateAccount(ctx context.Context, arg *models.CreateAccountPa
 
 func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
 	if err := s.repo.DeleteMyAccount(ctx, id); err != nil {
-		if errors.Is(err, repositories.ErrAccountNotFound) {
+		// Check if the error is a record not found error
+		var notFoundErr *utils.ErrRecordNotFound
+		if errors.As(err, &notFoundErr) {
 			return &utils.AppError{
 				Status:  http.StatusNotFound,
 				Code:    "ACCOUNT_NOT_FOUND",
 				Message: "Account not found",
-				Err:     fmt.Errorf("service: failed to delete account: %w", err),
+				Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "delete account", Err: notFoundErr}),
 			}
 		}
+
 		return &utils.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "DATABASE_ERROR",
 			Message: "Failed to delete account",
-			Err:     fmt.Errorf("service: failed to delete account: %w", err),
+			Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "delete account", Err: err}),
 		}
 	}
 

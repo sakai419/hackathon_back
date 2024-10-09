@@ -7,13 +7,6 @@ import (
 	"net/http"
 )
 
-type AppError struct {
-    Status  int
-    Code    string
-    Message string
-    Err     error
-}
-
 type errorResponse struct {
     Code    string `json:"code"`
     Message string `json:"message"`
