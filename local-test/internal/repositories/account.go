@@ -89,19 +89,23 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 		return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "delete account", Err: err})
 	}
 
+    // Check if account is deleted
+    num, err := res.RowsAffected()
+    if err != nil {
+        tx.Rollback()
+        return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "get rows affected", Err: err})
+    }
+    if num == 0 {
+        tx.Rollback()
+        return utils.WrapRepositoryError(&utils.ErrRecordNotFound{Condition: "account id"})
+    }
+
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
 		return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "commit transaction", Err: err})
 	}
 
-	num, err := res.RowsAffected()
-	if err != nil {
-		return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "get rows affected", Err: err})
-	}
-	if num == 0 {
-		return utils.WrapRepositoryError(&utils.ErrRecordNotFound{Condition: "account id"})
-	}
 	return nil
 }
 

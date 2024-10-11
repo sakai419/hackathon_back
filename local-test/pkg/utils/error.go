@@ -1,6 +1,9 @@
 package utils
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // ErrOperationFailed is a custom error type that holds the operation name
 type ErrOperationFailed struct {
@@ -46,6 +49,14 @@ func (e *ErrDuplicateEntry) Error() string {
 
 func (e *ErrDuplicateEntry) Unwrap() error {
 	return e.Err
+}
+
+func (e *ErrDuplicateEntry) Is(target error) bool {
+    t, ok := target.(*ErrDuplicateEntry)
+    if !ok {
+        return false
+    }
+    return e.Entity == t.Entity && errors.Is(e.Err, t.Err)
 }
 
 type AppError struct {
