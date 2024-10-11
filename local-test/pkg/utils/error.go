@@ -25,18 +25,13 @@ func (e *ErrRecordNotFound) Error() string {
     return fmt.Sprintf("record not found: there is no record matching your request(%s)", e.Condition)
 }
 
-// ErrInvalidRequest is a custom error type that indicates an invalid request
-type ErrInvalidRequest struct {
+// ErrInvalidInput is a custom error type that indicates an invalid input
+type ErrInvalidInput struct {
 	Message string
-	Err     error
 }
 
-func (e *ErrInvalidRequest) Error() string {
-	return fmt.Sprintf("invalid request: %s: %v", e.Message, e.Err)
-}
-
-func (e *ErrInvalidRequest) Unwrap() error {
-	return e.Err
+func (e *ErrInvalidInput) Error() string {
+	return fmt.Sprintf("invalid request: %s", e.Message)
 }
 
 // ErrDuplicateEntry is a custom error type that indicates a duplicate entry
@@ -64,7 +59,7 @@ func WrapRepositoryError(err error) error {
 	return fmt.Errorf("repository: %w", err)
 }
 
-func WrapSerivceError(err error) error {
+func WrapServiceError(err error) error {
 	return fmt.Errorf("service: %w", err)
 }
 

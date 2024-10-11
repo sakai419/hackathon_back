@@ -1,0 +1,44 @@
+openapi: 3.0.0
+info:
+    title: Report Management API
+    version: 1.0.0
+    description: API for managing reports
+
+paths:
+    /reports/{user_id}:
+        post:
+            summary: Create a new report
+            operationId: CreateReportByUserId
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/CreateReportByUserIdRequest"
+            responses:
+                "200":
+                    description: Report created successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        CreateReportByUserIdRequest:
+            type: object
+            required:
+                - reason
+                - content
+            properties:
+                reason:
+                    type: string
+                content:
+                    type: string
+                    nullable: true

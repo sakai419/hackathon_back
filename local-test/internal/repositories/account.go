@@ -2,6 +2,8 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"local-test/internal/models"
 	sqlcgen "local-test/internal/sqlc/generated"
 	"local-test/pkg/utils"
@@ -20,12 +22,12 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *models.CreateAccoun
     q := r.q.WithTx(tx)
 
     // Create account
-    accountParams := sqlcgen.CreateAccountParams{
+    params := sqlcgen.CreateAccountParams{
         ID:       arg.ID,
         UserID:   arg.UserID,
         UserName: arg.UserName,
     }
-    if err := q.CreateAccount(ctx, accountParams); err != nil {
+    if err := q.CreateAccount(ctx, params); err != nil {
         tx.Rollback()
 		if err.(*mysql.MySQLError).Number == 1062 {
 			return utils.WrapRepositoryError(&utils.ErrDuplicateEntry{Entity: "account id", Err: err})
@@ -45,12 +47,18 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *models.CreateAccoun
     // Create empty setting
     if err := q.CreateSettingsWithDefaultValues(ctx, arg.ID); err != nil {
         tx.Rollback()
+		if err.(*mysql.MySQLError).Number == 1062 {
+			return utils.WrapRepositoryError(&utils.ErrDuplicateEntry{Entity: "account id", Err: err})
+		}
         return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "create setting", Err: err})
     }
 
 	// Create empty interest
 	if err := q.CreateInterestsWithDefaultValues(ctx, arg.ID); err != nil {
 		tx.Rollback()
+		if err.(*mysql.MySQLError).Number == 1062 {
+			return utils.WrapRepositoryError(&utils.ErrDuplicateEntry{Entity: "account id", Err: err})
+		}
 		return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "create interest", Err: err})
 	}
 
@@ -95,4 +103,16 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 		return utils.WrapRepositoryError(&utils.ErrRecordNotFound{Condition: "account id"})
 	}
 	return nil
+}
+
+func (r *Repository) GetAccountIDByUserId(ctx context.Context, userId string) (string, error) {
+	AccountID, err := r.q.GetAccountIDByUserId(ctx, userId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", utils.WrapRepositoryError(&utils.ErrRecordNotFound{Condition: "user id"})
+		}
+		return "", utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "get account id by user id", Err: err})
+	}
+
+	return AccountID, nil
 }

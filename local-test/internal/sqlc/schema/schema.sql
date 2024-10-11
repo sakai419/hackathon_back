@@ -1,7 +1,7 @@
 CREATE TABLE accounts (
     id CHAR(28) PRIMARY KEY,
-    user_id VARCHAR(28) UNIQUE NOT NULL,
-    user_name VARCHAR(50) NOT NULL,
+    user_id VARCHAR(30) UNIQUE NOT NULL,
+    user_name VARCHAR(30) NOT NULL,
     is_suspended BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -368,7 +368,7 @@ CREATE TABLE retweets_and_quotes (
     retweeting_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT UNSIGNED NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_retweets_and_quotes_retweet_id FOREIGN KEY (d)
+    CONSTRAINT fk_retweets_and_quotes_retweet_id FOREIGN KEY (id)
         REFERENCES tweets(id) ON DELETE CASCADE,
     CONSTRAINT fk_retweets_and_quotes_retweeting_account_id FOREIGN KEY (retweeting_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,

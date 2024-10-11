@@ -69,25 +69,6 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) (sql.Result, err
 	return q.db.ExecContext(ctx, deleteAccount, id)
 }
 
-const getAccountById = `-- name: GetAccountById :one
-SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
-WHERE id = ?
-`
-
-func (q *Queries) GetAccountById(ctx context.Context, id string) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAccountById, id)
-	var i Account
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.UserName,
-		&i.IsSuspended,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const getAccountByUserId = `-- name: GetAccountByUserId :one
 SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
 WHERE user_id = ?
@@ -136,6 +117,18 @@ func (q *Queries) GetAccountCreationDate(ctx context.Context, id string) (time.T
 	var created_at time.Time
 	err := row.Scan(&created_at)
 	return created_at, err
+}
+
+const getAccountIDByUserId = `-- name: GetAccountIDByUserId :one
+SELECT id FROM accounts
+WHERE user_id = ?
+`
+
+func (q *Queries) GetAccountIDByUserId(ctx context.Context, userID string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getAccountIDByUserId, userID)
+	var id string
+	err := row.Scan(&id)
+	return id, err
 }
 
 const searchAccountsByUserId = `-- name: SearchAccountsByUserId :many

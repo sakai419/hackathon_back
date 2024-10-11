@@ -9,6 +9,17 @@ import (
 )
 
 func (s *Service) CreateAccount(ctx context.Context, arg *models.CreateAccountParams) error {
+	// Validate params
+	if err := validateCreateAccountParams(arg); err != nil {
+		return &utils.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Invalid request",
+			Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "validate request", Err: err}),
+		}
+	}
+
+	// Create account
     if err := s.repo.CreateAccount(ctx, arg); err != nil {
 		// Check if the error is a duplicate entry error
 		var duplicateErr *utils.ErrDuplicateEntry
@@ -17,7 +28,7 @@ func (s *Service) CreateAccount(ctx context.Context, arg *models.CreateAccountPa
 				Status:  http.StatusConflict,
 				Code:    "DUPLICATE_ENTRY",
 				Message: "Account already exists",
-				Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "create account", Err: duplicateErr}),
+				Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "create account", Err: duplicateErr}),
 			}
 		}
 
@@ -25,7 +36,7 @@ func (s *Service) CreateAccount(ctx context.Context, arg *models.CreateAccountPa
             Status:  http.StatusInternalServerError,
             Code:    "DATABASE_ERROR",
             Message: "Failed to create account",
-            Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "create account", Err: err}),
+            Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "create account", Err: err}),
         }
     }
 
@@ -41,7 +52,7 @@ func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
 				Status:  http.StatusNotFound,
 				Code:    "ACCOUNT_NOT_FOUND",
 				Message: "Account not found",
-				Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "delete account", Err: notFoundErr}),
+				Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "delete account", Err: notFoundErr}),
 			}
 		}
 
@@ -49,9 +60,23 @@ func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
 			Status:  http.StatusInternalServerError,
 			Code:    "DATABASE_ERROR",
 			Message: "Failed to delete account",
-			Err:     utils.WrapSerivceError(&utils.ErrOperationFailed{Operation: "delete account", Err: err}),
+			Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "delete account", Err: err}),
 		}
 	}
 
+	return nil
+}
+
+// Validate params
+func validateCreateAccountParams(arg *models.CreateAccountParams) error {
+	if len(arg.ID) != 28 {
+		return &utils.ErrInvalidInput{Message: "invalid firebase uid"}
+	}
+	if len(arg.UserID) > 30 {
+		return &utils.ErrInvalidInput{Message: "user id is too long"}
+	}
+	if len(arg.UserName) > 30 {
+		return &utils.ErrInvalidInput{Message: "user name is too long"}
+	}
 	return nil
 }

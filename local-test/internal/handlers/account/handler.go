@@ -1,6 +1,7 @@
 package account
 
 import (
+	"errors"
 	contextKey "local-test/internal/context"
 	"local-test/internal/models"
 	"local-test/internal/services"
@@ -34,7 +35,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
     }
 
 	// Decode request
-	var req models.CreateAccountRequest
+	var req CreateAccountJSONRequestBody
 	if err := utils.Decode(r, &req); err != nil {
 		utils.RespondError(w, &utils.AppError{
 			Status:  http.StatusBadRequest,
@@ -51,7 +52,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
 			Message: "Invalid request",
-			Err:     utils.WrapHandlerError(&utils.ErrInvalidRequest{Message: err.Error(), Err: err}),
+			Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "validate request", Err: err}),
 		})
 		return
 	}
@@ -64,7 +65,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := models.CreateAccountResponse{ID: arg.ID}
+	resp := CreateAccountResponse{Id: arg.ID}
 	utils.Respond(w, resp)
 }
 
@@ -90,4 +91,23 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	}
 
 	utils.Respond(w, nil)
+}
+
+// validate request
+func (r *CreateAccountJSONRequestBody) Validate() error {
+	if r.UserId == "" {
+		return errors.New("UserID is required")
+	}
+	if r.UserName == "" {
+		return errors.New("UserName is required")
+	}
+	return nil
+}
+
+// convert request to params
+func (r *CreateAccountJSONRequestBody) ToParams() *models.CreateAccountParams {
+	return &models.CreateAccountParams{
+		UserID:   r.UserId,
+		UserName: r.UserName,
+	}
 }

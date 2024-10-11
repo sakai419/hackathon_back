@@ -2,9 +2,9 @@
 INSERT INTO accounts (id, user_id, user_name)
 VALUES (?, ?, ?);
 
--- name: GetAccountById :one
-SELECT * FROM accounts
-WHERE id = ?;
+-- name: GetAccountIDByUserId :one
+SELECT id FROM accounts
+WHERE user_id = ?;
 
 -- name: GetAccountByUserId :one
 SELECT * FROM accounts

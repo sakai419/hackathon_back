@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"local-test/internal/handlers/account"
-	"local-test/internal/middlewares"
+	"local-test/internal/handlers/report"
+	middleware "local-test/internal/middlewares"
 	"local-test/internal/repositories"
 	"local-test/internal/services"
 	"log"
@@ -50,6 +51,24 @@ func setupAccountRoutes(r *mux.Router, svc *services.Service, client *auth.Clien
 	account.HandlerWithOptions(h, opts)
 }
 
+func setupReportRoutes(r *mux.Router, svc *services.Service, client *auth.Client) {
+	// Register the report handlers
+	h := report.NewReportHandler(svc)
+
+	// Create options for the report handlers
+	opts := report.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []report.MiddlewareFunc{
+			middleware.AuthMiddleware(client),
+		},
+		ErrorHandlerFunc: report.ErrHandleFunc,
+	}
+
+	// Register the report handlers
+	report.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -62,6 +81,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 
 	// Register the account routes
 	setupAccountRoutes(apiV1, svc, client)
+	setupReportRoutes(apiV1, svc, client)
 
 	return apiV1
 }

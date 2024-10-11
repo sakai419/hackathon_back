@@ -18,6 +18,10 @@ paths:
             responses:
                 "200":
                     description: Account created successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/CreateAccountResponse"
                 "400":
                     description: Bad request
                 "500":
@@ -40,13 +44,18 @@ components:
         CreateAccountRequest:
             type: object
             required:
-                - id
                 - user_id
                 - user_name
             properties:
-                id:
-                    type: string
                 user_id:
                     type: string
                 user_name:
                     type: string
+        CreateAccountResponse:
+            type: object
+            required:
+                - id
+            properties:
+                id:
+                    type: string
+                    description: The ID of the created account

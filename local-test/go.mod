@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	firebase.google.com/go/v4 v4.14.1
+	github.com/oapi-codegen/runtime v1.1.1
 	google.golang.org/api v0.170.0
 )
 
@@ -14,6 +15,7 @@ require (
 	cloud.google.com/go/storage v1.40.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.3 // indirect
