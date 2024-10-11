@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS interests;
 DROP TABLE IF EXISTS labels;
 DROP TABLE IF EXISTS retweets_and_quotes;
 DROP TABLE IF EXISTS replies;
+DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS likes;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS notifications;
@@ -17,7 +18,7 @@ DROP TABLE IF EXISTS accounts;
 
 CREATE TABLE accounts (
     id CHAR(28) PRIMARY KEY,
-    user_id VARCHAR(28) UNIQUE NOT NULL,
+    user_id VARCHAR(30) UNIQUE NOT NULL,
     user_name VARCHAR(50) NOT NULL,
     is_suspended BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -388,6 +389,21 @@ CREATE TABLE replies (
     INDEX idx_replies_parent_reply_id (parent_reply_id),
     INDEX idx_replies_replying_account_id (replying_account_id),
     INDEX idx_replies_created_at (created_at)
+);
+
+CREATE TABLE reports (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reporter_account_id CHAR(28) NOT NULL,
+    reported_account_id CHAR(28) NOT NULL,
+    reason ENUM('spam', 'harassment', 'inappropriate_content', 'other') NOT NULL,
+    content TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reports_reporter_account_id FOREIGN KEY (reporter_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_reports_reported_account_id FOREIGN KEY (reported_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    INDEX idx_reports_created_at (created_at),
+    INDEX idx_reports_reported_account_id (reported_account_id)
 );
 
 CREATE TABLE retweets_and_quotes (
