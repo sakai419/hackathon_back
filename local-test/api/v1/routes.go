@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"local-test/internal/handler/account"
 	"local-test/internal/handler/report"
-	middleware "local-test/internal/middlewares"
+	"local-test/internal/middleware"
 	"local-test/internal/repository"
 	"local-test/internal/service"
 	"log"
