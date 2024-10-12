@@ -3,11 +3,11 @@ package v1
 import (
 	"database/sql"
 	"fmt"
-	"local-test/internal/handlers/account"
-	"local-test/internal/handlers/report"
+	"local-test/internal/handler/account"
+	"local-test/internal/handler/report"
 	middleware "local-test/internal/middlewares"
-	"local-test/internal/repositories"
-	"local-test/internal/services"
+	"local-test/internal/repository"
+	"local-test/internal/service"
 	"log"
 	"net/http"
 
@@ -34,11 +34,11 @@ func (s *Server) Start(port int) error {
 	return http.ListenAndServe(addr, s.router)
 }
 
-func setupAccountRoutes(r *mux.Router, svc *services.Service, client *auth.Client) {
-	// Register the account handlers
+func setupAccountRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+	// Register the account handler
 	h := account.NewAccountHandler(svc)
 
-	// Create options for the account handlers
+	// Create options for the account handler
 	opts := account.GorillaServerOptions{
 		BaseURL: "",
 		BaseRouter: r,
@@ -47,15 +47,15 @@ func setupAccountRoutes(r *mux.Router, svc *services.Service, client *auth.Clien
 		},
 	}
 
-	// Register the account handlers
+	// Register the account handler
 	account.HandlerWithOptions(h, opts)
 }
 
-func setupReportRoutes(r *mux.Router, svc *services.Service, client *auth.Client) {
-	// Register the report handlers
+func setupReportRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+	// Register the report handler
 	h := report.NewReportHandler(svc)
 
-	// Create options for the report handlers
+	// Create options for the report handler
 	opts := report.GorillaServerOptions{
 		BaseURL: "",
 		BaseRouter: r,
@@ -65,7 +65,7 @@ func setupReportRoutes(r *mux.Router, svc *services.Service, client *auth.Client
 		ErrorHandlerFunc: report.ErrHandleFunc,
 	}
 
-	// Register the report handlers
+	// Register the report handler
 	report.HandlerWithOptions(h, opts)
 }
 
@@ -76,8 +76,8 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	apiV1 := r.PathPrefix("/api/v1").Subrouter()
 	apiV1.Use(middleware.LoggingMiddleware)
 
-	repo := repositories.NewRepository(db)
-	svc := services.NewService(repo)
+	repo := repository.NewRepository(db)
+	svc := service.NewService(repo)
 
 	// Register the account routes
 	setupAccountRoutes(apiV1, svc, client)
