@@ -29,7 +29,12 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
             Status:  http.StatusInternalServerError,
             Code:    "INTERNAL_SERVER_ERROR",
             Message: "User ID not found in context",
-            Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "get user ID", Err: err}),
+            Err:     utils.WrapHandlerError(
+				&utils.ErrOperationFailed{
+					Operation: "get user ID",
+					Err: err,
+				},
+			),
         })
         return
     }
@@ -41,27 +46,42 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
 			Message: "Failed to decode request",
-			Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "decode request", Err: err}),
+			Err:     utils.WrapHandlerError(
+				&utils.ErrOperationFailed{
+					Operation: "decode request",
+					Err: err,
+				},
+			),
 		})
 		return
 	}
 
 	// Validate request
-	if err := req.Validate(); err != nil {
+	if err := req.validate(); err != nil {
 		utils.RespondError(w, &utils.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
 			Message: "Invalid request",
-			Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "validate request", Err: err}),
+			Err:     utils.WrapHandlerError(
+				&utils.ErrOperationFailed{
+					Operation: "validate request",
+					Err: err,
+				},
+			),
 		})
 		return
 	}
 
 	// Create account
-	arg := req.ToParams()
+	arg := req.toParams()
     arg.ID = userID
 	if err := h.svc.CreateAccount(r.Context(), arg); err != nil {
-		utils.RespondError(w, utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "create account", Err: err}))
+		utils.RespondError(w, utils.WrapHandlerError(
+			&utils.ErrOperationFailed{
+				Operation: "create account",
+				Err: err,
+			},
+		))
 		return
 	}
 
@@ -79,14 +99,24 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
             Status:  http.StatusInternalServerError,
             Code:    "INTERNAL_SERVER_ERROR",
             Message: "User ID not found in context",
-            Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "get user ID", Err: err}),
+            Err:     utils.WrapHandlerError(
+				&utils.ErrOperationFailed{
+					Operation: "get user ID",
+					Err: err,
+				},
+			),
         })
 		return
 	}
 
     // Delete account
 	if err := h.svc.DeleteMyAccount(r.Context(), userID); err != nil {
-		utils.RespondError(w, utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "delete account", Err: err}))
+		utils.RespondError(w, utils.WrapHandlerError(
+			&utils.ErrOperationFailed{
+				Operation: "delete account",
+				Err: err,
+			},
+		))
 		return
 	}
 
@@ -94,7 +124,7 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 }
 
 // validate request
-func (r *CreateAccountJSONRequestBody) Validate() error {
+func (r *CreateAccountJSONRequestBody) validate() error {
 	if r.UserId == "" {
 		return errors.New("UserID is required")
 	}
@@ -105,7 +135,7 @@ func (r *CreateAccountJSONRequestBody) Validate() error {
 }
 
 // convert request to params
-func (r *CreateAccountJSONRequestBody) ToParams() *model.CreateAccountParams {
+func (r *CreateAccountJSONRequestBody) toParams() *model.CreateAccountParams {
 	return &model.CreateAccountParams{
 		UserID:   r.UserId,
 		UserName: r.UserName,

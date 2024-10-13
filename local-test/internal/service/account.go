@@ -15,7 +15,12 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountPar
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
 			Message: "Invalid request",
-			Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "validate request", Err: err}),
+			Err:     utils.WrapServiceError(
+				&utils.ErrOperationFailed{
+					Operation: "validate request",
+					Err: err,
+				},
+			),
 		}
 	}
 
@@ -28,7 +33,12 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountPar
 				Status:  http.StatusConflict,
 				Code:    "DUPLICATE_ENTRY",
 				Message: "Account already exists",
-				Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "create account", Err: duplicateErr}),
+				Err:     utils.WrapServiceError(
+					&utils.ErrOperationFailed{
+						Operation: "create account",
+						Err: duplicateErr,
+					},
+				),
 			}
 		}
 
@@ -36,7 +46,12 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountPar
             Status:  http.StatusInternalServerError,
             Code:    "DATABASE_ERROR",
             Message: "Failed to create account",
-            Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "create account", Err: err}),
+            Err:     utils.WrapServiceError(
+				&utils.ErrOperationFailed{
+					Operation: "create account",
+					Err: err,
+				},
+			),
         }
     }
 
@@ -52,7 +67,12 @@ func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
 				Status:  http.StatusNotFound,
 				Code:    "ACCOUNT_NOT_FOUND",
 				Message: "Account not found",
-				Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "delete account", Err: notFoundErr}),
+				Err:     utils.WrapServiceError(
+					&utils.ErrOperationFailed{
+						Operation: "delete account",
+						Err: notFoundErr,
+					},
+				),
 			}
 		}
 
@@ -60,7 +80,12 @@ func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
 			Status:  http.StatusInternalServerError,
 			Code:    "DATABASE_ERROR",
 			Message: "Failed to delete account",
-			Err:     utils.WrapServiceError(&utils.ErrOperationFailed{Operation: "delete account", Err: err}),
+			Err:     utils.WrapServiceError(
+				&utils.ErrOperationFailed{
+					Operation: "delete account",
+					Err: err,
+				},
+			),
 		}
 	}
 

@@ -11,7 +11,12 @@ func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportPa
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "begin transaction", Err: err})
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "begin transaction",
+				Err: err,
+				},
+			)
 	}
 
 	// Create query object with transaction
@@ -26,12 +31,22 @@ func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportPa
 	}
 	if err := q.CreateReport(ctx, params); err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "create report", Err: err})
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "create report",
+				Err: err,
+			},
+		)
 	}
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return utils.WrapRepositoryError(&utils.ErrOperationFailed{Operation: "commit transaction", Err: err})
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "commit transaction",
+				Err: err,
+			},
+		)
 	}
 
 	return nil

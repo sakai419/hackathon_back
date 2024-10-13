@@ -30,7 +30,12 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "Reporter ID not found in context",
-			Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "get reporter ID", Err: err}),
+			Err:     utils.WrapHandlerError(
+				&utils.ErrOperationFailed{
+					Operation: "get reporter ID",
+					Err: err,
+				},
+			),
 		})
 		return
 	}
@@ -42,27 +47,42 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
             Status:  http.StatusBadRequest,
             Code:    "BAD_REQUEST",
             Message: "Failed to decode request",
-            Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "decode request", Err: err}),
+            Err:     utils.WrapHandlerError(
+				&utils.ErrOperationFailed{
+					Operation: "decode request",
+					Err: err,
+				},
+			),
         })
         return
     }
 
     // Validate request
-    if err := req.Validate(); err != nil {
+    if err := req.validate(); err != nil {
         utils.RespondError(w, &utils.AppError{
             Status:  http.StatusBadRequest,
             Code:    "BAD_REQUEST",
             Message: "Invalid request",
-            Err:     utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "validate request", Err: err}),
+            Err:     utils.WrapHandlerError(
+				&utils.ErrOperationFailed{
+					Operation: "validate request",
+					Err: err,
+				},
+			),
         })
     }
 
     // Create report
-    arg := req.ToParams()
+    arg := req.toParams()
     arg.ReporterAccountID = reporterAccountID
     arg.ReportedUserID = reportedUserID
     if err := h.svc.CreateReportByUserID(r.Context(), arg); err != nil {
-        utils.RespondError(w, utils.WrapHandlerError(&utils.ErrOperationFailed{Operation: "create report", Err: err}))
+        utils.RespondError(w, utils.WrapHandlerError(
+			&utils.ErrOperationFailed{
+				Operation: "create report",
+				Err: err,
+			},
+		))
         return
     }
 
@@ -84,14 +104,14 @@ func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
     }
 }
 
-func (r *CreateReportByUserIdJSONRequestBody) Validate() error {
+func (r *CreateReportByUserIdJSONRequestBody) validate() error {
     if r.Reason == "" {
         return errors.New("reason is required")
     }
     return nil
 }
 
-func (r *CreateReportByUserIdJSONRequestBody) ToParams() *model.CreateReportByUserIDParams {
+func (r *CreateReportByUserIdJSONRequestBody) toParams() *model.CreateReportByUserIDParams {
     if r.Content == nil {
         return &model.CreateReportByUserIDParams{
             Reason: model.ReportReason(r.Reason),
