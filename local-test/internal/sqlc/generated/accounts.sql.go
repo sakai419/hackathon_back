@@ -69,44 +69,6 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) (sql.Result, err
 	return q.db.ExecContext(ctx, deleteAccount, id)
 }
 
-const getAccountByUserId = `-- name: GetAccountByUserId :one
-SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
-WHERE user_id = ?
-`
-
-func (q *Queries) GetAccountByUserId(ctx context.Context, userID string) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAccountByUserId, userID)
-	var i Account
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.UserName,
-		&i.IsSuspended,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getAccountByUserName = `-- name: GetAccountByUserName :one
-SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
-WHERE user_name = ?
-`
-
-func (q *Queries) GetAccountByUserName(ctx context.Context, userName string) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAccountByUserName, userName)
-	var i Account
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.UserName,
-		&i.IsSuspended,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const getAccountCreationDate = `-- name: GetAccountCreationDate :one
 SELECT created_at FROM accounts
 WHERE id = ?
@@ -129,6 +91,56 @@ func (q *Queries) GetAccountIDByUserId(ctx context.Context, userID string) (stri
 	var id string
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getUserAndProfileInfoByAccountIDs = `-- name: GetUserAndProfileInfoByAccountIDs :many
+SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
+FROM accounts a
+JOIN profiles p ON a.id = p.account_id
+WHERE a.id MEMBER OF (?)
+ORDER BY a.created_at DESC
+LIMIT ? OFFSET ?
+`
+
+type GetUserAndProfileInfoByAccountIDsParams struct {
+	JsonMemberof interface{}
+	Limit        int32
+	Offset       int32
+}
+
+type GetUserAndProfileInfoByAccountIDsRow struct {
+	UserID          string
+	UserName        string
+	Bio             sql.NullString
+	ProfileImageUrl sql.NullString
+}
+
+func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg GetUserAndProfileInfoByAccountIDsParams) ([]GetUserAndProfileInfoByAccountIDsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfoByAccountIDs, arg.JsonMemberof, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserAndProfileInfoByAccountIDsRow
+	for rows.Next() {
+		var i GetUserAndProfileInfoByAccountIDsRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.UserName,
+			&i.Bio,
+			&i.ProfileImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const searchAccountsByUserId = `-- name: SearchAccountsByUserId :many

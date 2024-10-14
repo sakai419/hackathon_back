@@ -6,13 +6,13 @@ VALUES (?, ?, ?);
 SELECT id FROM accounts
 WHERE user_id = ?;
 
--- name: GetAccountByUserId :one
-SELECT * FROM accounts
-WHERE user_id = ?;
-
--- name: GetAccountByUserName :one
-SELECT * FROM accounts
-WHERE user_name = ?;
+-- name: GetUserAndProfileInfoByAccountIDs :many
+SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
+FROM accounts a
+JOIN profiles p ON a.id = p.account_id
+WHERE a.id MEMBER OF (?)
+ORDER BY a.created_at DESC
+LIMIT ? OFFSET ?;
 
 -- name: UpdateAccountUserName :exec
 UPDATE accounts

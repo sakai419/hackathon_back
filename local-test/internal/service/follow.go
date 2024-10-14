@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
+func (s *Service) FollowAndNotify(ctx context.Context, arg *model.FollowAndNotifyParams) error {
 	// Validate params
 	if err := arg.Validate(); err != nil {
 		return &utils.AppError{
@@ -24,52 +24,68 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountPar
 		}
 	}
 
-	// Create account
-    if err := s.repo.CreateAccount(ctx, arg); err != nil {
+	// Create follow
+	if err := s.repo.FollowAndNotify(ctx, arg); err != nil {
 		// Check if the error is a duplicate entry error
 		var duplicateErr *utils.ErrDuplicateEntry
 		if errors.As(err, &duplicateErr) {
 			return &utils.AppError{
 				Status:  http.StatusConflict,
 				Code:    "DUPLICATE_ENTRY",
-				Message: "Account already exists",
+				Message: "Follow already exists",
 				Err:     utils.WrapServiceError(
 					&utils.ErrOperationFailed{
-						Operation: "create account",
+						Operation: "create follow",
 						Err: duplicateErr,
 					},
 				),
 			}
 		}
 
-        return &utils.AppError{
-            Status:  http.StatusInternalServerError,
-            Code:    "DATABASE_ERROR",
-            Message: "Failed to create account",
-            Err:     utils.WrapServiceError(
+		return &utils.AppError{
+			Status:  http.StatusInternalServerError,
+			Code:    "DATABASE_ERROR",
+			Message: "Failed to create follow",
+			Err:     utils.WrapServiceError(
 				&utils.ErrOperationFailed{
-					Operation: "create account",
+					Operation: "create follow",
 					Err: err,
 				},
 			),
-        }
-    }
+		}
+	}
 
-    return nil
+	return nil
 }
 
-func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
-	if err := s.repo.DeleteMyAccount(ctx, id); err != nil {
+func (s *Service) Unfollow(ctx context.Context, arg *model.UnfollowParams) error {
+	// Validate params
+	if err := arg.Validate(); err != nil {
+		return &utils.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Invalid request",
+			Err:     utils.WrapServiceError(
+				&utils.ErrOperationFailed{
+					Operation: "validate request",
+					Err: err,
+				},
+			),
+		}
+	}
+
+	// Unfollow
+	if err := s.repo.Unfollow(ctx, arg); err != nil {
 		// Check if the error is a record not found error
 		var notFoundErr *utils.ErrRecordNotFound
 		if errors.As(err, &notFoundErr) {
 			return &utils.AppError{
 				Status:  http.StatusNotFound,
-				Code:    "ACCOUNT_NOT_FOUND",
-				Message: "Account not found",
+				Code:    "FOLLOW_NOT_FOUND",
+				Message: "Follow not found",
 				Err:     utils.WrapServiceError(
 					&utils.ErrOperationFailed{
-						Operation: "delete account",
+						Operation: "unfollow",
 						Err: notFoundErr,
 					},
 				),
@@ -79,10 +95,10 @@ func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
 		return &utils.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "DATABASE_ERROR",
-			Message: "Failed to delete account",
+			Message: "Failed to unfollow",
 			Err:     utils.WrapServiceError(
 				&utils.ErrOperationFailed{
-					Operation: "delete account",
+					Operation: "unfollow",
 					Err: err,
 				},
 			),

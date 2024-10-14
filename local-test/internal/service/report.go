@@ -42,7 +42,7 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 	}
 
 	// Validate request
-	if err := validateCreateReportParams(params); err != nil {
+	if err := params.Validate(); err != nil {
 		return &utils.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -67,33 +67,4 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 	}
 
 	return nil
-}
-
-func validateCreateReportParams(params *model.CreateReportParams) error {
-	if params.ReporterAccountID == params.ReportedAccountID {
-		return &utils.ErrInvalidInput{
-			Message: "Reporter account ID and reported account ID must be different",
-		}
-	}
-
-	switch params.Reason {
-	case model.ReportReasonSpam:
-		return nil
-	case model.ReportReasonHarrassment:
-		return nil
-	case model.ReportReasonInappropriateContent:
-		return nil
-	case model.ReportReasonOther:
-		if !params.Content.Valid {
-			return &utils.ErrInvalidInput{
-				Message: "Content is required for other reason",
-			}
-		}
-		return nil
-	default:
-		return &utils.ErrInvalidInput{
-			Message: "Invalid report reason",
-		}
-	}
-
 }

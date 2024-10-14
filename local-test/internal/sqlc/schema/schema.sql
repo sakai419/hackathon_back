@@ -23,13 +23,13 @@ CREATE TABLE blocks (
 
 CREATE TABLE follow_requests (
     requester_account_id CHAR(28) NOT NULL,
-    requestee_account_id CHAR(28) NOT NULL,
+    requested_account_id CHAR(28) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (requester_account_id, requestee_account_id),
+    PRIMARY KEY (requester_account_id, requested_account_id),
     CONSTRAINT fk_follow_requests_requester_account_id FOREIGN KEY (requester_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_follow_requests_requestee_account_id FOREIGN KEY (requestee_account_id)
+    CONSTRAINT fk_follow_requests_requested_account_id FOREIGN KEY (requested_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
     INDEX idx_follow_requests_created_at (created_at)
 );
@@ -303,7 +303,7 @@ CREATE TABLE notifications (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     sender_account_id CHAR(28),
     recipient_account_id CHAR(28) NOT NULL,
-    type VARCHAR(50) NOT NULL,
+    type ENUM('follow', 'like', 'retweet', 'reply', 'message', 'quote', 'follow_request', 'report') NOT NULL,
     content TEXT,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

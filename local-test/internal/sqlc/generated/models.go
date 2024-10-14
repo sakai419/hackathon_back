@@ -12,6 +12,54 @@ import (
 	"time"
 )
 
+type NotificationsType string
+
+const (
+	NotificationsTypeFollow        NotificationsType = "follow"
+	NotificationsTypeLike          NotificationsType = "like"
+	NotificationsTypeRetweet       NotificationsType = "retweet"
+	NotificationsTypeReply         NotificationsType = "reply"
+	NotificationsTypeMessage       NotificationsType = "message"
+	NotificationsTypeQuote         NotificationsType = "quote"
+	NotificationsTypeFollowRequest NotificationsType = "follow_request"
+	NotificationsTypeReport        NotificationsType = "report"
+)
+
+func (e *NotificationsType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationsType(s)
+	case string:
+		*e = NotificationsType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationsType: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationsType struct {
+	NotificationsType NotificationsType
+	Valid             bool // Valid is true if NotificationsType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationsType) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationsType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationsType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationsType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationsType), nil
+}
+
 type ReportsReason string
 
 const (
@@ -81,7 +129,7 @@ type Follow struct {
 
 type FollowRequest struct {
 	RequesterAccountID string
-	RequesteeAccountID string
+	RequestedAccountID string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 }
@@ -224,7 +272,7 @@ type Notification struct {
 	ID                 uint32
 	SenderAccountID    sql.NullString
 	RecipientAccountID string
-	Type               string
+	Type               NotificationsType
 	Content            sql.NullString
 	IsRead             bool
 	CreatedAt          time.Time

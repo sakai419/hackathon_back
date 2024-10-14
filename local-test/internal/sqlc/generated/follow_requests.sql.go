@@ -12,73 +12,73 @@ import (
 
 const acceptFollowRequest = `-- name: AcceptFollowRequest :exec
 INSERT INTO follows (follower_account_id, following_account_id)
-SELECT requester_account_id, requestee_account_id
+SELECT requester_account_id, requested_account_id
 FROM follow_requests
-WHERE requester_account_id = ? AND requestee_account_id = ?
+WHERE requester_account_id = ? AND requested_account_id = ?
 `
 
 type AcceptFollowRequestParams struct {
 	RequesterAccountID string
-	RequesteeAccountID string
+	RequestedAccountID string
 }
 
 func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, acceptFollowRequest, arg.RequesterAccountID, arg.RequesteeAccountID)
+	_, err := q.db.ExecContext(ctx, acceptFollowRequest, arg.RequesterAccountID, arg.RequestedAccountID)
 	return err
 }
 
 const createFollowRequest = `-- name: CreateFollowRequest :exec
-INSERT INTO follow_requests (requester_account_id, requestee_account_id)
+INSERT INTO follow_requests (requester_account_id, requested_account_id)
 VALUES (?, ?)
 `
 
 type CreateFollowRequestParams struct {
 	RequesterAccountID string
-	RequesteeAccountID string
+	RequestedAccountID string
 }
 
 func (q *Queries) CreateFollowRequest(ctx context.Context, arg CreateFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, createFollowRequest, arg.RequesterAccountID, arg.RequesteeAccountID)
+	_, err := q.db.ExecContext(ctx, createFollowRequest, arg.RequesterAccountID, arg.RequestedAccountID)
 	return err
 }
 
 const deleteFollowRequest = `-- name: DeleteFollowRequest :exec
 DELETE FROM follow_requests
-WHERE requester_account_id = ? AND requestee_account_id = ?
+WHERE requester_account_id = ? AND requested_account_id = ?
 `
 
 type DeleteFollowRequestParams struct {
 	RequesterAccountID string
-	RequesteeAccountID string
+	RequestedAccountID string
 }
 
 func (q *Queries) DeleteFollowRequest(ctx context.Context, arg DeleteFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFollowRequest, arg.RequesterAccountID, arg.RequesteeAccountID)
+	_, err := q.db.ExecContext(ctx, deleteFollowRequest, arg.RequesterAccountID, arg.RequestedAccountID)
 	return err
 }
 
 const deleteOldFollowRequests = `-- name: DeleteOldFollowRequests :exec
 DELETE FROM follow_requests
-WHERE created_at < ? AND requestee_account_id = ?
+WHERE created_at < ? AND requested_account_id = ?
 `
 
 type DeleteOldFollowRequestsParams struct {
 	CreatedAt          time.Time
-	RequesteeAccountID string
+	RequestedAccountID string
 }
 
 func (q *Queries) DeleteOldFollowRequests(ctx context.Context, arg DeleteOldFollowRequestsParams) error {
-	_, err := q.db.ExecContext(ctx, deleteOldFollowRequests, arg.CreatedAt, arg.RequesteeAccountID)
+	_, err := q.db.ExecContext(ctx, deleteOldFollowRequests, arg.CreatedAt, arg.RequestedAccountID)
 	return err
 }
 
 const getPendingFollowRequestCount = `-- name: GetPendingFollowRequestCount :one
 SELECT COUNT(*) FROM follow_requests
-WHERE requestee_account_id = ?
+WHERE requested_account_id = ?
 `
 
-func (q *Queries) GetPendingFollowRequestCount(ctx context.Context, requesteeAccountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getPendingFollowRequestCount, requesteeAccountID)
+func (q *Queries) GetPendingFollowRequestCount(ctx context.Context, requestedAccountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPendingFollowRequestCount, requestedAccountID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -87,19 +87,19 @@ func (q *Queries) GetPendingFollowRequestCount(ctx context.Context, requesteeAcc
 const getPendingFollowRequests = `-- name: GetPendingFollowRequests :many
 SELECT requester_account_id
 FROM follow_requests
-WHERE requestee_account_id = ?
+WHERE requested_account_id = ?
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
 
 type GetPendingFollowRequestsParams struct {
-	RequesteeAccountID string
+	RequestedAccountID string
 	Limit              int32
 	Offset             int32
 }
 
 func (q *Queries) GetPendingFollowRequests(ctx context.Context, arg GetPendingFollowRequestsParams) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getPendingFollowRequests, arg.RequesteeAccountID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getPendingFollowRequests, arg.RequestedAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (q *Queries) GetSentFollowRequestCount(ctx context.Context, requesterAccoun
 }
 
 const getSentFollowRequests = `-- name: GetSentFollowRequests :many
-SELECT requestee_account_id
+SELECT requested_account_id
 FROM follow_requests
 WHERE requester_account_id = ?
 ORDER BY created_at DESC
@@ -155,11 +155,11 @@ func (q *Queries) GetSentFollowRequests(ctx context.Context, arg GetSentFollowRe
 	defer rows.Close()
 	var items []string
 	for rows.Next() {
-		var requestee_account_id string
-		if err := rows.Scan(&requestee_account_id); err != nil {
+		var requested_account_id string
+		if err := rows.Scan(&requested_account_id); err != nil {
 			return nil, err
 		}
-		items = append(items, requestee_account_id)
+		items = append(items, requested_account_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -172,15 +172,15 @@ func (q *Queries) GetSentFollowRequests(ctx context.Context, arg GetSentFollowRe
 
 const rejectFollowRequest = `-- name: RejectFollowRequest :exec
 DELETE FROM follow_requests
-WHERE requester_account_id = ? AND requestee_account_id = ?
+WHERE requester_account_id = ? AND requested_account_id = ?
 `
 
 type RejectFollowRequestParams struct {
 	RequesterAccountID string
-	RequesteeAccountID string
+	RequestedAccountID string
 }
 
 func (q *Queries) RejectFollowRequest(ctx context.Context, arg RejectFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, rejectFollowRequest, arg.RequesterAccountID, arg.RequesteeAccountID)
+	_, err := q.db.ExecContext(ctx, rejectFollowRequest, arg.RequesterAccountID, arg.RequestedAccountID)
 	return err
 }

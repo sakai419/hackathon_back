@@ -23,13 +23,13 @@ func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportPa
 	q := r.q.WithTx(tx)
 
 	// Create report
-	params := sqlcgen.CreateReportParams{
+	createReportParams := sqlcgen.CreateReportParams{
 		ReporterAccountID: arg.ReporterAccountID,
 		ReportedAccountID: arg.ReportedAccountID,
 		Reason:            sqlcgen.ReportsReason(arg.Reason),
 		Content:           arg.Content,
 	}
-	if err := q.CreateReport(ctx, params); err != nil {
+	if err := q.CreateReport(ctx, createReportParams); err != nil {
 		tx.Rollback()
 		return utils.WrapRepositoryError(
 			&utils.ErrOperationFailed{

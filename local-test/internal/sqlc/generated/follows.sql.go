@@ -7,6 +7,7 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 const checkFollowExists = `-- name: CheckFollowExists :one
@@ -43,7 +44,7 @@ func (q *Queries) CreateFollow(ctx context.Context, arg CreateFollowParams) erro
 	return err
 }
 
-const deleteFollow = `-- name: DeleteFollow :exec
+const deleteFollow = `-- name: DeleteFollow :execresult
 DELETE FROM follows
 WHERE follower_account_id = ? AND following_account_id = ?
 `
@@ -53,9 +54,8 @@ type DeleteFollowParams struct {
 	FollowingAccountID string
 }
 
-func (q *Queries) DeleteFollow(ctx context.Context, arg DeleteFollowParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFollow, arg.FollowerAccountID, arg.FollowingAccountID)
-	return err
+func (q *Queries) DeleteFollow(ctx context.Context, arg DeleteFollowParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteFollow, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
 const getFollowSuggestions = `-- name: GetFollowSuggestions :many
@@ -100,19 +100,7 @@ func (q *Queries) GetFollowSuggestions(ctx context.Context, arg GetFollowSuggest
 	return items, nil
 }
 
-const getFollowerCount = `-- name: GetFollowerCount :one
-SELECT COUNT(*) FROM follows
-WHERE following_account_id = ?
-`
-
-func (q *Queries) GetFollowerCount(ctx context.Context, followingAccountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getFollowerCount, followingAccountID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const getFollowers = `-- name: GetFollowers :many
+const getFollowerAccountIDs = `-- name: GetFollowerAccountIDs :many
 SELECT follower_account_id
 FROM follows
 WHERE following_account_id = ?
@@ -120,14 +108,14 @@ ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
 
-type GetFollowersParams struct {
+type GetFollowerAccountIDsParams struct {
 	FollowingAccountID string
 	Limit              int32
 	Offset             int32
 }
 
-func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getFollowers, arg.FollowingAccountID, arg.Limit, arg.Offset)
+func (q *Queries) GetFollowerAccountIDs(ctx context.Context, arg GetFollowerAccountIDsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getFollowerAccountIDs, arg.FollowingAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -147,6 +135,18 @@ func (q *Queries) GetFollowers(ctx context.Context, arg GetFollowersParams) ([]s
 		return nil, err
 	}
 	return items, nil
+}
+
+const getFollowerCount = `-- name: GetFollowerCount :one
+SELECT COUNT(*) FROM follows
+WHERE following_account_id = ?
+`
+
+func (q *Queries) GetFollowerCount(ctx context.Context, followingAccountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getFollowerCount, followingAccountID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getFollowing = `-- name: GetFollowing :many

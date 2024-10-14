@@ -2,7 +2,7 @@
 INSERT INTO follows (follower_account_id, following_account_id)
 VALUES (?, ?);
 
--- name: DeleteFollow :exec
+-- name: DeleteFollow :execresult
 DELETE FROM follows
 WHERE follower_account_id = ? AND following_account_id = ?;
 
@@ -12,7 +12,7 @@ SELECT EXISTS(
     WHERE follower_account_id = ? AND following_account_id = ?
 ) AS is_following;
 
--- name: GetFollowers :many
+-- name: GetFollowerAccountIDs :many
 SELECT follower_account_id
 FROM follows
 WHERE following_account_id = ?

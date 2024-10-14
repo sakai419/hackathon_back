@@ -19,7 +19,7 @@ VALUES (?, ?, ?, ?)
 type CreateNotificationParams struct {
 	SenderAccountID    sql.NullString
 	RecipientAccountID string
-	Type               string
+	Type               NotificationsType
 	Content            sql.NullString
 }
 
@@ -160,7 +160,7 @@ LIMIT ? OFFSET ?
 
 type GetNotificationsByTypeParams struct {
 	RecipientAccountID string
-	Type               string
+	Type               NotificationsType
 	Limit              int32
 	Offset             int32
 }

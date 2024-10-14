@@ -27,12 +27,12 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     q := r.q.WithTx(tx)
 
     // Create account
-    params := sqlcgen.CreateAccountParams{
+    createAccountParams := sqlcgen.CreateAccountParams{
         ID:       arg.ID,
         UserID:   arg.UserID,
         UserName: arg.UserName,
     }
-    if err := q.CreateAccount(ctx, params); err != nil {
+    if err := q.CreateAccount(ctx, createAccountParams); err != nil {
         tx.Rollback()
 		if err.(*mysql.MySQLError).Number == 1062 {
 			return utils.WrapRepositoryError(
@@ -164,7 +164,6 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 			},
 		)
     }
-
     if num == 0 {
         tx.Rollback()
         return utils.WrapRepositoryError(
