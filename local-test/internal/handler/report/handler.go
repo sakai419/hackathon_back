@@ -3,7 +3,7 @@ package report
 import (
 	"database/sql"
 	"errors"
-	contextKey "local-test/internal/context"
+	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
 	"local-test/pkg/utils"
@@ -24,7 +24,7 @@ func NewReportHandler(svc *service.Service) ServerInterface {
 // (POST /reports)
 func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Request, reportedUserID string) {
 	// Get Reporter Account ID
-	reporterAccountID, err := contextKey.GetUserID(r.Context())
+	reporterAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &utils.AppError{
 			Status:  http.StatusInternalServerError,

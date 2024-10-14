@@ -1,0 +1,183 @@
+openapi: 3.0.0
+info:
+    title: Follow Management API
+    version: 1.0.0
+    description: API for managing user follows
+
+paths:
+    /users/{user_id}/follow:
+        post:
+            summary: Follow a user
+            operationId: FollowUser
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User followed successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Unfollow a user
+            operationId: UnfollowUser
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User unfollowed successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/followers:
+        get:
+            summary: Get followers of a user
+            operationId: GetFollowers
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+            responses:
+                "200":
+                    description: Followers retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserAndProfileInfoList"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/following:
+        get:
+            summary: Get users followed by a user
+            operationId: GetFollowings
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+            responses:
+                "200":
+                    description: Users followed retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserAndProfileInfoList"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/follow-request:
+        post:
+            summary: Send a follow request to a user
+            operationId: SendFollowRequest
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request sent successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/follow-request/accept:
+        post:
+            summary: Accept a follow request
+            operationId: AcceptFollowRequest
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request accepted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/follow-request/reject:
+        post:
+            summary: Reject a follow request
+            operationId: RejectFollowRequest
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request rejected successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        UserAndProfileInfo:
+            type: object
+            properties:
+                userId:
+                    type: string
+                    description: The ID of the user.
+                userName:
+                    type: string
+                    description: The name of the user.
+                bio:
+                    type: string
+                    description: The bio of the user.
+                profileImageUrl:
+                    type: string
+                    format: uri
+                    description: URL of the user's profile image.
+            required:
+                - userId
+                - userName
+                - bio
+                - profileImageUrl
+
+        UserAndProfileInfoList:
+            type: array
+            items:
+                $ref: "#/components/schemas/UserAndProfileInfo"

@@ -2,7 +2,7 @@ package account
 
 import (
 	"errors"
-	contextKey "local-test/internal/context"
+	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
 	"local-test/pkg/utils"
@@ -23,7 +23,7 @@ func NewAccountHandler(svc *service.Service) ServerInterface {
 // (POST /accounts)
 func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
     // Get user ID
-    userID, err := contextKey.GetUserID(r.Context())
+    accountID, err := key.GetAccountID(r.Context())
     if err != nil {
         utils.RespondError(w, &utils.AppError{
             Status:  http.StatusInternalServerError,
@@ -74,7 +74,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 
 	// Create account
 	arg := req.toParams()
-    arg.ID = userID
+    arg.ID = accountID
 	if err := h.svc.CreateAccount(r.Context(), arg); err != nil {
 		utils.RespondError(w, utils.WrapHandlerError(
 			&utils.ErrOperationFailed{
@@ -93,7 +93,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 // (DELETE /accounts/me)
 func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 	// Get user ID
-	userID, err := contextKey.GetUserID(r.Context())
+	accountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &utils.AppError{
             Status:  http.StatusInternalServerError,
@@ -110,7 +110,7 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	}
 
     // Delete account
-	if err := h.svc.DeleteMyAccount(r.Context(), userID); err != nil {
+	if err := h.svc.DeleteMyAccount(r.Context(), accountID); err != nil {
 		utils.RespondError(w, utils.WrapHandlerError(
 			&utils.ErrOperationFailed{
 				Operation: "delete account",

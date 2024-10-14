@@ -1,4 +1,4 @@
-package contextKey
+package key
 
 import (
 	"context"
@@ -11,7 +11,7 @@ const (
 	AccountIDKey ctxKey = "account_id"
 )
 
-func GetUserID(ctx context.Context) (string, error) {
+func GetAccountID(ctx context.Context) (string, error) {
 	id, ok := ctx.Value(AccountIDKey).(string)
 	if !ok {
 		return "", errors.New("user_id not found in context")

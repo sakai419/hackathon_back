@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"local-test/internal/handler/account"
+	"local-test/internal/handler/follow"
 	"local-test/internal/handler/report"
 	"local-test/internal/middleware"
 	"local-test/internal/repository"
@@ -34,7 +35,7 @@ func (s *Server) Start(port int) error {
 	return http.ListenAndServe(addr, s.router)
 }
 
-func setupAccountRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+func setUpAccountRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
 	// Register the account handler
 	h := account.NewAccountHandler(svc)
 
@@ -51,7 +52,7 @@ func setupAccountRoutes(r *mux.Router, svc *service.Service, client *auth.Client
 	account.HandlerWithOptions(h, opts)
 }
 
-func setupReportRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+func setUpReportRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
 	// Register the report handler
 	h := report.NewReportHandler(svc)
 
@@ -69,6 +70,24 @@ func setupReportRoutes(r *mux.Router, svc *service.Service, client *auth.Client)
 	report.HandlerWithOptions(h, opts)
 }
 
+func setUpFollowRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+	// Register the follow handler
+	h := follow.NewFollowHandler(svc)
+
+	// Create options for the follow handler
+	opts := follow.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []follow.MiddlewareFunc{
+			middleware.AuthMiddleware(client),
+		},
+		ErrorHandlerFunc: follow.ErrHandleFunc,
+	}
+
+	// Register the follow handler
+	follow.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -80,8 +99,9 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	svc := service.NewService(repo)
 
 	// Register the account routes
-	setupAccountRoutes(apiV1, svc, client)
-	setupReportRoutes(apiV1, svc, client)
+	setUpAccountRoutes(apiV1, svc, client)
+	setUpReportRoutes(apiV1, svc, client)
+	setUpFollowRoutes(apiV1, svc, client)
 
 	return apiV1
 }

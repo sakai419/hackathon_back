@@ -2,4 +2,4 @@ package: report
 generate:
     models: true
     gorilla-server: true
-output: ./../../internal/handlers/report/schema.gen.go
+output: ./../../internal/handler/report/schema.gen.go
