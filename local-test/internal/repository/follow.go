@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"local-test/internal/model"
-	sqlcgen "local-test/internal/sqlc/generated"
+	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/utils"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 )
 
 func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNotifyParams) error {
@@ -32,7 +32,7 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 	}
 	if err := q.CreateFollow(ctx, createFollowParams); err != nil {
 		tx.Rollback()
-		if err.(*mysql.MySQLError).Number == 1062 {
+		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return utils.WrapRepositoryError(
 				&utils.ErrDuplicateEntry{
 					Entity: "follower/following account id",
@@ -49,14 +49,13 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 		)
 	}
 
-	// Create notification
-	CreateNotificationParams := sqlcgen.CreateNotificationParams{
+	// Notify following user
+	createNotificationParams := sqlcgen.CreateNotificationParams{
 		SenderAccountID: sql.NullString{String: arg.FollowerAccountID, Valid: true},
 		RecipientAccountID: arg.FollowingAccountID,
 		Type: sqlcgen.NotificationTypeFollow,
-		Content: sql.NullString{String: "You have a new follower", Valid: true},
 	}
-	if err := q.CreateNotification(ctx, CreateNotificationParams); err != nil {
+	if err := q.CreateNotification(ctx, createNotificationParams); err != nil {
 		tx.Rollback()
 		return utils.WrapRepositoryError(
 			&utils.ErrOperationFailed{
@@ -79,7 +78,7 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 	return nil
 }
 
-func (r *Repository) Unfollow(ctx context.Context, arg *model.UnfollowParams) error {
+func (r *Repository) DeleteFollow(ctx context.Context, arg *model.DeleteFollowParams) error {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -161,4 +160,195 @@ func (r *Repository) GetFollowerAccountIDs(ctx context.Context, arg *model.GetFo
 	}
 
 	return followerAccountIDs, nil
+}
+
+func (r *Repository) GetFollowingAccountIDs(ctx context.Context, arg *model.GetFollowingAccountIDsParams) ([]string, error) {
+	// Get following account ids
+	query := sqlcgen.GetFollowingAccountIDsParams{
+		FollowerAccountID: arg.FollowerAccountID,
+		Limit: arg.Limit,
+		Offset: arg.Offset,
+	}
+	followingAccountIDs, err := r.q.GetFollowingAccountIDs(ctx, query)
+	if err != nil {
+		return nil, utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "get following account ids",
+				Err: err,
+			},
+		)
+	}
+
+	return followingAccountIDs, nil
+}
+
+func (r *Repository) RequestFollowAndNotify(ctx context.Context, arg *model.RequestFollowAndNotifyParams) error {
+	// Begin transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "begin transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Create query object with transaction
+	q := r.q.WithTx(tx)
+
+	// Create follow request
+	createFollowRequestParams := sqlcgen.CreateFollowRequestParams{
+		FollowerAccountID: arg.RequesterAccountID,
+		FollowingAccountID: arg.RequestedAccountID,
+	}
+	if err := q.CreateFollowRequest(ctx, createFollowRequestParams); err != nil {
+		tx.Rollback()
+		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
+			return utils.WrapRepositoryError(
+				&utils.ErrDuplicateEntry{
+					Entity: "requester/requested account id",
+					Err: err,
+				},
+			)
+		}
+
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "create follow request",
+				Err: err,
+			},
+		)
+	}
+
+	// Notify requested user
+	createNotificationParams := sqlcgen.CreateNotificationParams{
+		SenderAccountID: sql.NullString{String: arg.RequesterAccountID, Valid: true},
+		RecipientAccountID: arg.RequestedAccountID,
+		Type: sqlcgen.NotificationTypeFollowRequest,
+	}
+	if err := q.CreateNotification(ctx, createNotificationParams); err != nil {
+		tx.Rollback()
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "create notification",
+				Err: err,
+			},
+		)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "commit transaction",
+				Err: err,
+			},
+		)
+	}
+
+	return nil
+}
+
+func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *model.AcceptFollowRequestAndNotifyParams) error {
+	// Begin transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "begin transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Create query object with transaction
+	q := r.q.WithTx(tx)
+
+	// Accept follow request
+	acceptFollowRequestParams := sqlcgen.AcceptFollowRequestParams{
+		FollowerAccountID: arg.RequesterAccountID,
+		FollowingAccountID: arg.RequestedAccountID,
+	}
+	if err := q.AcceptFollowRequest(ctx, acceptFollowRequestParams); err != nil {
+		tx.Rollback()
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "accept follow request",
+				Err: err,
+			},
+		)
+	}
+
+	// Notify requester
+	createNotificationParams := sqlcgen.CreateNotificationParams{
+		SenderAccountID: sql.NullString{String: arg.RequestedAccountID, Valid: true},
+		RecipientAccountID: arg.RequesterAccountID,
+		Type: sqlcgen.NotificationTypeFollow,
+	}
+	if err := q.CreateNotification(ctx, createNotificationParams); err != nil {
+		tx.Rollback()
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "create notification",
+				Err: err,
+			},
+		)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "commit transaction",
+				Err: err,
+			},
+		)
+	}
+
+	return nil
+}
+
+func (r *Repository) DeleteFollowRequest(ctx context.Context, arg *model.DeleteFollowRequestParams) error {
+	// Begin transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "begin transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Create query object with transaction
+	q := r.q.WithTx(tx)
+
+	// Delete follow request
+	deleteFollowRequestParams := sqlcgen.DeleteFollowRequestParams{
+		FollowerAccountID: arg.RequesterAccountID,
+		FollowingAccountID: arg.RequestedAccountID,
+	}
+
+	if err := q.DeleteFollowRequest(ctx, deleteFollowRequestParams); err != nil {
+		tx.Rollback()
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "delete follow request",
+				Err: err,
+			},
+		)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "commit transaction",
+				Err: err,
+			},
+		)
+	}
+
+	return nil
 }

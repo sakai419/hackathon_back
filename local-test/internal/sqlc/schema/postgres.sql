@@ -73,26 +73,17 @@ CREATE TABLE blocks (
 
 CREATE INDEX idx_blocks_created_at ON blocks(created_at);
 
--- Table: follow_requests
-
-CREATE TABLE follow_requests (
-    requester_account_id CHAR(28) NOT NULL,
-    requested_account_id CHAR(28) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (requester_account_id, requested_account_id),
-    CONSTRAINT fk_follow_requests_requester_account_id FOREIGN KEY (requester_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_follow_requests_requested_account_id FOREIGN KEY (requested_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_follow_requests_created_at ON follow_requests(created_at);
-
 -- Table: follows
+
+CREATE TYPE follow_status AS ENUM (
+    'pending',
+    'accepted'
+);
 
 CREATE TABLE follows (
     follower_account_id CHAR(28) NOT NULL,
     following_account_id CHAR(28) NOT NULL,
+    status follow_status NOT NULL DEFAULT 'accepted',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (follower_account_id, following_account_id),
     CONSTRAINT fk_follows_follower_account_id FOREIGN KEY (follower_account_id)
@@ -275,7 +266,9 @@ CREATE TYPE notification_type AS ENUM (
     'message',
     'quote',
     'follow_request',
-    'report'
+    'report',
+    'warning',
+    'other'
 );
 
 CREATE TABLE notifications (

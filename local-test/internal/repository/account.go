@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"local-test/internal/model"
-	sqlcgen "local-test/internal/sqlc/generated"
+	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/utils"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 )
 
 func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
@@ -34,7 +34,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     }
     if err := q.CreateAccount(ctx, createAccountParams); err != nil {
         tx.Rollback()
-		if err.(*mysql.MySQLError).Number == 1062 {
+		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return utils.WrapRepositoryError(
 				&utils.ErrDuplicateEntry{
 					Entity: "account id",
@@ -54,7 +54,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     // Create empty profile
     if err := q.CreateProfilesWithDefaultValues(ctx, arg.ID); err != nil {
         tx.Rollback()
-		if err.(*mysql.MySQLError).Number == 1062 {
+		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return utils.WrapRepositoryError(
 				&utils.ErrDuplicateEntry{
 					Entity: "account id",
@@ -74,7 +74,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     // Create empty setting
     if err := q.CreateSettingsWithDefaultValues(ctx, arg.ID); err != nil {
         tx.Rollback()
-		if err.(*mysql.MySQLError).Number == 1062 {
+		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return utils.WrapRepositoryError(
 				&utils.ErrDuplicateEntry{
 					Entity: "account id",
@@ -94,7 +94,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
 	// Create empty interest
 	if err := q.CreateInterestsWithDefaultValues(ctx, arg.ID); err != nil {
 		tx.Rollback()
-		if err.(*mysql.MySQLError).Number == 1062 {
+		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return utils.WrapRepositoryError(
 				&utils.ErrDuplicateEntry{
 					Entity: "account id",
@@ -207,4 +207,36 @@ func (r *Repository) GetAccountIDByUserId(ctx context.Context, userId string) (s
 	}
 
 	return AccountID, nil
+}
+
+func (r *Repository) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg *model.GetUserAndProfileInfoByAccountIDsParams) ([]*model.UserAndProfileInfo, error) {
+	// Get user and profile info
+	query := sqlcgen.GetUserAndProfileInfoByAccountIDsParams{
+		Limit:  int32(arg.Limit),
+		Offset: int32(arg.Offset),
+		Ids: arg.IDs,
+	}
+	res, err := r.q.GetUserAndProfileInfoByAccountIDs(ctx, query)
+	if err != nil {
+		return nil, utils.WrapRepositoryError(
+			&utils.ErrOperationFailed{
+				Operation: "get user and profile info by account ids",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	var userAndProfileInfos []*model.UserAndProfileInfo
+	for _, r := range res {
+		userAndProfileInfo := &model.UserAndProfileInfo{
+			UserID: r.UserID,
+			UserName: r.UserName,
+			Bio: r.Bio.String,
+			ProfileImageURL: r.ProfileImageUrl.String,
+		}
+		userAndProfileInfos = append(userAndProfileInfos, userAndProfileInfo)
+	}
+
+	return userAndProfileInfos, nil
 }

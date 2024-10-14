@@ -13,6 +13,48 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+type FollowStatus string
+
+const (
+	FollowStatusPending  FollowStatus = "pending"
+	FollowStatusAccepted FollowStatus = "accepted"
+)
+
+func (e *FollowStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = FollowStatus(s)
+	case string:
+		*e = FollowStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for FollowStatus: %T", src)
+	}
+	return nil
+}
+
+type NullFollowStatus struct {
+	FollowStatus FollowStatus
+	Valid        bool // Valid is true if FollowStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullFollowStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.FollowStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.FollowStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullFollowStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.FollowStatus), nil
+}
+
 type NotificationType string
 
 const (
@@ -24,6 +66,8 @@ const (
 	NotificationTypeQuote         NotificationType = "quote"
 	NotificationTypeFollowRequest NotificationType = "follow_request"
 	NotificationTypeReport        NotificationType = "report"
+	NotificationTypeWarning       NotificationType = "warning"
+	NotificationTypeOther         NotificationType = "other"
 )
 
 func (e *NotificationType) Scan(src interface{}) error {
@@ -123,12 +167,7 @@ type Block struct {
 type Follow struct {
 	FollowerAccountID  string
 	FollowingAccountID string
-	CreatedAt          time.Time
-}
-
-type FollowRequest struct {
-	RequesterAccountID string
-	RequestedAccountID string
+	Status             FollowStatus
 	CreatedAt          time.Time
 }
 

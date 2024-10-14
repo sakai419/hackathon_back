@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	sqlcgen "local-test/internal/sqlc/generated"
+	"local-test/internal/sqlc/sqlcgen"
 )
 
 type Repository struct {

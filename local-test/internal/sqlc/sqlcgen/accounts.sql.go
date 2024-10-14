@@ -9,6 +9,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const checkUserIdExists = `-- name: CheckUserIdExists :one
@@ -97,15 +99,15 @@ const getUserAndProfileInfoByAccountIDs = `-- name: GetUserAndProfileInfoByAccou
 SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
-WHERE a.id = ANY($1)
+WHERE a.id = ANY($3::VARCHAR[])
 ORDER BY a.created_at DESC
-LIMIT $2 OFFSET $3
+LIMIT $1 OFFSET $2
 `
 
 type GetUserAndProfileInfoByAccountIDsParams struct {
-	ID     string
 	Limit  int32
 	Offset int32
+	Ids    []string
 }
 
 type GetUserAndProfileInfoByAccountIDsRow struct {
@@ -115,8 +117,9 @@ type GetUserAndProfileInfoByAccountIDsRow struct {
 	ProfileImageUrl sql.NullString
 }
 
+// args: ids VARCHAR[]
 func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg GetUserAndProfileInfoByAccountIDsParams) ([]GetUserAndProfileInfoByAccountIDsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfoByAccountIDs, arg.ID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfoByAccountIDs, arg.Limit, arg.Offset, pq.Array(arg.Ids))
 	if err != nil {
 		return nil, err
 	}

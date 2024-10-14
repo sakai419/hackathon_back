@@ -25,6 +25,7 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 				),
 			}
 		}
+
 		return utils.WrapServiceError(
 			&utils.ErrOperationFailed{
 				Operation: "get account ID by user ID",
@@ -34,7 +35,7 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 	}
 
 	// Convert params
-	params := &model.CreateReportParams{
+	createReportParams := &model.CreateReportParams{
 		ReporterAccountID: arg.ReporterAccountID,
 		ReportedAccountID: RepotedAccountID,
 		Reason:            arg.Reason,
@@ -42,7 +43,7 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 	}
 
 	// Validate request
-	if err := params.Validate(); err != nil {
+	if err := createReportParams.Validate(); err != nil {
 		return &utils.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -57,7 +58,7 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 	}
 
 	// Create report
-	if err := s.repo.CreateReport(ctx, params); err != nil {
+	if err := s.repo.CreateReport(ctx, createReportParams); err != nil {
 		return utils.WrapServiceError(
 			&utils.ErrOperationFailed{
 				Operation: "create report",

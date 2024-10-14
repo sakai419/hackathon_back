@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"local-test/internal/model"
-	sqlcgen "local-test/internal/sqlc/generated"
+	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/utils"
 )
 

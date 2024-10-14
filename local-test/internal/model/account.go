@@ -21,9 +21,15 @@ func (p *CreateAccountParams) Validate() error {
 	return nil
 }
 
-type UserAndProfile struct {
-	UserID  string
-	UserName string
-	Bio	 string
+type GetUserAndProfileInfoByAccountIDsParams struct {
+	Limit  int32
+	Offset int32
+	IDs    []string
+}
+
+type UserAndProfileInfo struct {
+	UserID          string
+	UserName        string
+	Bio	            string
 	ProfileImageURL string
 }
