@@ -1,19 +1,19 @@
 -- name: CreateSettingsWithDefaultValues :exec
 INSERT INTO settings (account_id)
-VALUES (?);
+VALUES ($1);
 
 -- name: GetSettingsByAccountId :one
 SELECT * FROM settings
-WHERE account_id = ?;
+WHERE account_id = $1;
 
 -- name: UpdateSettingsPrivacy :exec
 UPDATE settings
-SET is_private = ?
-WHERE account_id = ?;
+SET is_private = $1
+WHERE account_id = $2;
 
 -- name: DeleteSettings :exec
 DELETE FROM settings
-WHERE account_id = ?;
+WHERE account_id = $1;
 
 -- name: CheckSettingsExist :one
-SELECT EXISTS(SELECT 1 FROM settings WHERE account_id = ?);
+SELECT EXISTS(SELECT 1 FROM settings WHERE account_id = $1);

@@ -10,7 +10,7 @@ import (
 )
 
 const checkSettingsExist = `-- name: CheckSettingsExist :one
-SELECT EXISTS(SELECT 1 FROM settings WHERE account_id = ?)
+SELECT EXISTS(SELECT 1 FROM settings WHERE account_id = $1)
 `
 
 func (q *Queries) CheckSettingsExist(ctx context.Context, accountID string) (bool, error) {
@@ -22,7 +22,7 @@ func (q *Queries) CheckSettingsExist(ctx context.Context, accountID string) (boo
 
 const createSettingsWithDefaultValues = `-- name: CreateSettingsWithDefaultValues :exec
 INSERT INTO settings (account_id)
-VALUES (?)
+VALUES ($1)
 `
 
 func (q *Queries) CreateSettingsWithDefaultValues(ctx context.Context, accountID string) error {
@@ -32,7 +32,7 @@ func (q *Queries) CreateSettingsWithDefaultValues(ctx context.Context, accountID
 
 const deleteSettings = `-- name: DeleteSettings :exec
 DELETE FROM settings
-WHERE account_id = ?
+WHERE account_id = $1
 `
 
 func (q *Queries) DeleteSettings(ctx context.Context, accountID string) error {
@@ -42,7 +42,7 @@ func (q *Queries) DeleteSettings(ctx context.Context, accountID string) error {
 
 const getSettingsByAccountId = `-- name: GetSettingsByAccountId :one
 SELECT account_id, is_private, created_at, updated_at FROM settings
-WHERE account_id = ?
+WHERE account_id = $1
 `
 
 func (q *Queries) GetSettingsByAccountId(ctx context.Context, accountID string) (Setting, error) {
@@ -59,8 +59,8 @@ func (q *Queries) GetSettingsByAccountId(ctx context.Context, accountID string) 
 
 const updateSettingsPrivacy = `-- name: UpdateSettingsPrivacy :exec
 UPDATE settings
-SET is_private = ?
-WHERE account_id = ?
+SET is_private = $1
+WHERE account_id = $2
 `
 
 type UpdateSettingsPrivacyParams struct {

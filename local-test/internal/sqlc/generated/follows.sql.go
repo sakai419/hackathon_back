@@ -13,7 +13,7 @@ import (
 const checkFollowExists = `-- name: CheckFollowExists :one
 SELECT EXISTS(
     SELECT 1 FROM follows
-    WHERE follower_account_id = ? AND following_account_id = ?
+    WHERE follower_account_id = $1 AND following_account_id = $2
 ) AS is_following
 `
 
@@ -31,7 +31,7 @@ func (q *Queries) CheckFollowExists(ctx context.Context, arg CheckFollowExistsPa
 
 const createFollow = `-- name: CreateFollow :exec
 INSERT INTO follows (follower_account_id, following_account_id)
-VALUES (?, ?)
+VALUES ($1, $2)
 `
 
 type CreateFollowParams struct {
@@ -46,7 +46,7 @@ func (q *Queries) CreateFollow(ctx context.Context, arg CreateFollowParams) erro
 
 const deleteFollow = `-- name: DeleteFollow :execresult
 DELETE FROM follows
-WHERE follower_account_id = ? AND following_account_id = ?
+WHERE follower_account_id = $1 AND following_account_id = $2
 `
 
 type DeleteFollowParams struct {
@@ -62,23 +62,24 @@ const getFollowSuggestions = `-- name: GetFollowSuggestions :many
 SELECT DISTINCT f2.following_account_id
 FROM follows f1
 JOIN follows f2 ON f1.following_account_id = f2.follower_account_id
-WHERE f1.follower_account_id = ?
+WHERE f1.follower_account_id = $1
     AND f2.following_account_id != f1.follower_account_id
     AND NOT EXISTS (
         SELECT 1 FROM follows f3
         WHERE f3.follower_account_id = f1.follower_account_id
             AND f3.following_account_id = f2.following_account_id
     )
-LIMIT ?
+LIMIT $2 OFFSET $3
 `
 
 type GetFollowSuggestionsParams struct {
 	FollowerAccountID string
 	Limit             int32
+	Offset            int32
 }
 
 func (q *Queries) GetFollowSuggestions(ctx context.Context, arg GetFollowSuggestionsParams) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getFollowSuggestions, arg.FollowerAccountID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, getFollowSuggestions, arg.FollowerAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +104,9 @@ func (q *Queries) GetFollowSuggestions(ctx context.Context, arg GetFollowSuggest
 const getFollowerAccountIDs = `-- name: GetFollowerAccountIDs :many
 SELECT follower_account_id
 FROM follows
-WHERE following_account_id = ?
+WHERE following_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetFollowerAccountIDsParams struct {
@@ -139,7 +140,7 @@ func (q *Queries) GetFollowerAccountIDs(ctx context.Context, arg GetFollowerAcco
 
 const getFollowerCount = `-- name: GetFollowerCount :one
 SELECT COUNT(*) FROM follows
-WHERE following_account_id = ?
+WHERE following_account_id = $1
 `
 
 func (q *Queries) GetFollowerCount(ctx context.Context, followingAccountID string) (int64, error) {
@@ -152,9 +153,9 @@ func (q *Queries) GetFollowerCount(ctx context.Context, followingAccountID strin
 const getFollowing = `-- name: GetFollowing :many
 SELECT following_account_id
 FROM follows
-WHERE follower_account_id = ?
+WHERE follower_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetFollowingParams struct {
@@ -188,7 +189,7 @@ func (q *Queries) GetFollowing(ctx context.Context, arg GetFollowingParams) ([]s
 
 const getFollowingCount = `-- name: GetFollowingCount :one
 SELECT COUNT(*) FROM follows
-WHERE follower_account_id = ?
+WHERE follower_account_id = $1
 `
 
 func (q *Queries) GetFollowingCount(ctx context.Context, followerAccountID string) (int64, error) {
@@ -202,8 +203,8 @@ const getMutualFollows = `-- name: GetMutualFollows :many
 SELECT f1.following_account_id
 FROM follows f1
 JOIN follows f2 ON f1.following_account_id = f2.follower_account_id
-WHERE f1.follower_account_id = ? AND f2.following_account_id = ?
-LIMIT ? OFFSET ?
+WHERE f1.follower_account_id = $1 AND f2.following_account_id = $2
+LIMIT $3 OFFSET $4
 `
 
 type GetMutualFollowsParams struct {

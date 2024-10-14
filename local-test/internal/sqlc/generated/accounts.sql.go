@@ -12,7 +12,7 @@ import (
 )
 
 const checkUserIdExists = `-- name: CheckUserIdExists :one
-SELECT EXISTS(SELECT 1 FROM accounts WHERE user_id = ?)
+SELECT EXISTS(SELECT 1 FROM accounts WHERE user_id = $1)
 `
 
 func (q *Queries) CheckUserIdExists(ctx context.Context, userID string) (bool, error) {
@@ -23,7 +23,7 @@ func (q *Queries) CheckUserIdExists(ctx context.Context, userID string) (bool, e
 }
 
 const checkUserNameExists = `-- name: CheckUserNameExists :one
-SELECT EXISTS(SELECT 1 FROM accounts WHERE user_name = ?)
+SELECT EXISTS(SELECT 1 FROM accounts WHERE user_name = $1)
 `
 
 func (q *Queries) CheckUserNameExists(ctx context.Context, userName string) (bool, error) {
@@ -46,7 +46,7 @@ func (q *Queries) CountAccounts(ctx context.Context) (int64, error) {
 
 const createAccount = `-- name: CreateAccount :exec
 INSERT INTO accounts (id, user_id, user_name)
-VALUES (?, ?, ?)
+VALUES ($1, $2, $3)
 `
 
 type CreateAccountParams struct {
@@ -62,7 +62,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) er
 
 const deleteAccount = `-- name: DeleteAccount :execresult
 DELETE FROM accounts
-WHERE id = ?
+WHERE id = $1
 `
 
 func (q *Queries) DeleteAccount(ctx context.Context, id string) (sql.Result, error) {
@@ -71,7 +71,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) (sql.Result, err
 
 const getAccountCreationDate = `-- name: GetAccountCreationDate :one
 SELECT created_at FROM accounts
-WHERE id = ?
+WHERE id = $1
 `
 
 func (q *Queries) GetAccountCreationDate(ctx context.Context, id string) (time.Time, error) {
@@ -83,7 +83,7 @@ func (q *Queries) GetAccountCreationDate(ctx context.Context, id string) (time.T
 
 const getAccountIDByUserId = `-- name: GetAccountIDByUserId :one
 SELECT id FROM accounts
-WHERE user_id = ?
+WHERE user_id = $1
 `
 
 func (q *Queries) GetAccountIDByUserId(ctx context.Context, userID string) (string, error) {
@@ -97,15 +97,15 @@ const getUserAndProfileInfoByAccountIDs = `-- name: GetUserAndProfileInfoByAccou
 SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
-WHERE a.id MEMBER OF (?)
+WHERE a.id = ANY($1)
 ORDER BY a.created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetUserAndProfileInfoByAccountIDsParams struct {
-	JsonMemberof interface{}
-	Limit        int32
-	Offset       int32
+	ID     string
+	Limit  int32
+	Offset int32
 }
 
 type GetUserAndProfileInfoByAccountIDsRow struct {
@@ -116,7 +116,7 @@ type GetUserAndProfileInfoByAccountIDsRow struct {
 }
 
 func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg GetUserAndProfileInfoByAccountIDsParams) ([]GetUserAndProfileInfoByAccountIDsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfoByAccountIDs, arg.JsonMemberof, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfoByAccountIDs, arg.ID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -145,19 +145,19 @@ func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg Get
 
 const searchAccountsByUserId = `-- name: SearchAccountsByUserId :many
 SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
-WHERE user_id LIKE CONCAT('%', ?, '%')
+WHERE user_id LIKE CONCAT('%', $1, '%')
 ORDER BY user_id
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type SearchAccountsByUserIdParams struct {
-	CONCAT interface{}
+	Concat interface{}
 	Limit  int32
 	Offset int32
 }
 
 func (q *Queries) SearchAccountsByUserId(ctx context.Context, arg SearchAccountsByUserIdParams) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, searchAccountsByUserId, arg.CONCAT, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, searchAccountsByUserId, arg.Concat, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -188,19 +188,19 @@ func (q *Queries) SearchAccountsByUserId(ctx context.Context, arg SearchAccounts
 
 const searchAccountsByUserName = `-- name: SearchAccountsByUserName :many
 SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
-WHERE user_name LIKE CONCAT('%', ?, '%')
+WHERE user_name LIKE CONCAT('%', $1, '%')
 ORDER BY user_name
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type SearchAccountsByUserNameParams struct {
-	CONCAT interface{}
+	Concat interface{}
 	Limit  int32
 	Offset int32
 }
 
 func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccountsByUserNameParams) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, searchAccountsByUserName, arg.CONCAT, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, searchAccountsByUserName, arg.Concat, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccoun
 const suspendAccount = `-- name: SuspendAccount :execresult
 UPDATE accounts
 SET is_suspended = TRUE
-WHERE id = ?
+WHERE id = $1
 `
 
 func (q *Queries) SuspendAccount(ctx context.Context, id string) (sql.Result, error) {
@@ -242,7 +242,7 @@ func (q *Queries) SuspendAccount(ctx context.Context, id string) (sql.Result, er
 const unsuspendAccount = `-- name: UnsuspendAccount :execresult
 UPDATE accounts
 SET is_suspended = FALSE
-WHERE id = ?
+WHERE id = $1
 `
 
 func (q *Queries) UnsuspendAccount(ctx context.Context, id string) (sql.Result, error) {
@@ -251,8 +251,8 @@ func (q *Queries) UnsuspendAccount(ctx context.Context, id string) (sql.Result, 
 
 const updateAccountUserId = `-- name: UpdateAccountUserId :exec
 UPDATE accounts
-SET user_id = ?
-WHERE id = ?
+SET user_id = $1
+WHERE id = $2
 `
 
 type UpdateAccountUserIdParams struct {
@@ -267,8 +267,8 @@ func (q *Queries) UpdateAccountUserId(ctx context.Context, arg UpdateAccountUser
 
 const updateAccountUserName = `-- name: UpdateAccountUserName :exec
 UPDATE accounts
-SET user_name = ?
-WHERE id = ?
+SET user_name = $1
+WHERE id = $2
 `
 
 type UpdateAccountUserNameParams struct {

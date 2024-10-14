@@ -1,26 +1,26 @@
 -- name: CreateHashtag :exec
-INSERT INTO hashtags (tag) VALUES (?)
-ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id);
+INSERT INTO hashtags (tag) VALUES ($1)
+ON CONFLICT (tag) DO NOTHING;
 
 -- name: GetHashtagById :one
-SELECT * FROM hashtags WHERE id = ?;
+SELECT * FROM hashtags WHERE id = $1;
 
 -- name: GetHashtagByTag :one
-SELECT * FROM hashtags WHERE tag = ?;
+SELECT * FROM hashtags WHERE tag = $1;
 
 -- name: DeleteHashtag :exec
-DELETE FROM hashtags WHERE id = ?;
+DELETE FROM hashtags WHERE id = $1;
 
 -- name: GetAllHashtags :many
 SELECT * FROM hashtags
 ORDER BY tag ASC
-LIMIT ? OFFSET ?;
+LIMIT $1 OFFSET $2;
 
 -- name: SearchHashtags :many
 SELECT * FROM hashtags
-WHERE tag LIKE CONCAT('%', ?, '%')
+WHERE tag LIKE CONCAT('%', $1, '%')
 ORDER BY tag ASC
-LIMIT ?;
+LIMIT $2;
 
 -- name: GetHashtagCount :one
 SELECT COUNT(*) FROM hashtags;
@@ -28,4 +28,4 @@ SELECT COUNT(*) FROM hashtags;
 -- name: UpdateHashtagCreatedAt :exec
 UPDATE hashtags
 SET created_at = CURRENT_TIMESTAMP
-WHERE id = ?;
+WHERE id = $1;

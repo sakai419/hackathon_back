@@ -7,13 +7,13 @@ services:
         platform: linux/x86_64
         tty: true
         ports:
-            - "3306:3306"
+            - "5432:5432"
         env_file:
             - .env
         volumes:
             - type: volume
               source: hackathon_postgres
-              target: /var/lib/mysql
+              target: /var/lib/postgresql/data
             - type: bind
               source: ./init
               target: /docker-entrypoint-initdb.d

@@ -1,55 +1,55 @@
 -- name: CreateNotification :exec
 INSERT INTO notifications (sender_account_id, recipient_account_id, type, content)
-VALUES (?, ?, ?, ?);
+VALUES ($1, $2, $3, $4);
 
 -- name: GetNotificationById :one
 SELECT * FROM notifications
-WHERE id = ?;
+WHERE id = $1;
 
 -- name: GetNotificationsByRecipientId :many
 SELECT * FROM notifications
-WHERE recipient_account_id = ?
+WHERE recipient_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?;
+LIMIT $2 OFFSET $3;
 
 -- name: GetUnreadNotificationsByRecipientId :many
 SELECT * FROM notifications
-WHERE recipient_account_id = ? AND is_read = FALSE
+WHERE recipient_account_id = $1 AND is_read = FALSE
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?;
+LIMIT $2 OFFSET $3;
 
 -- name: MarkNotificationAsRead :exec
 UPDATE notifications
 SET is_read = TRUE
-WHERE id = ? AND recipient_account_id = ?;
+WHERE id = $1 AND recipient_account_id = $2;
 
 -- name: MarkAllNotificationsAsRead :exec
 UPDATE notifications
 SET is_read = TRUE
-WHERE recipient_account_id = ? AND is_read = FALSE;
+WHERE recipient_account_id = $1 AND is_read = FALSE;
 
 -- name: DeleteNotification :exec
 DELETE FROM notifications
-WHERE id = ? AND recipient_account_id = ?;
+WHERE id = $1 AND recipient_account_id = $2;
 
 -- name: DeleteAllNotificationsForRecipient :exec
 DELETE FROM notifications
-WHERE recipient_account_id = ?;
+WHERE recipient_account_id = $1;
 
 -- name: GetNotificationCountByRecipientId :one
 SELECT COUNT(*) FROM notifications
-WHERE recipient_account_id = ?;
+WHERE recipient_account_id = $1;
 
 -- name: GetUnreadNotificationCountByRecipientId :one
 SELECT COUNT(*) FROM notifications
-WHERE recipient_account_id = ? AND is_read = FALSE;
+WHERE recipient_account_id = $1 AND is_read = FALSE;
 
 -- name: GetNotificationsByType :many
 SELECT * FROM notifications
-WHERE recipient_account_id = ? AND type = ?
+WHERE recipient_account_id = $1 AND type = $2
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?;
+LIMIT $3 OFFSET $4;
 
 -- name: DeleteOldReadNotifications :exec
 DELETE FROM notifications
-WHERE recipient_account_id = ? AND is_read = TRUE AND created_at < ?;
+WHERE recipient_account_id = $1 AND is_read = TRUE AND created_at < $2;

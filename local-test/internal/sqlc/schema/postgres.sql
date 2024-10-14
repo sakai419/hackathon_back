@@ -1,22 +1,3 @@
--- Drop tables
-DROP TABLE IF EXISTS tweet_hashtags;
-DROP TABLE IF EXISTS hashtags;
-DROP TABLE IF EXISTS interests;
-DROP TABLE IF EXISTS labels;
-DROP TABLE IF EXISTS retweets_and_quotes;
-DROP TABLE IF EXISTS replies;
-DROP TABLE IF EXISTS reports;
-DROP TABLE IF EXISTS likes;
-DROP TABLE IF EXISTS messages;
-DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS follow_requests;
-DROP TABLE IF EXISTS follows;
-DROP TABLE IF EXISTS blocks;
-DROP TABLE IF EXISTS settings;
-DROP TABLE IF EXISTS profiles;
-DROP TABLE IF EXISTS tweets;
-DROP TABLE IF EXISTS accounts;
-
 -- Define functions
 CREATE OR REPLACE FUNCTION update_timestamp()
 RETURNS TRIGGER AS $$
@@ -240,6 +221,17 @@ CREATE TABLE interests (
         REFERENCES accounts(id) ON DELETE CASCADE
 );
 
+-- Table: labels
+CREATE TABLE labels (
+    tweet_id BIGINT PRIMARY KEY,
+    label1 VARCHAR(50) NOT NULL,
+    label2 VARCHAR(50),
+    label3 VARCHAR(50),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_labels_tweet_id FOREIGN KEY (tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE
+);
+
 -- Table: likes
 
 CREATE TABLE likes (
@@ -323,7 +315,7 @@ EXECUTE FUNCTION update_timestamp();
 -- Table: replies
 
 CREATE TABLE replies (
-    reply_id BIGINT NOT NULL,
+    tweet_id BIGINT NOT NULL,
     original_tweet_id BIGINT NOT NULL,
     parent_reply_id BIGINT,
     replying_account_id CHAR(28) NOT NULL,
@@ -372,7 +364,7 @@ CREATE INDEX idx_reports_reported_account_id ON reports (reported_account_id);
 -- Table: retweets_and_quotes
 
 CREATE TABLE retweets_and_quotes (
-    retweet_id BIGINT NOT NULL,
+    tweet_id BIGINT NOT NULL,
     retweeting_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

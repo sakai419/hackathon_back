@@ -7,13 +7,15 @@ import (
 	"local-test/pkg/utils"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 func generateConnStr(c *config.DBConfig) string {
 	switch c.Driver {
 	case "mysql":
-		return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=%s&timeout=%ds&readTimeout=%ds&writeTimeout=%ds", c.User, c.Pwd, c.Host, c.Database, c.Charset, c.Timeout, c.ReadTimeout, c.WriteTimeout)
+		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&timeout=%ds&readTimeout=%ds&writeTimeout=%ds", c.User, c.Pwd, c.Host, c.Port, c.Database, c.Charset, c.Timeout, c.ReadTimeout, c.WriteTimeout)
+	case "postgres":
+		return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", c.Host, c.Port, c.User, c.Pwd, c.Database, c.SSLMode)
 	default:
 		return ""
 	}
@@ -40,10 +42,12 @@ func ConnectToDB(c *config.DBConfig) (*sql.DB, error) {
 	db.SetConnMaxLifetime(time.Duration(c.ConnMaxLifetime) * time.Minute)
 	db.SetConnMaxIdleTime(time.Duration(c.ConnMaxIdleTime) * time.Minute)
 
+
 	// Check if the database is alive
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("database: failed to ping db: %w", err)
 	}
+
 
 	// Check user permissions
 	if err := utils.ValidateDB(db, c); err != nil {

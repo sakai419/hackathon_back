@@ -4,7 +4,9 @@ go 1.23.0
 
 require (
 	firebase.google.com/go/v4 v4.14.1
+	github.com/lib/pq v1.10.9
 	github.com/oapi-codegen/runtime v1.1.1
+	github.com/sqlc-dev/pqtype v0.3.0
 	google.golang.org/api v0.170.0
 )
 

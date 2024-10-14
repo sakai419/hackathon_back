@@ -7,101 +7,102 @@ package sqlcgen
 import (
 	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
-type NotificationsType string
+type NotificationType string
 
 const (
-	NotificationsTypeFollow        NotificationsType = "follow"
-	NotificationsTypeLike          NotificationsType = "like"
-	NotificationsTypeRetweet       NotificationsType = "retweet"
-	NotificationsTypeReply         NotificationsType = "reply"
-	NotificationsTypeMessage       NotificationsType = "message"
-	NotificationsTypeQuote         NotificationsType = "quote"
-	NotificationsTypeFollowRequest NotificationsType = "follow_request"
-	NotificationsTypeReport        NotificationsType = "report"
+	NotificationTypeFollow        NotificationType = "follow"
+	NotificationTypeLike          NotificationType = "like"
+	NotificationTypeRetweet       NotificationType = "retweet"
+	NotificationTypeReply         NotificationType = "reply"
+	NotificationTypeMessage       NotificationType = "message"
+	NotificationTypeQuote         NotificationType = "quote"
+	NotificationTypeFollowRequest NotificationType = "follow_request"
+	NotificationTypeReport        NotificationType = "report"
 )
 
-func (e *NotificationsType) Scan(src interface{}) error {
+func (e *NotificationType) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = NotificationsType(s)
+		*e = NotificationType(s)
 	case string:
-		*e = NotificationsType(s)
+		*e = NotificationType(s)
 	default:
-		return fmt.Errorf("unsupported scan type for NotificationsType: %T", src)
+		return fmt.Errorf("unsupported scan type for NotificationType: %T", src)
 	}
 	return nil
 }
 
-type NullNotificationsType struct {
-	NotificationsType NotificationsType
-	Valid             bool // Valid is true if NotificationsType is not NULL
+type NullNotificationType struct {
+	NotificationType NotificationType
+	Valid            bool // Valid is true if NotificationType is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullNotificationsType) Scan(value interface{}) error {
+func (ns *NullNotificationType) Scan(value interface{}) error {
 	if value == nil {
-		ns.NotificationsType, ns.Valid = "", false
+		ns.NotificationType, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.NotificationsType.Scan(value)
+	return ns.NotificationType.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullNotificationsType) Value() (driver.Value, error) {
+func (ns NullNotificationType) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.NotificationsType), nil
+	return string(ns.NotificationType), nil
 }
 
-type ReportsReason string
+type ReportReason string
 
 const (
-	ReportsReasonSpam                 ReportsReason = "spam"
-	ReportsReasonHarassment           ReportsReason = "harassment"
-	ReportsReasonInappropriateContent ReportsReason = "inappropriate_content"
-	ReportsReasonOther                ReportsReason = "other"
+	ReportReasonSpam                 ReportReason = "spam"
+	ReportReasonHarassment           ReportReason = "harassment"
+	ReportReasonInappropriateContent ReportReason = "inappropriate_content"
+	ReportReasonOther                ReportReason = "other"
 )
 
-func (e *ReportsReason) Scan(src interface{}) error {
+func (e *ReportReason) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = ReportsReason(s)
+		*e = ReportReason(s)
 	case string:
-		*e = ReportsReason(s)
+		*e = ReportReason(s)
 	default:
-		return fmt.Errorf("unsupported scan type for ReportsReason: %T", src)
+		return fmt.Errorf("unsupported scan type for ReportReason: %T", src)
 	}
 	return nil
 }
 
-type NullReportsReason struct {
-	ReportsReason ReportsReason
-	Valid         bool // Valid is true if ReportsReason is not NULL
+type NullReportReason struct {
+	ReportReason ReportReason
+	Valid        bool // Valid is true if ReportReason is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullReportsReason) Scan(value interface{}) error {
+func (ns *NullReportReason) Scan(value interface{}) error {
 	if value == nil {
-		ns.ReportsReason, ns.Valid = "", false
+		ns.ReportReason, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.ReportsReason.Scan(value)
+	return ns.ReportReason.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullReportsReason) Value() (driver.Value, error) {
+func (ns NullReportReason) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.ReportsReason), nil
+	return string(ns.ReportReason), nil
 }
 
 type Account struct {
@@ -117,25 +118,22 @@ type Block struct {
 	BlockerAccountID string
 	BlockedAccountID string
 	CreatedAt        time.Time
-	UpdatedAt        time.Time
 }
 
 type Follow struct {
 	FollowerAccountID  string
 	FollowingAccountID string
 	CreatedAt          time.Time
-	UpdatedAt          time.Time
 }
 
 type FollowRequest struct {
 	RequesterAccountID string
 	RequestedAccountID string
 	CreatedAt          time.Time
-	UpdatedAt          time.Time
 }
 
 type Hashtag struct {
-	ID        uint64
+	ID        int64
 	Tag       string
 	CreatedAt time.Time
 }
@@ -245,7 +243,7 @@ type Interest struct {
 }
 
 type Label struct {
-	TweetID   uint64
+	TweetID   int64
 	Label1    string
 	Label2    sql.NullString
 	Label3    sql.NullString
@@ -254,29 +252,27 @@ type Label struct {
 
 type Like struct {
 	LikingAccountID string
-	OriginalTweetID uint64
+	OriginalTweetID int64
 	CreatedAt       time.Time
 }
 
 type Message struct {
-	ID                 uint32
+	ID                 int64
 	SenderAccountID    string
 	RecipientAccountID string
 	Content            sql.NullString
 	IsRead             bool
 	CreatedAt          time.Time
-	UpdatedAt          time.Time
 }
 
 type Notification struct {
-	ID                 uint32
+	ID                 int64
 	SenderAccountID    sql.NullString
 	RecipientAccountID string
-	Type               NotificationsType
+	Type               NotificationType
 	Content            sql.NullString
 	IsRead             bool
 	CreatedAt          time.Time
-	UpdatedAt          time.Time
 }
 
 type Profile struct {
@@ -289,26 +285,26 @@ type Profile struct {
 }
 
 type Reply struct {
-	ID                uint64
-	OriginalTweetID   uint64
+	TweetID           int64
+	OriginalTweetID   int64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 	CreatedAt         time.Time
 }
 
 type Report struct {
-	ID                uint64
+	ID                int64
 	ReporterAccountID string
 	ReportedAccountID string
-	Reason            ReportsReason
+	Reason            ReportReason
 	Content           sql.NullString
 	CreatedAt         time.Time
 }
 
 type RetweetsAndQuote struct {
-	ID                  uint64
+	TweetID             int64
 	RetweetingAccountID string
-	OriginalTweetID     uint64
+	OriginalTweetID     int64
 	CreatedAt           time.Time
 }
 
@@ -320,24 +316,24 @@ type Setting struct {
 }
 
 type Tweet struct {
-	ID              uint64
+	ID              int64
 	AccountID       string
 	IsPinned        bool
 	Content         sql.NullString
 	Code            sql.NullString
-	LikesCount      uint32
-	RepliesCount    uint32
-	RetweetsCount   uint32
+	LikesCount      int32
+	RepliesCount    int32
+	RetweetsCount   int32
 	IsRetweet       bool
 	IsReply         bool
 	IsQuote         bool
-	EngagementScore uint32
-	Media           json.RawMessage
+	EngagementScore int32
+	Media           pqtype.NullRawMessage
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
 
 type TweetHashtag struct {
-	TweetID   uint64
-	HashtagID uint64
+	TweetID   int64
+	HashtagID int64
 }

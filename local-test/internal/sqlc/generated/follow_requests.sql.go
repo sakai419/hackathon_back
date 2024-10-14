@@ -14,7 +14,7 @@ const acceptFollowRequest = `-- name: AcceptFollowRequest :exec
 INSERT INTO follows (follower_account_id, following_account_id)
 SELECT requester_account_id, requested_account_id
 FROM follow_requests
-WHERE requester_account_id = ? AND requested_account_id = ?
+WHERE requester_account_id = $1 AND requested_account_id = $2
 `
 
 type AcceptFollowRequestParams struct {
@@ -29,7 +29,7 @@ func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowReque
 
 const createFollowRequest = `-- name: CreateFollowRequest :exec
 INSERT INTO follow_requests (requester_account_id, requested_account_id)
-VALUES (?, ?)
+VALUES ($1, $2)
 `
 
 type CreateFollowRequestParams struct {
@@ -44,7 +44,7 @@ func (q *Queries) CreateFollowRequest(ctx context.Context, arg CreateFollowReque
 
 const deleteFollowRequest = `-- name: DeleteFollowRequest :exec
 DELETE FROM follow_requests
-WHERE requester_account_id = ? AND requested_account_id = ?
+WHERE requester_account_id = $1 AND requested_account_id = $2
 `
 
 type DeleteFollowRequestParams struct {
@@ -59,7 +59,7 @@ func (q *Queries) DeleteFollowRequest(ctx context.Context, arg DeleteFollowReque
 
 const deleteOldFollowRequests = `-- name: DeleteOldFollowRequests :exec
 DELETE FROM follow_requests
-WHERE created_at < ? AND requested_account_id = ?
+WHERE created_at < $1 AND requested_account_id = $2
 `
 
 type DeleteOldFollowRequestsParams struct {
@@ -74,7 +74,7 @@ func (q *Queries) DeleteOldFollowRequests(ctx context.Context, arg DeleteOldFoll
 
 const getPendingFollowRequestCount = `-- name: GetPendingFollowRequestCount :one
 SELECT COUNT(*) FROM follow_requests
-WHERE requested_account_id = ?
+WHERE requested_account_id = $1
 `
 
 func (q *Queries) GetPendingFollowRequestCount(ctx context.Context, requestedAccountID string) (int64, error) {
@@ -87,9 +87,9 @@ func (q *Queries) GetPendingFollowRequestCount(ctx context.Context, requestedAcc
 const getPendingFollowRequests = `-- name: GetPendingFollowRequests :many
 SELECT requester_account_id
 FROM follow_requests
-WHERE requested_account_id = ?
+WHERE requested_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetPendingFollowRequestsParams struct {
@@ -123,7 +123,7 @@ func (q *Queries) GetPendingFollowRequests(ctx context.Context, arg GetPendingFo
 
 const getSentFollowRequestCount = `-- name: GetSentFollowRequestCount :one
 SELECT COUNT(*) FROM follow_requests
-WHERE requester_account_id = ?
+WHERE requester_account_id = $1
 `
 
 func (q *Queries) GetSentFollowRequestCount(ctx context.Context, requesterAccountID string) (int64, error) {
@@ -136,9 +136,9 @@ func (q *Queries) GetSentFollowRequestCount(ctx context.Context, requesterAccoun
 const getSentFollowRequests = `-- name: GetSentFollowRequests :many
 SELECT requested_account_id
 FROM follow_requests
-WHERE requester_account_id = ?
+WHERE requester_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetSentFollowRequestsParams struct {
@@ -172,7 +172,7 @@ func (q *Queries) GetSentFollowRequests(ctx context.Context, arg GetSentFollowRe
 
 const rejectFollowRequest = `-- name: RejectFollowRequest :exec
 DELETE FROM follow_requests
-WHERE requester_account_id = ? AND requested_account_id = ?
+WHERE requester_account_id = $1 AND requested_account_id = $2
 `
 
 type RejectFollowRequestParams struct {

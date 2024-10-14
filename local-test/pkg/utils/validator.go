@@ -48,6 +48,7 @@ func checkRequiredTables(db *sql.DB) error {
         "notifications",
         "profiles",
         "replies",
+		"reports",
         "retweets_and_quotes",
         "tweet_hashtags",
         "tweets",
@@ -60,9 +61,18 @@ func checkRequiredTables(db *sql.DB) error {
 	return nil
 }
 
-func generateQueries(db_type string) (*Queries) {
-    switch db_type {
+func generateQueries(driver string) (*Queries) {
+    switch driver {
     case "mysql":
+		return &Queries{
+			createTableQuery: "CREATE TABLE test_table (id INT)",
+			dropTableQuery:   "DROP TABLE test_table",
+			insertQuery:      "INSERT INTO test_table (id) VALUES (1)",
+			selectQuery:      "SELECT * FROM test_table",
+			deleteQuery:      "DELETE FROM test_table",
+			updateQuery:      "UPDATE test_table SET id = 2",
+		}
+	case "postgres":
 		return &Queries{
 			createTableQuery: "CREATE TABLE test_table (id INT)",
 			dropTableQuery:   "DROP TABLE test_table",
@@ -76,9 +86,9 @@ func generateQueries(db_type string) (*Queries) {
     }
 }
 
-func checkUserPermissions(db *sql.DB, dbType string) error {
+func checkUserPermissions(db *sql.DB, driver string) error {
 	// Generate queries based on database type
-    queries := generateQueries(dbType)
+    queries := generateQueries(driver)
     permissions := map[string]string{
         "create tables": queries.createTableQuery,
         "insert data":   queries.insertQuery,

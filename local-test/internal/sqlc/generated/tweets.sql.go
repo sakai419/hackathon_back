@@ -8,20 +8,21 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createTweet = `-- name: CreateTweet :exec
 INSERT INTO tweets (
     account_id, content, code, media
-) VALUES (?, ?, ?, ?)
+) VALUES ($1, $2, $3, $4)
 `
 
 type CreateTweetParams struct {
 	AccountID string
 	Content   sql.NullString
 	Code      sql.NullString
-	Media     json.RawMessage
+	Media     pqtype.NullRawMessage
 }
 
 func (q *Queries) CreateTweet(ctx context.Context, arg CreateTweetParams) error {
@@ -37,14 +38,14 @@ func (q *Queries) CreateTweet(ctx context.Context, arg CreateTweetParams) error 
 const createTweetAsQuote = `-- name: CreateTweetAsQuote :exec
 INSERT INTO tweets (
     account_id, is_quote, content, code, media
-) VALUES (?, TRUE, ?, ?, ?)
+) VALUES ($1, TRUE, $2, $3, $4)
 `
 
 type CreateTweetAsQuoteParams struct {
 	AccountID string
 	Content   sql.NullString
 	Code      sql.NullString
-	Media     json.RawMessage
+	Media     pqtype.NullRawMessage
 }
 
 func (q *Queries) CreateTweetAsQuote(ctx context.Context, arg CreateTweetAsQuoteParams) error {
@@ -60,14 +61,14 @@ func (q *Queries) CreateTweetAsQuote(ctx context.Context, arg CreateTweetAsQuote
 const createTweetAsReply = `-- name: CreateTweetAsReply :exec
 INSERT INTO tweets (
     account_id, is_reply, content, code, media
-) VALUES (?, TRUE, ?, ?, ?)
+) VALUES ($1, TRUE, $2, $3, $4)
 `
 
 type CreateTweetAsReplyParams struct {
 	AccountID string
 	Content   sql.NullString
 	Code      sql.NullString
-	Media     json.RawMessage
+	Media     pqtype.NullRawMessage
 }
 
 func (q *Queries) CreateTweetAsReply(ctx context.Context, arg CreateTweetAsReplyParams) error {
@@ -83,7 +84,7 @@ func (q *Queries) CreateTweetAsReply(ctx context.Context, arg CreateTweetAsReply
 const createTweetAsRetweet = `-- name: CreateTweetAsRetweet :exec
 INSERT INTO tweets (
     account_id, is_retweet
-) VALUES (?, TRUE)
+) VALUES ($1, TRUE)
 `
 
 func (q *Queries) CreateTweetAsRetweet(ctx context.Context, accountID string) error {
@@ -92,11 +93,11 @@ func (q *Queries) CreateTweetAsRetweet(ctx context.Context, accountID string) er
 }
 
 const deleteTweet = `-- name: DeleteTweet :exec
-DELETE FROM tweets WHERE id = ? AND account_id = ?
+DELETE FROM tweets WHERE id = $1 AND account_id = $2
 `
 
 type DeleteTweetParams struct {
-	ID        uint64
+	ID        int64
 	AccountID string
 }
 
@@ -107,7 +108,7 @@ func (q *Queries) DeleteTweet(ctx context.Context, arg DeleteTweetParams) error 
 
 const getPinnedTweetForAccount = `-- name: GetPinnedTweetForAccount :one
 SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets
-WHERE account_id = ? AND is_pinned = TRUE
+WHERE account_id = $1 AND is_pinned = TRUE
 LIMIT 1
 `
 
@@ -137,11 +138,16 @@ func (q *Queries) GetPinnedTweetForAccount(ctx context.Context, accountID string
 const getTrendingTweets = `-- name: GetTrendingTweets :many
 SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets
 ORDER BY engagement_score DESC
-LIMIT ?
+LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) GetTrendingTweets(ctx context.Context, limit int32) ([]Tweet, error) {
-	rows, err := q.db.QueryContext(ctx, getTrendingTweets, limit)
+type GetTrendingTweetsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetTrendingTweets(ctx context.Context, arg GetTrendingTweetsParams) ([]Tweet, error) {
+	rows, err := q.db.QueryContext(ctx, getTrendingTweets, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -180,10 +186,10 @@ func (q *Queries) GetTrendingTweets(ctx context.Context, limit int32) ([]Tweet, 
 }
 
 const getTweetById = `-- name: GetTweetById :one
-SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets WHERE id = ?
+SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets WHERE id = $1
 `
 
-func (q *Queries) GetTweetById(ctx context.Context, id uint64) (Tweet, error) {
+func (q *Queries) GetTweetById(ctx context.Context, id int64) (Tweet, error) {
 	row := q.db.QueryRowContext(ctx, getTweetById, id)
 	var i Tweet
 	err := row.Scan(
@@ -207,7 +213,7 @@ func (q *Queries) GetTweetById(ctx context.Context, id uint64) (Tweet, error) {
 }
 
 const getTweetCountByAccountId = `-- name: GetTweetCountByAccountId :one
-SELECT COUNT(*) FROM tweets WHERE account_id = ?
+SELECT COUNT(*) FROM tweets WHERE account_id = $1
 `
 
 func (q *Queries) GetTweetCountByAccountId(ctx context.Context, accountID string) (int64, error) {
@@ -219,9 +225,9 @@ func (q *Queries) GetTweetCountByAccountId(ctx context.Context, accountID string
 
 const getTweetsByAccountId = `-- name: GetTweetsByAccountId :many
 SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets
-WHERE account_id = ?
+WHERE account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetTweetsByAccountIdParams struct {
@@ -270,37 +276,37 @@ func (q *Queries) GetTweetsByAccountId(ctx context.Context, arg GetTweetsByAccou
 }
 
 const incrementLikesCount = `-- name: IncrementLikesCount :exec
-UPDATE tweets SET likes_count = likes_count + 1 WHERE id = ?
+UPDATE tweets SET likes_count = likes_count + 1 WHERE id = $1
 `
 
-func (q *Queries) IncrementLikesCount(ctx context.Context, id uint64) error {
+func (q *Queries) IncrementLikesCount(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, incrementLikesCount, id)
 	return err
 }
 
 const incrementRepliesCount = `-- name: IncrementRepliesCount :exec
-UPDATE tweets SET replies_count = replies_count + 1 WHERE id = ?
+UPDATE tweets SET replies_count = replies_count + 1 WHERE id = $1
 `
 
-func (q *Queries) IncrementRepliesCount(ctx context.Context, id uint64) error {
+func (q *Queries) IncrementRepliesCount(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, incrementRepliesCount, id)
 	return err
 }
 
 const incrementRetweetsCount = `-- name: IncrementRetweetsCount :exec
-UPDATE tweets SET retweets_count = retweets_count + 1 WHERE id = ?
+UPDATE tweets SET retweets_count = retweets_count + 1 WHERE id = $1
 `
 
-func (q *Queries) IncrementRetweetsCount(ctx context.Context, id uint64) error {
+func (q *Queries) IncrementRetweetsCount(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, incrementRetweetsCount, id)
 	return err
 }
 
 const searchTweets = `-- name: SearchTweets :many
 SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets
-WHERE content LIKE ? OR code LIKE ?
+WHERE content LIKE $1 OR code LIKE $2
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $3 OFFSET $4
 `
 
 type SearchTweetsParams struct {
@@ -357,11 +363,11 @@ func (q *Queries) SearchTweets(ctx context.Context, arg SearchTweetsParams) ([]T
 const setTweetAsPinned = `-- name: SetTweetAsPinned :exec
 UPDATE tweets
 SET is_pinned = TRUE
-WHERE id = ? AND account_id = ?
+WHERE id = $1 AND account_id = $2
 `
 
 type SetTweetAsPinnedParams struct {
-	ID        uint64
+	ID        int64
 	AccountID string
 }
 
@@ -373,11 +379,11 @@ func (q *Queries) SetTweetAsPinned(ctx context.Context, arg SetTweetAsPinnedPara
 const unpinTweet = `-- name: UnpinTweet :exec
 UPDATE tweets
 SET is_pinned = FALSE
-WHERE id = ? AND account_id = ?
+WHERE id = $1 AND account_id = $2
 `
 
 type UnpinTweetParams struct {
-	ID        uint64
+	ID        int64
 	AccountID string
 }
 
@@ -389,23 +395,23 @@ func (q *Queries) UnpinTweet(ctx context.Context, arg UnpinTweetParams) error {
 const updateEngagementScore = `-- name: UpdateEngagementScore :exec
 UPDATE tweets
 SET engagement_score = likes_count + replies_count + retweets_count
-WHERE id = ?
+WHERE id = $1
 `
 
-func (q *Queries) UpdateEngagementScore(ctx context.Context, id uint64) error {
+func (q *Queries) UpdateEngagementScore(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, updateEngagementScore, id)
 	return err
 }
 
 const updateTweetCode = `-- name: UpdateTweetCode :exec
 UPDATE tweets
-SET code = ?
-WHERE id = ? AND account_id = ?
+SET code = $1
+WHERE id = $2 AND account_id = $3
 `
 
 type UpdateTweetCodeParams struct {
 	Code      sql.NullString
-	ID        uint64
+	ID        int64
 	AccountID string
 }
 
@@ -416,13 +422,13 @@ func (q *Queries) UpdateTweetCode(ctx context.Context, arg UpdateTweetCodeParams
 
 const updateTweetContent = `-- name: UpdateTweetContent :exec
 UPDATE tweets
-SET content = ?
-WHERE id = ? AND account_id = ?
+SET content = $1
+WHERE id = $2 AND account_id = $3
 `
 
 type UpdateTweetContentParams struct {
 	Content   sql.NullString
-	ID        uint64
+	ID        int64
 	AccountID string
 }
 

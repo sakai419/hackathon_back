@@ -37,6 +37,8 @@ type DBConfig struct {
 	User string
 	Pwd string
 	Host string
+	Port int
+	SSLMode string
 	Database string
 	Charset string
 	MaxOpenConns int
@@ -106,6 +108,8 @@ func generateDBConfig(v *viper.Viper) (DBConfig, error) {
 		User:     v.GetString("db.user"),
 		Pwd:      v.GetString("db.password"),
 		Host:     v.GetString("db.host"),
+		Port:     v.GetInt("db.port"),
+		SSLMode:  v.GetString("db.ssl_mode"),
 		Database: v.GetString("db.database"),
 		Charset:  v.GetString("db.charset"),
 		MaxOpenConns: v.GetInt("db.max_open_conns"),

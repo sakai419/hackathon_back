@@ -13,13 +13,13 @@ import (
 
 const createNotification = `-- name: CreateNotification :exec
 INSERT INTO notifications (sender_account_id, recipient_account_id, type, content)
-VALUES (?, ?, ?, ?)
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateNotificationParams struct {
 	SenderAccountID    sql.NullString
 	RecipientAccountID string
-	Type               NotificationsType
+	Type               NotificationType
 	Content            sql.NullString
 }
 
@@ -35,7 +35,7 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 
 const deleteAllNotificationsForRecipient = `-- name: DeleteAllNotificationsForRecipient :exec
 DELETE FROM notifications
-WHERE recipient_account_id = ?
+WHERE recipient_account_id = $1
 `
 
 func (q *Queries) DeleteAllNotificationsForRecipient(ctx context.Context, recipientAccountID string) error {
@@ -45,11 +45,11 @@ func (q *Queries) DeleteAllNotificationsForRecipient(ctx context.Context, recipi
 
 const deleteNotification = `-- name: DeleteNotification :exec
 DELETE FROM notifications
-WHERE id = ? AND recipient_account_id = ?
+WHERE id = $1 AND recipient_account_id = $2
 `
 
 type DeleteNotificationParams struct {
-	ID                 uint32
+	ID                 int64
 	RecipientAccountID string
 }
 
@@ -60,7 +60,7 @@ func (q *Queries) DeleteNotification(ctx context.Context, arg DeleteNotification
 
 const deleteOldReadNotifications = `-- name: DeleteOldReadNotifications :exec
 DELETE FROM notifications
-WHERE recipient_account_id = ? AND is_read = TRUE AND created_at < ?
+WHERE recipient_account_id = $1 AND is_read = TRUE AND created_at < $2
 `
 
 type DeleteOldReadNotificationsParams struct {
@@ -74,11 +74,11 @@ func (q *Queries) DeleteOldReadNotifications(ctx context.Context, arg DeleteOldR
 }
 
 const getNotificationById = `-- name: GetNotificationById :one
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at, updated_at FROM notifications
-WHERE id = ?
+SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
+WHERE id = $1
 `
 
-func (q *Queries) GetNotificationById(ctx context.Context, id uint32) (Notification, error) {
+func (q *Queries) GetNotificationById(ctx context.Context, id int64) (Notification, error) {
 	row := q.db.QueryRowContext(ctx, getNotificationById, id)
 	var i Notification
 	err := row.Scan(
@@ -89,14 +89,13 @@ func (q *Queries) GetNotificationById(ctx context.Context, id uint32) (Notificat
 		&i.Content,
 		&i.IsRead,
 		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getNotificationCountByRecipientId = `-- name: GetNotificationCountByRecipientId :one
 SELECT COUNT(*) FROM notifications
-WHERE recipient_account_id = ?
+WHERE recipient_account_id = $1
 `
 
 func (q *Queries) GetNotificationCountByRecipientId(ctx context.Context, recipientAccountID string) (int64, error) {
@@ -107,10 +106,10 @@ func (q *Queries) GetNotificationCountByRecipientId(ctx context.Context, recipie
 }
 
 const getNotificationsByRecipientId = `-- name: GetNotificationsByRecipientId :many
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at, updated_at FROM notifications
-WHERE recipient_account_id = ?
+SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
+WHERE recipient_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetNotificationsByRecipientIdParams struct {
@@ -136,7 +135,6 @@ func (q *Queries) GetNotificationsByRecipientId(ctx context.Context, arg GetNoti
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -152,15 +150,15 @@ func (q *Queries) GetNotificationsByRecipientId(ctx context.Context, arg GetNoti
 }
 
 const getNotificationsByType = `-- name: GetNotificationsByType :many
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at, updated_at FROM notifications
-WHERE recipient_account_id = ? AND type = ?
+SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
+WHERE recipient_account_id = $1 AND type = $2
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $3 OFFSET $4
 `
 
 type GetNotificationsByTypeParams struct {
 	RecipientAccountID string
-	Type               NotificationsType
+	Type               NotificationType
 	Limit              int32
 	Offset             int32
 }
@@ -187,7 +185,6 @@ func (q *Queries) GetNotificationsByType(ctx context.Context, arg GetNotificatio
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -204,7 +201,7 @@ func (q *Queries) GetNotificationsByType(ctx context.Context, arg GetNotificatio
 
 const getUnreadNotificationCountByRecipientId = `-- name: GetUnreadNotificationCountByRecipientId :one
 SELECT COUNT(*) FROM notifications
-WHERE recipient_account_id = ? AND is_read = FALSE
+WHERE recipient_account_id = $1 AND is_read = FALSE
 `
 
 func (q *Queries) GetUnreadNotificationCountByRecipientId(ctx context.Context, recipientAccountID string) (int64, error) {
@@ -215,10 +212,10 @@ func (q *Queries) GetUnreadNotificationCountByRecipientId(ctx context.Context, r
 }
 
 const getUnreadNotificationsByRecipientId = `-- name: GetUnreadNotificationsByRecipientId :many
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at, updated_at FROM notifications
-WHERE recipient_account_id = ? AND is_read = FALSE
+SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
+WHERE recipient_account_id = $1 AND is_read = FALSE
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetUnreadNotificationsByRecipientIdParams struct {
@@ -244,7 +241,6 @@ func (q *Queries) GetUnreadNotificationsByRecipientId(ctx context.Context, arg G
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -262,7 +258,7 @@ func (q *Queries) GetUnreadNotificationsByRecipientId(ctx context.Context, arg G
 const markAllNotificationsAsRead = `-- name: MarkAllNotificationsAsRead :exec
 UPDATE notifications
 SET is_read = TRUE
-WHERE recipient_account_id = ? AND is_read = FALSE
+WHERE recipient_account_id = $1 AND is_read = FALSE
 `
 
 func (q *Queries) MarkAllNotificationsAsRead(ctx context.Context, recipientAccountID string) error {
@@ -273,11 +269,11 @@ func (q *Queries) MarkAllNotificationsAsRead(ctx context.Context, recipientAccou
 const markNotificationAsRead = `-- name: MarkNotificationAsRead :exec
 UPDATE notifications
 SET is_read = TRUE
-WHERE id = ? AND recipient_account_id = ?
+WHERE id = $1 AND recipient_account_id = $2
 `
 
 type MarkNotificationAsReadParams struct {
-	ID                 uint32
+	ID                 int64
 	RecipientAccountID string
 }
 

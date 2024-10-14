@@ -12,11 +12,11 @@ import (
 
 const createLabel = `-- name: CreateLabel :exec
 INSERT INTO labels (tweet_id, label1, label2, label3)
-VALUES (?, ?, ?, ?)
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateLabelParams struct {
-	TweetID uint64
+	TweetID int64
 	Label1  string
 	Label2  sql.NullString
 	Label3  sql.NullString
@@ -34,20 +34,20 @@ func (q *Queries) CreateLabel(ctx context.Context, arg CreateLabelParams) error 
 
 const deleteLabel = `-- name: DeleteLabel :exec
 DELETE FROM labels
-WHERE tweet_id = ?
+WHERE tweet_id = $1
 `
 
-func (q *Queries) DeleteLabel(ctx context.Context, tweetID uint64) error {
+func (q *Queries) DeleteLabel(ctx context.Context, tweetID int64) error {
 	_, err := q.db.ExecContext(ctx, deleteLabel, tweetID)
 	return err
 }
 
 const getLabelsByTweetId = `-- name: GetLabelsByTweetId :one
 SELECT tweet_id, label1, label2, label3, created_at FROM labels
-WHERE tweet_id = ?
+WHERE tweet_id = $1
 `
 
-func (q *Queries) GetLabelsByTweetId(ctx context.Context, tweetID uint64) (Label, error) {
+func (q *Queries) GetLabelsByTweetId(ctx context.Context, tweetID int64) (Label, error) {
 	row := q.db.QueryRowContext(ctx, getLabelsByTweetId, tweetID)
 	var i Label
 	err := row.Scan(
@@ -63,9 +63,9 @@ func (q *Queries) GetLabelsByTweetId(ctx context.Context, tweetID uint64) (Label
 const getTweetsByLabel = `-- name: GetTweetsByLabel :many
 SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at FROM tweets t
 JOIN labels l ON t.id = l.tweet_id
-WHERE l.label1 = ? OR l.label2 = ? OR l.label3 = ?
+WHERE l.label1 = $1 OR l.label2 = $2 OR l.label3 = $3
 ORDER BY t.created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $4 OFFSET $5
 `
 
 type GetTweetsByLabelParams struct {
@@ -126,7 +126,7 @@ SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.repl
 LEFT JOIN labels l ON t.id = l.tweet_id
 WHERE l.tweet_id IS NULL
 ORDER BY t.created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $1 OFFSET $2
 `
 
 type GetTweetsWithoutLabelsParams struct {
@@ -175,15 +175,15 @@ func (q *Queries) GetTweetsWithoutLabels(ctx context.Context, arg GetTweetsWitho
 
 const updateLabels = `-- name: UpdateLabels :exec
 UPDATE labels
-SET label1 = ?, label2 = ?, label3 = ?
-WHERE tweet_id = ?
+SET label1 = $1, label2 = $2, label3 = $3
+WHERE tweet_id = $4
 `
 
 type UpdateLabelsParams struct {
 	Label1  string
 	Label2  sql.NullString
 	Label3  sql.NullString
-	TweetID uint64
+	TweetID int64
 }
 
 func (q *Queries) UpdateLabels(ctx context.Context, arg UpdateLabelsParams) error {

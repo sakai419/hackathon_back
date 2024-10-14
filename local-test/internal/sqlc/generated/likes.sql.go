@@ -11,12 +11,12 @@ import (
 
 const createLike = `-- name: CreateLike :exec
 INSERT INTO likes (liking_account_id, original_tweet_id)
-VALUES (?, ?)
+VALUES ($1, $2)
 `
 
 type CreateLikeParams struct {
 	LikingAccountID string
-	OriginalTweetID uint64
+	OriginalTweetID int64
 }
 
 func (q *Queries) CreateLike(ctx context.Context, arg CreateLikeParams) error {
@@ -26,12 +26,12 @@ func (q *Queries) CreateLike(ctx context.Context, arg CreateLikeParams) error {
 
 const deleteLike = `-- name: DeleteLike :exec
 DELETE FROM likes
-WHERE liking_account_id = ? AND original_tweet_id = ?
+WHERE liking_account_id = $1 AND original_tweet_id = $2
 `
 
 type DeleteLikeParams struct {
 	LikingAccountID string
-	OriginalTweetID uint64
+	OriginalTweetID int64
 }
 
 func (q *Queries) DeleteLike(ctx context.Context, arg DeleteLikeParams) error {
@@ -41,10 +41,10 @@ func (q *Queries) DeleteLike(ctx context.Context, arg DeleteLikeParams) error {
 
 const getLikeCount = `-- name: GetLikeCount :one
 SELECT COUNT(*) FROM likes
-WHERE original_tweet_id = ?
+WHERE original_tweet_id = $1
 `
 
-func (q *Queries) GetLikeCount(ctx context.Context, originalTweetID uint64) (int64, error) {
+func (q *Queries) GetLikeCount(ctx context.Context, originalTweetID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getLikeCount, originalTweetID)
 	var count int64
 	err := row.Scan(&count)
@@ -53,9 +53,9 @@ func (q *Queries) GetLikeCount(ctx context.Context, originalTweetID uint64) (int
 
 const getLikesByAccountId = `-- name: GetLikesByAccountId :many
 SELECT liking_account_id, original_tweet_id, created_at FROM likes
-WHERE liking_account_id = ?
+WHERE liking_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetLikesByAccountIdParams struct {
@@ -89,13 +89,13 @@ func (q *Queries) GetLikesByAccountId(ctx context.Context, arg GetLikesByAccount
 
 const getLikesByTweetId = `-- name: GetLikesByTweetId :many
 SELECT liking_account_id, original_tweet_id, created_at FROM likes
-WHERE original_tweet_id = ?
+WHERE original_tweet_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetLikesByTweetIdParams struct {
-	OriginalTweetID uint64
+	OriginalTweetID int64
 	Limit           int32
 	Offset          int32
 }

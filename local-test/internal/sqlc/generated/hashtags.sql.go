@@ -10,8 +10,8 @@ import (
 )
 
 const createHashtag = `-- name: CreateHashtag :exec
-INSERT INTO hashtags (tag) VALUES (?)
-ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
+INSERT INTO hashtags (tag) VALUES ($1)
+ON CONFLICT (tag) DO NOTHING
 `
 
 func (q *Queries) CreateHashtag(ctx context.Context, tag string) error {
@@ -20,10 +20,10 @@ func (q *Queries) CreateHashtag(ctx context.Context, tag string) error {
 }
 
 const deleteHashtag = `-- name: DeleteHashtag :exec
-DELETE FROM hashtags WHERE id = ?
+DELETE FROM hashtags WHERE id = $1
 `
 
-func (q *Queries) DeleteHashtag(ctx context.Context, id uint64) error {
+func (q *Queries) DeleteHashtag(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteHashtag, id)
 	return err
 }
@@ -31,7 +31,7 @@ func (q *Queries) DeleteHashtag(ctx context.Context, id uint64) error {
 const getAllHashtags = `-- name: GetAllHashtags :many
 SELECT id, tag, created_at FROM hashtags
 ORDER BY tag ASC
-LIMIT ? OFFSET ?
+LIMIT $1 OFFSET $2
 `
 
 type GetAllHashtagsParams struct {
@@ -63,10 +63,10 @@ func (q *Queries) GetAllHashtags(ctx context.Context, arg GetAllHashtagsParams) 
 }
 
 const getHashtagById = `-- name: GetHashtagById :one
-SELECT id, tag, created_at FROM hashtags WHERE id = ?
+SELECT id, tag, created_at FROM hashtags WHERE id = $1
 `
 
-func (q *Queries) GetHashtagById(ctx context.Context, id uint64) (Hashtag, error) {
+func (q *Queries) GetHashtagById(ctx context.Context, id int64) (Hashtag, error) {
 	row := q.db.QueryRowContext(ctx, getHashtagById, id)
 	var i Hashtag
 	err := row.Scan(&i.ID, &i.Tag, &i.CreatedAt)
@@ -74,7 +74,7 @@ func (q *Queries) GetHashtagById(ctx context.Context, id uint64) (Hashtag, error
 }
 
 const getHashtagByTag = `-- name: GetHashtagByTag :one
-SELECT id, tag, created_at FROM hashtags WHERE tag = ?
+SELECT id, tag, created_at FROM hashtags WHERE tag = $1
 `
 
 func (q *Queries) GetHashtagByTag(ctx context.Context, tag string) (Hashtag, error) {
@@ -97,18 +97,18 @@ func (q *Queries) GetHashtagCount(ctx context.Context) (int64, error) {
 
 const searchHashtags = `-- name: SearchHashtags :many
 SELECT id, tag, created_at FROM hashtags
-WHERE tag LIKE CONCAT('%', ?, '%')
+WHERE tag LIKE CONCAT('%', $1, '%')
 ORDER BY tag ASC
-LIMIT ?
+LIMIT $2
 `
 
 type SearchHashtagsParams struct {
-	CONCAT interface{}
+	Concat interface{}
 	Limit  int32
 }
 
 func (q *Queries) SearchHashtags(ctx context.Context, arg SearchHashtagsParams) ([]Hashtag, error) {
-	rows, err := q.db.QueryContext(ctx, searchHashtags, arg.CONCAT, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, searchHashtags, arg.Concat, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -133,10 +133,10 @@ func (q *Queries) SearchHashtags(ctx context.Context, arg SearchHashtagsParams) 
 const updateHashtagCreatedAt = `-- name: UpdateHashtagCreatedAt :exec
 UPDATE hashtags
 SET created_at = CURRENT_TIMESTAMP
-WHERE id = ?
+WHERE id = $1
 `
 
-func (q *Queries) UpdateHashtagCreatedAt(ctx context.Context, id uint64) error {
+func (q *Queries) UpdateHashtagCreatedAt(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, updateHashtagCreatedAt, id)
 	return err
 }

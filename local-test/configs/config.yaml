@@ -11,10 +11,12 @@ firebase:
     client_x509_cert_url: ${FIREBASE_CLIENT_X509_CERT_URL}
     universe_domain: gogoleapis.com
 db:
-    driver: mysql
+    driver: postgres
     user: user
     password: ${DB_PASSWORD}
-    host: localhost:3306
+    host: localhost
+    port: 5432
+    ssl_mode: disable
     database: mydatabase
     charset: utf8mb4
     timeout: 30

@@ -13,7 +13,7 @@ import (
 
 const createMessage = `-- name: CreateMessage :exec
 INSERT INTO messages (sender_account_id, recipient_account_id, content)
-VALUES (?, ?, ?)
+VALUES ($1, $2, $3)
 `
 
 type CreateMessageParams struct {
@@ -29,11 +29,11 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) er
 
 const deleteMessage = `-- name: DeleteMessage :exec
 DELETE FROM messages
-WHERE id = ? AND (sender_account_id = ? OR recipient_account_id = ?)
+WHERE id = $1 AND (sender_account_id = $2 OR recipient_account_id = $3)
 `
 
 type DeleteMessageParams struct {
-	ID                 uint32
+	ID                 int64
 	SenderAccountID    string
 	RecipientAccountID string
 }
@@ -45,7 +45,7 @@ func (q *Queries) DeleteMessage(ctx context.Context, arg DeleteMessageParams) er
 
 const deleteOldMessages = `-- name: DeleteOldMessages :exec
 DELETE FROM messages
-WHERE created_at < ? AND is_read = TRUE
+WHERE created_at < $1 AND is_read = TRUE
 `
 
 func (q *Queries) DeleteOldMessages(ctx context.Context, createdAt time.Time) error {
@@ -55,7 +55,7 @@ func (q *Queries) DeleteOldMessages(ctx context.Context, createdAt time.Time) er
 
 const gerUnreadMessageCountBetweenUsers = `-- name: GerUnreadMessageCountBetweenUsers :one
 SELECT COUNT(*) FROM messages
-WHERE recipient_account_id = ? AND sender_account_id = ? AND is_read = FALSE
+WHERE recipient_account_id = $1 AND sender_account_id = $2 AND is_read = FALSE
 `
 
 type GerUnreadMessageCountBetweenUsersParams struct {
@@ -71,7 +71,7 @@ func (q *Queries) GerUnreadMessageCountBetweenUsers(ctx context.Context, arg Ger
 }
 
 const getLatestMessageForEachConversation = `-- name: GetLatestMessageForEachConversation :many
-SELECT m.id, m.sender_account_id, m.recipient_account_id, m.content, m.is_read, m.created_at, m.updated_at
+SELECT m.id, m.sender_account_id, m.recipient_account_id, m.content, m.is_read, m.created_at
 FROM messages m
 INNER JOIN (
     SELECT
@@ -87,7 +87,7 @@ INNER JOIN (
         END AS user2,
         MAX(created_at) AS max_created_at
     FROM messages m2
-    WHERE m2.sender_account_id = ? OR m2.recipient_account_id = ?
+    WHERE m2.sender_account_id = $1 OR m2.recipient_account_id = $2
     GROUP BY user1, user2
 ) latest ON (
     (m.sender_account_id = latest.user1 AND m.recipient_account_id = latest.user2) OR
@@ -117,7 +117,6 @@ func (q *Queries) GetLatestMessageForEachConversation(ctx context.Context, arg G
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -133,11 +132,11 @@ func (q *Queries) GetLatestMessageForEachConversation(ctx context.Context, arg G
 }
 
 const getMessageById = `-- name: GetMessageById :one
-SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at, updated_at FROM messages
-WHERE id = ?
+SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at FROM messages
+WHERE id = $1
 `
 
-func (q *Queries) GetMessageById(ctx context.Context, id uint32) (Message, error) {
+func (q *Queries) GetMessageById(ctx context.Context, id int64) (Message, error) {
 	row := q.db.QueryRowContext(ctx, getMessageById, id)
 	var i Message
 	err := row.Scan(
@@ -147,14 +146,13 @@ func (q *Queries) GetMessageById(ctx context.Context, id uint32) (Message, error
 		&i.Content,
 		&i.IsRead,
 		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getMessageCountForUser = `-- name: GetMessageCountForUser :one
 SELECT COUNT(*) FROM messages
-WHERE sender_account_id = ? OR recipient_account_id = ?
+WHERE sender_account_id = $1 OR recipient_account_id = $2
 `
 
 type GetMessageCountForUserParams struct {
@@ -170,11 +168,11 @@ func (q *Queries) GetMessageCountForUser(ctx context.Context, arg GetMessageCoun
 }
 
 const getMessagesBetweenUsers = `-- name: GetMessagesBetweenUsers :many
-SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at, updated_at FROM messages
-WHERE (sender_account_id = ? AND recipient_account_id = ?)
-    OR (sender_account_id = ? AND recipient_account_id = ?)
+SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at FROM messages
+WHERE (sender_account_id = $1 AND recipient_account_id = $2)
+    OR (sender_account_id = $3 AND recipient_account_id = $4)
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $5 OFFSET $6
 `
 
 type GetMessagesBetweenUsersParams struct {
@@ -209,7 +207,6 @@ func (q *Queries) GetMessagesBetweenUsers(ctx context.Context, arg GetMessagesBe
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -226,7 +223,7 @@ func (q *Queries) GetMessagesBetweenUsers(ctx context.Context, arg GetMessagesBe
 
 const getUnreadMessageCountForUser = `-- name: GetUnreadMessageCountForUser :one
 SELECT COUNT(*) FROM messages
-WHERE recipient_account_id = ? AND is_read = FALSE
+WHERE recipient_account_id = $1 AND is_read = FALSE
 `
 
 func (q *Queries) GetUnreadMessageCountForUser(ctx context.Context, recipientAccountID string) (int64, error) {
@@ -237,8 +234,8 @@ func (q *Queries) GetUnreadMessageCountForUser(ctx context.Context, recipientAcc
 }
 
 const getUnreadMessagesForUser = `-- name: GetUnreadMessagesForUser :many
-SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at, updated_at FROM messages
-WHERE recipient_account_id = ? AND is_read = FALSE
+SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at FROM messages
+WHERE recipient_account_id = $1 AND is_read = FALSE
 ORDER BY created_at DESC
 `
 
@@ -258,7 +255,6 @@ func (q *Queries) GetUnreadMessagesForUser(ctx context.Context, recipientAccount
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -276,7 +272,7 @@ func (q *Queries) GetUnreadMessagesForUser(ctx context.Context, recipientAccount
 const markAllMessagesAsRead = `-- name: MarkAllMessagesAsRead :exec
 UPDATE messages
 SET is_read = TRUE
-WHERE recipient_account_id = ? AND is_read = FALSE
+WHERE recipient_account_id = $1 AND is_read = FALSE
 `
 
 func (q *Queries) MarkAllMessagesAsRead(ctx context.Context, recipientAccountID string) error {
@@ -287,11 +283,11 @@ func (q *Queries) MarkAllMessagesAsRead(ctx context.Context, recipientAccountID 
 const markMessageAsRead = `-- name: MarkMessageAsRead :exec
 UPDATE messages
 SET is_read = TRUE
-WHERE id = ? AND recipient_account_id = ?
+WHERE id = $1 AND recipient_account_id = $2
 `
 
 type MarkMessageAsReadParams struct {
-	ID                 uint32
+	ID                 int64
 	RecipientAccountID string
 }
 
@@ -301,11 +297,11 @@ func (q *Queries) MarkMessageAsRead(ctx context.Context, arg MarkMessageAsReadPa
 }
 
 const searchMessages = `-- name: SearchMessages :many
-SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at, updated_at FROM messages
-WHERE (sender_account_id = ? OR recipient_account_id = ?)
-    AND content LIKE ?
+SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at FROM messages
+WHERE (sender_account_id = $1 OR recipient_account_id = $2)
+    AND content LIKE $3
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $4 OFFSET $5
 `
 
 type SearchMessagesParams struct {
@@ -338,7 +334,6 @@ func (q *Queries) SearchMessages(ctx context.Context, arg SearchMessagesParams) 
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -12,7 +12,7 @@ import (
 const checkBlockExists = `-- name: CheckBlockExists :one
 SELECT EXISTS(
     SELECT 1 FROM blocks
-    WHERE blocker_account_id = ? AND blocked_account_id = ?
+    WHERE blocker_account_id = $1 AND blocked_account_id = $2
 ) AS is_blocked
 `
 
@@ -30,7 +30,7 @@ func (q *Queries) CheckBlockExists(ctx context.Context, arg CheckBlockExistsPara
 
 const createBlock = `-- name: CreateBlock :exec
 INSERT INTO blocks (blocker_account_id, blocked_account_id)
-VALUES (?, ?)
+VALUES ($1, $2)
 `
 
 type CreateBlockParams struct {
@@ -45,22 +45,17 @@ func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error 
 
 const deleteAllBlocksForUser = `-- name: DeleteAllBlocksForUser :exec
 DELETE FROM blocks
-WHERE blocker_account_id = ? OR blocked_account_id = ?
+WHERE blocker_account_id = $1 OR blocked_account_id = $1
 `
 
-type DeleteAllBlocksForUserParams struct {
-	BlockerAccountID string
-	BlockedAccountID string
-}
-
-func (q *Queries) DeleteAllBlocksForUser(ctx context.Context, arg DeleteAllBlocksForUserParams) error {
-	_, err := q.db.ExecContext(ctx, deleteAllBlocksForUser, arg.BlockerAccountID, arg.BlockedAccountID)
+func (q *Queries) DeleteAllBlocksForUser(ctx context.Context, blockerAccountID string) error {
+	_, err := q.db.ExecContext(ctx, deleteAllBlocksForUser, blockerAccountID)
 	return err
 }
 
 const deleteBlock = `-- name: DeleteBlock :exec
 DELETE FROM blocks
-WHERE blocker_account_id = ? AND blocked_account_id = ?
+WHERE blocker_account_id = $1 AND blocked_account_id = $2
 `
 
 type DeleteBlockParams struct {
@@ -75,7 +70,7 @@ func (q *Queries) DeleteBlock(ctx context.Context, arg DeleteBlockParams) error 
 
 const getBlockCount = `-- name: GetBlockCount :one
 SELECT COUNT(*) FROM blocks
-WHERE blocker_account_id = ?
+WHERE blocker_account_id = $1
 `
 
 func (q *Queries) GetBlockCount(ctx context.Context, blockerAccountID string) (int64, error) {
@@ -87,7 +82,7 @@ func (q *Queries) GetBlockCount(ctx context.Context, blockerAccountID string) (i
 
 const getBlockedByCount = `-- name: GetBlockedByCount :one
 SELECT COUNT(*) FROM blocks
-WHERE blocked_account_id = ?
+WHERE blocked_account_id = $1
 `
 
 func (q *Queries) GetBlockedByCount(ctx context.Context, blockedAccountID string) (int64, error) {
@@ -100,9 +95,9 @@ func (q *Queries) GetBlockedByCount(ctx context.Context, blockedAccountID string
 const getBlockedUsers = `-- name: GetBlockedUsers :many
 SELECT blocked_account_id
 FROM blocks
-WHERE blocker_account_id = ?
+WHERE blocker_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetBlockedUsersParams struct {
@@ -137,9 +132,9 @@ func (q *Queries) GetBlockedUsers(ctx context.Context, arg GetBlockedUsersParams
 const getBlockersOfUser = `-- name: GetBlockersOfUser :many
 SELECT blocker_account_id
 FROM blocks
-WHERE blocked_account_id = ?
+WHERE blocked_account_id = $1
 ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 `
 
 type GetBlockersOfUserParams struct {

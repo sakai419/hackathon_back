@@ -8,17 +8,18 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createReply = `-- name: CreateReply :exec
 INSERT INTO replies (original_tweet_id, parent_reply_id, replying_account_id)
-VALUES (?, ?, ?)
+VALUES ($1, $2, $3)
 `
 
 type CreateReplyParams struct {
-	OriginalTweetID   uint64
+	OriginalTweetID   int64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 }
@@ -29,23 +30,23 @@ func (q *Queries) CreateReply(ctx context.Context, arg CreateReplyParams) error 
 }
 
 const deleteReply = `-- name: DeleteReply :exec
-DELETE FROM replies WHERE id = ?
+DELETE FROM replies WHERE tweet_id = $1
 `
 
-func (q *Queries) DeleteReply(ctx context.Context, id uint64) error {
-	_, err := q.db.ExecContext(ctx, deleteReply, id)
+func (q *Queries) DeleteReply(ctx context.Context, tweetID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteReply, tweetID)
 	return err
 }
 
 const getReplyById = `-- name: GetReplyById :one
-SELECT id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies WHERE id = ?
+SELECT tweet_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies WHERE tweet_id = $1
 `
 
-func (q *Queries) GetReplyById(ctx context.Context, id uint64) (Reply, error) {
-	row := q.db.QueryRowContext(ctx, getReplyById, id)
+func (q *Queries) GetReplyById(ctx context.Context, tweetID int64) (Reply, error) {
+	row := q.db.QueryRowContext(ctx, getReplyById, tweetID)
 	var i Reply
 	err := row.Scan(
-		&i.ID,
+		&i.TweetID,
 		&i.OriginalTweetID,
 		&i.ParentReplyID,
 		&i.ReplyingAccountID,
@@ -58,7 +59,7 @@ const getReplyCount = `-- name: GetReplyCount :one
 
 
 
-SELECT COUNT(*) FROM replies WHERE original_tweet_id = ?
+SELECT COUNT(*) FROM replies WHERE original_tweet_id = $1
 `
 
 // -- name: GetRepliesByOriginalTweetId :many
@@ -66,26 +67,26 @@ SELECT COUNT(*) FROM replies WHERE original_tweet_id = ?
 // FROM replies r
 // JOIN tweets t ON r.reply_id = t.id
 // JOIN accounts a ON r.replying_account_id = a.id
-// WHERE r.original_tweet_id = ?
+// WHERE r.original_tweet_id = $1
 // ORDER BY r.created_at ASC
-// LIMIT ? OFFSET ?;
+// LIMIT $2 OFFSET $3;
 // -- name: GetRepliesByParentReplyId :many
 // SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
 // FROM replies r
 // JOIN tweets t ON r.reply_id = t.id
 // JOIN accounts a ON r.replying_account_id = a.id
-// WHERE r.parent_reply_id = ?
+// WHERE r.parent_reply_id = $1
 // ORDER BY r.created_at ASC
-// LIMIT ? OFFSET ?;
+// LIMIT $2 OFFSET $3;
 // -- name: GetRepliesByAccountId :many
 // SELECT r.*, t.content AS reply_content, ot.content AS original_tweet_content
 // FROM replies r
 // JOIN tweets t ON r.reply_id = t.id
 // JOIN tweets ot ON r.original_tweet_id = ot.id
-// WHERE r.replying_account_id = ?
+// WHERE r.replying_account_id = $1
 // ORDER BY r.created_at DESC
-// LIMIT ? OFFSET ?;
-func (q *Queries) GetReplyCount(ctx context.Context, originalTweetID uint64) (int64, error) {
+// LIMIT $2 OFFSET $3;
+func (q *Queries) GetReplyCount(ctx context.Context, originalTweetID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getReplyCount, originalTweetID)
 	var count int64
 	err := row.Scan(&count)
@@ -94,42 +95,42 @@ func (q *Queries) GetReplyCount(ctx context.Context, originalTweetID uint64) (in
 
 const getReplyThread = `-- name: GetReplyThread :many
 WITH RECURSIVE reply_thread AS (
-    SELECT id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.id = ?
+    SELECT tweet_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.tweet_id = $1
     UNION ALL
-    SELECT r.id, r.original_tweet_id, r.parent_reply_id, r.replying_account_id, r.created_at FROM replies r
-    JOIN reply_thread rt ON r.parent_reply_id = rt.id
+    SELECT r.tweet_id, r.original_tweet_id, r.parent_reply_id, r.replying_account_id, r.created_at FROM replies r
+    JOIN reply_thread rt ON r.parent_reply_id = rt.tweet_id
 )
-SELECT rt.id, rt.original_tweet_id, rt.parent_reply_id, rt.replying_account_id, rt.created_at, t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
+SELECT rt.tweet_id, rt.original_tweet_id, rt.parent_reply_id, rt.replying_account_id, rt.created_at, t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
 FROM reply_thread rt
-JOIN tweets t ON rt.reply_id = t.id
+JOIN tweets t ON rt.tweet_id = t.id
 ORDER BY rt.created_at ASC
 `
 
 type GetReplyThreadRow struct {
-	ID                uint64
-	OriginalTweetID   uint64
+	TweetID           int64
+	OriginalTweetID   int64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 	CreatedAt         time.Time
-	ID_2              uint64
+	ID                int64
 	AccountID         string
 	IsPinned          bool
 	Content           sql.NullString
 	Code              sql.NullString
-	LikesCount        uint32
-	RepliesCount      uint32
-	RetweetsCount     uint32
+	LikesCount        int32
+	RepliesCount      int32
+	RetweetsCount     int32
 	IsRetweet         bool
 	IsReply           bool
 	IsQuote           bool
-	EngagementScore   uint32
-	Media             json.RawMessage
+	EngagementScore   int32
+	Media             pqtype.NullRawMessage
 	CreatedAt_2       time.Time
 	UpdatedAt         time.Time
 }
 
-func (q *Queries) GetReplyThread(ctx context.Context, id uint64) ([]GetReplyThreadRow, error) {
-	rows, err := q.db.QueryContext(ctx, getReplyThread, id)
+func (q *Queries) GetReplyThread(ctx context.Context, tweetID int64) ([]GetReplyThreadRow, error) {
+	rows, err := q.db.QueryContext(ctx, getReplyThread, tweetID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,12 +139,12 @@ func (q *Queries) GetReplyThread(ctx context.Context, id uint64) ([]GetReplyThre
 	for rows.Next() {
 		var i GetReplyThreadRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.TweetID,
 			&i.OriginalTweetID,
 			&i.ParentReplyID,
 			&i.ReplyingAccountID,
 			&i.CreatedAt,
-			&i.ID_2,
+			&i.ID,
 			&i.AccountID,
 			&i.IsPinned,
 			&i.Content,

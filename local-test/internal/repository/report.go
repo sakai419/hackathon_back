@@ -26,7 +26,7 @@ func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportPa
 	createReportParams := sqlcgen.CreateReportParams{
 		ReporterAccountID: arg.ReporterAccountID,
 		ReportedAccountID: arg.ReportedAccountID,
-		Reason:            sqlcgen.ReportsReason(arg.Reason),
+		Reason:            sqlcgen.ReportReason(arg.Reason),
 		Content:           arg.Content,
 	}
 	if err := q.CreateReport(ctx, createReportParams); err != nil {

@@ -53,7 +53,7 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 	CreateNotificationParams := sqlcgen.CreateNotificationParams{
 		SenderAccountID: sql.NullString{String: arg.FollowerAccountID, Valid: true},
 		RecipientAccountID: arg.FollowingAccountID,
-		Type: sqlcgen.NotificationsTypeFollow,
+		Type: sqlcgen.NotificationTypeFollow,
 		Content: sql.NullString{String: "You have a new follower", Valid: true},
 	}
 	if err := q.CreateNotification(ctx, CreateNotificationParams); err != nil {

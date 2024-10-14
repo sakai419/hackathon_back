@@ -1,31 +1,31 @@
 -- name: CreateRetweetOrQuote :exec
 INSERT INTO retweets_and_quotes (retweeting_account_id, original_tweet_id)
-VALUES (?, ?);
+VALUES ($1, $2);
 
 -- name: GetRetweetOrQuoteById :one
 SELECT * FROM retweets_and_quotes
-WHERE id = ?;
+WHERE tweet_id = $1;
 
 -- name: DeleteRetweetOrQuote :exec
 DELETE FROM retweets_and_quotes
-WHERE id = ?;
+WHERE tweet_id = $1;
 
 -- name: GetRetweetsAndQuotesByOriginalTweetId :many
 SELECT r.*, t.content AS retweet_content
 FROM retweets_and_quotes r
-JOIN tweets t ON r.id = t.id
-WHERE r.original_tweet_id = ?
+JOIN tweets t ON r.tweet_id = t.id
+WHERE r.original_tweet_id = $1
 ORDER BY r.created_at DESC
-LIMIT ? OFFSET ?;
+LIMIT $2 OFFSET $3;
 
 -- name: GetRetweetsAndQuotesByAccountId :many
 SELECT r.*, t.content AS original_tweet_content
 FROM retweets_and_quotes r
 JOIN tweets t ON r.original_tweet_id = t.id
-WHERE r.retweeting_account_id = ?
+WHERE r.retweeting_account_id = $1
 ORDER BY r.created_at DESC
-LIMIT ? OFFSET ?;
+LIMIT $2 OFFSET $3;
 
 -- name: GetRetweetAndQuoteCount :one
 SELECT COUNT(*) FROM retweets_and_quotes
-WHERE original_tweet_id = ?;
+WHERE original_tweet_id = $1;

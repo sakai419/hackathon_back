@@ -12,13 +12,13 @@ import (
 
 const createReport = `-- name: CreateReport :exec
 INSERT INTO reports (reporter_account_id, reported_account_id, reason, content)
-VALUES (?, ?, ?, ?)
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateReportParams struct {
 	ReporterAccountID string
 	ReportedAccountID string
-	Reason            ReportsReason
+	Reason            ReportReason
 	Content           sql.NullString
 }
 
@@ -34,17 +34,17 @@ func (q *Queries) CreateReport(ctx context.Context, arg CreateReportParams) erro
 
 const deleteReport = `-- name: DeleteReport :exec
 DELETE FROM reports
-WHERE id = ?
+WHERE id = $1
 `
 
-func (q *Queries) DeleteReport(ctx context.Context, id uint64) error {
+func (q *Queries) DeleteReport(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteReport, id)
 	return err
 }
 
 const deleteReportsByReportedAccount = `-- name: DeleteReportsByReportedAccount :exec
 DELETE FROM reports
-WHERE reported_account_id = ?
+WHERE reported_account_id = $1
 `
 
 func (q *Queries) DeleteReportsByReportedAccount(ctx context.Context, reportedAccountID string) error {
@@ -55,10 +55,10 @@ func (q *Queries) DeleteReportsByReportedAccount(ctx context.Context, reportedAc
 const getReportByID = `-- name: GetReportByID :one
 SELECT id, reporter_account_id, reported_account_id, reason, content, created_at
 FROM reports
-WHERE id = ?
+WHERE id = $1
 `
 
-func (q *Queries) GetReportByID(ctx context.Context, id uint64) (Report, error) {
+func (q *Queries) GetReportByID(ctx context.Context, id int64) (Report, error) {
 	row := q.db.QueryRowContext(ctx, getReportByID, id)
 	var i Report
 	err := row.Scan(
@@ -75,7 +75,7 @@ func (q *Queries) GetReportByID(ctx context.Context, id uint64) (Report, error) 
 const getReportsByReportedAccount = `-- name: GetReportsByReportedAccount :many
 SELECT id, reporter_account_id, reported_account_id, reason, content, created_at
 FROM reports
-WHERE reported_account_id = ?
+WHERE reported_account_id = $1
 ORDER BY created_at DESC
 `
 
@@ -115,8 +115,7 @@ FROM accounts
 LEFT JOIN reports ON accounts.id = reports.reported_account_id
 GROUP BY accounts.id
 ORDER BY report_count DESC
-LIMIT ?
-OFFSET ?
+LIMIT $1 OFFSET $2
 `
 
 type GetUsersOrderByReportCountParams struct {

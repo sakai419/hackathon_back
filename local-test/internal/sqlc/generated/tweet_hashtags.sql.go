@@ -8,20 +8,21 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 const checkTweetHashtagExists = `-- name: CheckTweetHashtagExists :one
 SELECT EXISTS(
     SELECT 1 FROM tweet_hashtags
-    WHERE tweet_id = ? AND hashtag_id = ?
+    WHERE tweet_id = $1 AND hashtag_id = $2
 ) AS hashtag_exists
 `
 
 type CheckTweetHashtagExistsParams struct {
-	TweetID   uint64
-	HashtagID uint64
+	TweetID   int64
+	HashtagID int64
 }
 
 func (q *Queries) CheckTweetHashtagExists(ctx context.Context, arg CheckTweetHashtagExistsParams) (bool, error) {
@@ -33,12 +34,12 @@ func (q *Queries) CheckTweetHashtagExists(ctx context.Context, arg CheckTweetHas
 
 const createTweetHashtag = `-- name: CreateTweetHashtag :exec
 INSERT INTO tweet_hashtags (tweet_id, hashtag_id)
-VALUES (?, ?)
+VALUES ($1, $2)
 `
 
 type CreateTweetHashtagParams struct {
-	TweetID   uint64
-	HashtagID uint64
+	TweetID   int64
+	HashtagID int64
 }
 
 func (q *Queries) CreateTweetHashtag(ctx context.Context, arg CreateTweetHashtagParams) error {
@@ -48,22 +49,22 @@ func (q *Queries) CreateTweetHashtag(ctx context.Context, arg CreateTweetHashtag
 
 const deleteAllHashtagsForTweet = `-- name: DeleteAllHashtagsForTweet :exec
 DELETE FROM tweet_hashtags
-WHERE tweet_id = ?
+WHERE tweet_id = $1
 `
 
-func (q *Queries) DeleteAllHashtagsForTweet(ctx context.Context, tweetID uint64) error {
+func (q *Queries) DeleteAllHashtagsForTweet(ctx context.Context, tweetID int64) error {
 	_, err := q.db.ExecContext(ctx, deleteAllHashtagsForTweet, tweetID)
 	return err
 }
 
 const deleteTweetHashtag = `-- name: DeleteTweetHashtag :exec
 DELETE FROM tweet_hashtags
-WHERE tweet_id = ? AND hashtag_id = ?
+WHERE tweet_id = $1 AND hashtag_id = $2
 `
 
 type DeleteTweetHashtagParams struct {
-	TweetID   uint64
-	HashtagID uint64
+	TweetID   int64
+	HashtagID int64
 }
 
 func (q *Queries) DeleteTweetHashtag(ctx context.Context, arg DeleteTweetHashtagParams) error {
@@ -75,10 +76,10 @@ const getHashtagsByTweetId = `-- name: GetHashtagsByTweetId :many
 SELECT h.id, h.tag, h.created_at
 FROM hashtags h
 JOIN tweet_hashtags th ON h.id = th.hashtag_id
-WHERE th.tweet_id = ?
+WHERE th.tweet_id = $1
 `
 
-func (q *Queries) GetHashtagsByTweetId(ctx context.Context, tweetID uint64) ([]Hashtag, error) {
+func (q *Queries) GetHashtagsByTweetId(ctx context.Context, tweetID int64) ([]Hashtag, error) {
 	rows, err := q.db.QueryContext(ctx, getHashtagsByTweetId, tweetID)
 	if err != nil {
 		return nil, err
@@ -107,18 +108,23 @@ FROM hashtags h
 JOIN tweet_hashtags th ON h.id = th.hashtag_id
 GROUP BY h.id
 ORDER BY usage_count DESC
-LIMIT ?
+LIMIT $1 OFFSET $2
 `
 
+type GetMostUsedHashtagsParams struct {
+	Limit  int32
+	Offset int32
+}
+
 type GetMostUsedHashtagsRow struct {
-	ID         uint64
+	ID         int64
 	Tag        string
 	CreatedAt  time.Time
 	UsageCount int64
 }
 
-func (q *Queries) GetMostUsedHashtags(ctx context.Context, limit int32) ([]GetMostUsedHashtagsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getMostUsedHashtags, limit)
+func (q *Queries) GetMostUsedHashtags(ctx context.Context, arg GetMostUsedHashtagsParams) ([]GetMostUsedHashtagsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMostUsedHashtags, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -150,37 +156,38 @@ SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.repl
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
 JOIN hashtags h ON th.hashtag_id = h.id
-WHERE h.tag = ?
+WHERE h.tag = $1
 ORDER BY t.created_at DESC
-LIMIT ?
+LIMIT $2 OFFSET $3
 `
 
 type GetRecentTweetsWithHashtagParams struct {
-	Tag   string
-	Limit int32
+	Tag    string
+	Limit  int32
+	Offset int32
 }
 
 type GetRecentTweetsWithHashtagRow struct {
-	ID              uint64
+	ID              int64
 	AccountID       string
 	IsPinned        bool
 	Content         sql.NullString
 	Code            sql.NullString
-	LikesCount      uint32
-	RepliesCount    uint32
-	RetweetsCount   uint32
+	LikesCount      int32
+	RepliesCount    int32
+	RetweetsCount   int32
 	IsRetweet       bool
 	IsReply         bool
 	IsQuote         bool
-	EngagementScore uint32
-	Media           json.RawMessage
+	EngagementScore int32
+	Media           pqtype.NullRawMessage
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	Tag             string
 }
 
 func (q *Queries) GetRecentTweetsWithHashtag(ctx context.Context, arg GetRecentTweetsWithHashtagParams) ([]GetRecentTweetsWithHashtagRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRecentTweetsWithHashtag, arg.Tag, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, getRecentTweetsWithHashtag, arg.Tag, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -222,10 +229,10 @@ func (q *Queries) GetRecentTweetsWithHashtag(ctx context.Context, arg GetRecentT
 const getTweetCountByHashtagId = `-- name: GetTweetCountByHashtagId :one
 SELECT COUNT(DISTINCT tweet_id)
 FROM tweet_hashtags
-WHERE hashtag_id = ?
+WHERE hashtag_id = $1
 `
 
-func (q *Queries) GetTweetCountByHashtagId(ctx context.Context, hashtagID uint64) (int64, error) {
+func (q *Queries) GetTweetCountByHashtagId(ctx context.Context, hashtagID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getTweetCountByHashtagId, hashtagID)
 	var count int64
 	err := row.Scan(&count)
@@ -236,19 +243,18 @@ const getTweetsByHashtagId = `-- name: GetTweetsByHashtagId :many
 SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
-WHERE th.hashtag_id = ?
+WHERE th.hashtag_id = $1
 ORDER BY t.created_at DESC
-LIMIT ? OFFSET ?
+LIMIT $1 OFFSET $2
 `
 
 type GetTweetsByHashtagIdParams struct {
-	HashtagID uint64
-	Limit     int32
-	Offset    int32
+	Limit  int32
+	Offset int32
 }
 
 func (q *Queries) GetTweetsByHashtagId(ctx context.Context, arg GetTweetsByHashtagIdParams) ([]Tweet, error) {
-	rows, err := q.db.QueryContext(ctx, getTweetsByHashtagId, arg.HashtagID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getTweetsByHashtagId, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
