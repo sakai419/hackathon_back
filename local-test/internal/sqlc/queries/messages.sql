@@ -2,7 +2,7 @@
 INSERT INTO messages (sender_account_id, recipient_account_id, content)
 VALUES ($1, $2, $3);
 
--- name: GetMessageById :one
+-- name: GetMessageByID :one
 SELECT * FROM messages
 WHERE id = $1;
 

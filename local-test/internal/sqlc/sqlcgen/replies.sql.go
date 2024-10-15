@@ -38,12 +38,12 @@ func (q *Queries) DeleteReply(ctx context.Context, tweetID int64) error {
 	return err
 }
 
-const getReplyById = `-- name: GetReplyById :one
+const getReplyByID = `-- name: GetReplyByID :one
 SELECT tweet_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies WHERE tweet_id = $1
 `
 
-func (q *Queries) GetReplyById(ctx context.Context, tweetID int64) (Reply, error) {
-	row := q.db.QueryRowContext(ctx, getReplyById, tweetID)
+func (q *Queries) GetReplyByID(ctx context.Context, tweetID int64) (Reply, error) {
+	row := q.db.QueryRowContext(ctx, getReplyByID, tweetID)
 	var i Reply
 	err := row.Scan(
 		&i.TweetID,
@@ -62,7 +62,7 @@ const getReplyCount = `-- name: GetReplyCount :one
 SELECT COUNT(*) FROM replies WHERE original_tweet_id = $1
 `
 
-// -- name: GetRepliesByOriginalTweetId :many
+// -- name: GetRepliesByOriginalTweetID :many
 // SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
 // FROM replies r
 // JOIN tweets t ON r.reply_id = t.id
@@ -70,7 +70,7 @@ SELECT COUNT(*) FROM replies WHERE original_tweet_id = $1
 // WHERE r.original_tweet_id = $1
 // ORDER BY r.created_at ASC
 // LIMIT $2 OFFSET $3;
-// -- name: GetRepliesByParentReplyId :many
+// -- name: GetRepliesByParentReplyID :many
 // SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
 // FROM replies r
 // JOIN tweets t ON r.reply_id = t.id
@@ -78,7 +78,7 @@ SELECT COUNT(*) FROM replies WHERE original_tweet_id = $1
 // WHERE r.parent_reply_id = $1
 // ORDER BY r.created_at ASC
 // LIMIT $2 OFFSET $3;
-// -- name: GetRepliesByAccountId :many
+// -- name: GetRepliesByAccountID :many
 // SELECT r.*, t.content AS reply_content, ot.content AS original_tweet_content
 // FROM replies r
 // JOIN tweets t ON r.reply_id = t.id

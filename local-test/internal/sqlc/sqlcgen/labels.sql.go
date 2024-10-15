@@ -42,13 +42,13 @@ func (q *Queries) DeleteLabel(ctx context.Context, tweetID int64) error {
 	return err
 }
 
-const getLabelsByTweetId = `-- name: GetLabelsByTweetId :one
+const getLabelsByTweetID = `-- name: GetLabelsByTweetID :one
 SELECT tweet_id, label1, label2, label3, created_at FROM labels
 WHERE tweet_id = $1
 `
 
-func (q *Queries) GetLabelsByTweetId(ctx context.Context, tweetID int64) (Label, error) {
-	row := q.db.QueryRowContext(ctx, getLabelsByTweetId, tweetID)
+func (q *Queries) GetLabelsByTweetID(ctx context.Context, tweetID int64) (Label, error) {
+	row := q.db.QueryRowContext(ctx, getLabelsByTweetID, tweetID)
 	var i Label
 	err := row.Scan(
 		&i.TweetID,

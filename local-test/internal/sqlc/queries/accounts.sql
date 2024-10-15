@@ -2,12 +2,11 @@
 INSERT INTO accounts (id, user_id, user_name)
 VALUES ($1, $2, $3);
 
--- name: GetAccountIDByUserId :one
+-- name: GetAccountIDByUserID :one
 SELECT id FROM accounts
 WHERE user_id = $1;
 
 -- name: GetUserAndProfileInfoByAccountIDs :many
--- args: ids VARCHAR[]
 SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
@@ -20,7 +19,7 @@ UPDATE accounts
 SET user_name = $1
 WHERE id = $2;
 
--- name: UpdateAccountUserId :exec
+-- name: UpdateAccountUserID :exec
 UPDATE accounts
 SET user_id = $1
 WHERE id = $2;
@@ -39,7 +38,7 @@ WHERE id = $1;
 DELETE FROM accounts
 WHERE id = $1;
 
--- name: SearchAccountsByUserId :many
+-- name: SearchAccountsByUserID :many
 SELECT * FROM accounts
 WHERE user_id LIKE CONCAT('%', $1, '%')
 ORDER BY user_id
@@ -61,5 +60,5 @@ SELECT COUNT(*) FROM accounts;
 -- name: CheckUserNameExists :one
 SELECT EXISTS(SELECT 1 FROM accounts WHERE user_name = $1);
 
--- name: CheckUserIdExists :one
+-- name: CheckUserIDExists :one
 SELECT EXISTS(SELECT 1 FROM accounts WHERE user_id = $1);

@@ -2,17 +2,17 @@
 INSERT INTO notifications (sender_account_id, recipient_account_id, type, content)
 VALUES ($1, $2, $3, $4);
 
--- name: GetNotificationById :one
+-- name: GetNotificationByID :one
 SELECT * FROM notifications
 WHERE id = $1;
 
--- name: GetNotificationsByRecipientId :many
+-- name: GetNotificationsByRecipientID :many
 SELECT * FROM notifications
 WHERE recipient_account_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
--- name: GetUnreadNotificationsByRecipientId :many
+-- name: GetUnreadNotificationsByRecipientID :many
 SELECT * FROM notifications
 WHERE recipient_account_id = $1 AND is_read = FALSE
 ORDER BY created_at DESC
@@ -36,11 +36,11 @@ WHERE id = $1 AND recipient_account_id = $2;
 DELETE FROM notifications
 WHERE recipient_account_id = $1;
 
--- name: GetNotificationCountByRecipientId :one
+-- name: GetNotificationCountByRecipientID :one
 SELECT COUNT(*) FROM notifications
 WHERE recipient_account_id = $1;
 
--- name: GetUnreadNotificationCountByRecipientId :one
+-- name: GetUnreadNotificationCountByRecipientID :one
 SELECT COUNT(*) FROM notifications
 WHERE recipient_account_id = $1 AND is_read = FALSE;
 

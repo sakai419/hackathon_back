@@ -185,12 +185,12 @@ func (q *Queries) GetTrendingTweets(ctx context.Context, arg GetTrendingTweetsPa
 	return items, nil
 }
 
-const getTweetById = `-- name: GetTweetById :one
+const getTweetByID = `-- name: GetTweetByID :one
 SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets WHERE id = $1
 `
 
-func (q *Queries) GetTweetById(ctx context.Context, id int64) (Tweet, error) {
-	row := q.db.QueryRowContext(ctx, getTweetById, id)
+func (q *Queries) GetTweetByID(ctx context.Context, id int64) (Tweet, error) {
+	row := q.db.QueryRowContext(ctx, getTweetByID, id)
 	var i Tweet
 	err := row.Scan(
 		&i.ID,
@@ -212,32 +212,32 @@ func (q *Queries) GetTweetById(ctx context.Context, id int64) (Tweet, error) {
 	return i, err
 }
 
-const getTweetCountByAccountId = `-- name: GetTweetCountByAccountId :one
+const getTweetCountByAccountID = `-- name: GetTweetCountByAccountID :one
 SELECT COUNT(*) FROM tweets WHERE account_id = $1
 `
 
-func (q *Queries) GetTweetCountByAccountId(ctx context.Context, accountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getTweetCountByAccountId, accountID)
+func (q *Queries) GetTweetCountByAccountID(ctx context.Context, accountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTweetCountByAccountID, accountID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getTweetsByAccountId = `-- name: GetTweetsByAccountId :many
+const getTweetsByAccountID = `-- name: GetTweetsByAccountID :many
 SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_retweet, is_reply, is_quote, engagement_score, media, created_at, updated_at FROM tweets
 WHERE account_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetTweetsByAccountIdParams struct {
+type GetTweetsByAccountIDParams struct {
 	AccountID string
 	Limit     int32
 	Offset    int32
 }
 
-func (q *Queries) GetTweetsByAccountId(ctx context.Context, arg GetTweetsByAccountIdParams) ([]Tweet, error) {
-	rows, err := q.db.QueryContext(ctx, getTweetsByAccountId, arg.AccountID, arg.Limit, arg.Offset)
+func (q *Queries) GetTweetsByAccountID(ctx context.Context, arg GetTweetsByAccountIDParams) ([]Tweet, error) {
+	rows, err := q.db.QueryContext(ctx, getTweetsByAccountID, arg.AccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -51,21 +51,21 @@ func (q *Queries) GetLikeCount(ctx context.Context, originalTweetID int64) (int6
 	return count, err
 }
 
-const getLikesByAccountId = `-- name: GetLikesByAccountId :many
+const getLikesByAccountID = `-- name: GetLikesByAccountID :many
 SELECT liking_account_id, original_tweet_id, created_at FROM likes
 WHERE liking_account_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetLikesByAccountIdParams struct {
+type GetLikesByAccountIDParams struct {
 	LikingAccountID string
 	Limit           int32
 	Offset          int32
 }
 
-func (q *Queries) GetLikesByAccountId(ctx context.Context, arg GetLikesByAccountIdParams) ([]Like, error) {
-	rows, err := q.db.QueryContext(ctx, getLikesByAccountId, arg.LikingAccountID, arg.Limit, arg.Offset)
+func (q *Queries) GetLikesByAccountID(ctx context.Context, arg GetLikesByAccountIDParams) ([]Like, error) {
+	rows, err := q.db.QueryContext(ctx, getLikesByAccountID, arg.LikingAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -87,21 +87,21 @@ func (q *Queries) GetLikesByAccountId(ctx context.Context, arg GetLikesByAccount
 	return items, nil
 }
 
-const getLikesByTweetId = `-- name: GetLikesByTweetId :many
+const getLikesByTweetID = `-- name: GetLikesByTweetID :many
 SELECT liking_account_id, original_tweet_id, created_at FROM likes
 WHERE original_tweet_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetLikesByTweetIdParams struct {
+type GetLikesByTweetIDParams struct {
 	OriginalTweetID int64
 	Limit           int32
 	Offset          int32
 }
 
-func (q *Queries) GetLikesByTweetId(ctx context.Context, arg GetLikesByTweetIdParams) ([]Like, error) {
-	rows, err := q.db.QueryContext(ctx, getLikesByTweetId, arg.OriginalTweetID, arg.Limit, arg.Offset)
+func (q *Queries) GetLikesByTweetID(ctx context.Context, arg GetLikesByTweetIDParams) ([]Like, error) {
+	rows, err := q.db.QueryContext(ctx, getLikesByTweetID, arg.OriginalTweetID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

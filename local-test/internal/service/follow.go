@@ -10,7 +10,7 @@ import (
 
 func (s *Service) FollowUser(ctx context.Context, arg *model.FollowUserParams) error {
 	// Get account id by user id
-	FollowingAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.FollowingUserID)
+	FollowingAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowingUserID)
 	if err != nil {
 		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
 			return &apperrors.AppError{
@@ -84,7 +84,7 @@ func (s *Service) FollowUser(ctx context.Context, arg *model.FollowUserParams) e
 
 func (s *Service) UnfollowUser(ctx context.Context, arg *model.UnfollowUserParams) error {
 	// Get account id by user id
-	FollowingAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.FollowingUserID)
+	FollowingAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowingUserID)
 	if err != nil {
 		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
 			return &apperrors.AppError{
@@ -173,7 +173,7 @@ func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerIn
 	}
 
 	// Get account id by user id
-	FollowingAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.FollowingUserID)
+	FollowingAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowingUserID)
 	if err != nil {
 		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
 			return nil, &apperrors.AppError{
@@ -253,7 +253,7 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 	}
 
 	// Get account id by user id
-	FollowerAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.FollowerUserID)
+	FollowerAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowerUserID)
 	if err != nil {
 		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
 			return nil, &apperrors.AppError{
@@ -318,7 +318,7 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 
 func (s *Service) RequestFollow(ctx context.Context, arg *model.RequestFollowParams) error {
 	// Get account id by user id
-	RequestedAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.RequestedUserID)
+	RequestedAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.RequestedUserID)
 	if err != nil {
 		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
 			return &apperrors.AppError{
@@ -392,7 +392,7 @@ func (s *Service) RequestFollow(ctx context.Context, arg *model.RequestFollowPar
 
 func (s *Service) AcceptFollowRequest(ctx context.Context, arg *model.AcceptFollowRequestParams) error {
     // Get account id by user id
-    RequesterAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.RequesterUserID)
+    RequesterAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.RequesterUserID)
     if err != nil {
         if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
             return &apperrors.AppError{
@@ -451,7 +451,7 @@ func (s *Service) AcceptFollowRequest(ctx context.Context, arg *model.AcceptFoll
 
 func (s *Service) RejectFollowRequest(ctx context.Context, arg *model.RejectFollowRequestParams) error {
 	// Get account id by user id
-	RequesterAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.RequesterUserID)
+	RequesterAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.RequesterUserID)
 	if err != nil {
 		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
 			return &apperrors.AppError{

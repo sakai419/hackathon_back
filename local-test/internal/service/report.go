@@ -10,7 +10,7 @@ import (
 
 func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateReportByUserIDParams) error {
 	// Get account id by user id
-	RepotedAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.ReportedUserID)
+	RepotedAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.ReportedUserID)
 	if err != nil {
 		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
 			return &apperrors.AppError{

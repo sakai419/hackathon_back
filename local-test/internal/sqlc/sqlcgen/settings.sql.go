@@ -40,13 +40,13 @@ func (q *Queries) DeleteSettings(ctx context.Context, accountID string) error {
 	return err
 }
 
-const getSettingsByAccountId = `-- name: GetSettingsByAccountId :one
+const getSettingsByAccountID = `-- name: GetSettingsByAccountID :one
 SELECT account_id, is_private, created_at, updated_at FROM settings
 WHERE account_id = $1
 `
 
-func (q *Queries) GetSettingsByAccountId(ctx context.Context, accountID string) (Setting, error) {
-	row := q.db.QueryRowContext(ctx, getSettingsByAccountId, accountID)
+func (q *Queries) GetSettingsByAccountID(ctx context.Context, accountID string) (Setting, error) {
+	row := q.db.QueryRowContext(ctx, getSettingsByAccountID, accountID)
 	var i Setting
 	err := row.Scan(
 		&i.AccountID,

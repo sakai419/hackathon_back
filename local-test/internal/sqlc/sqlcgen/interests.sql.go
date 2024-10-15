@@ -30,13 +30,13 @@ func (q *Queries) DeleteInterests(ctx context.Context, accountID string) error {
 	return err
 }
 
-const getInterestsByAccountId = `-- name: GetInterestsByAccountId :one
+const getInterestsByAccountID = `-- name: GetInterestsByAccountID :one
 SELECT account_id, news_score, politics_score, economics_score, health_score, sports_score, entertainment_score, art_score, cooking_score, travel_score, fashion_score, beauty_score, pets_score, parenting_score, education_score, environment_score, climate_score, space_score, mental_health_score, fitness_score, reading_score, history_score, philosophy_score, religion_score, culture_score, volunteering_score, social_issues_score, law_score, taxes_score, investment_score, real_estate_score, diy_score, gardening_score, interior_design_score, automotive_score, gaming_score, anime_manga_score, creative_works_score, photography_video_score, media_score, marketing_score, branding_score, entrepreneurship_score, remote_work_score, data_science_score, iot_score, robotics_engineering_score, biotechnology_score, nanotechnology_score, energy_technology_score, archaeology_score, psychology_score, sociology_score, anthropology_score, geography_score, geology_score, meteorology_score, disaster_emergency_management_score, urban_planning_score, architecture_score, agriculture_score, nutrition_science_score, sleep_science_score, productivity_score, leadership_score, international_relations_score, future_predictions_score, events_score, community_score, trends_score, lifestyle_score, software_development_score, programming_languages_score, web_development_score, mobile_app_development_score, debugging_techniques_score, algorithms_mathematics_score, database_design_score, cloud_computing_score, server_management_score, network_security_score, cryptography_score, artificial_intelligence_score, machine_learning_score, deep_learning_score, computer_vision_score, natural_language_processing_score, blockchain_technology_score, quantum_computing_score, edge_computing_score, microservices_architecture_score, devops_score, container_technology_score, ci_cd_score, test_automation_score, ux_ui_design_score, agile_development_methodologies_score, open_source_score, version_control_score, api_design_score, performance_optimization_score FROM interests
 WHERE account_id = $1
 `
 
-func (q *Queries) GetInterestsByAccountId(ctx context.Context, accountID string) (Interest, error) {
-	row := q.db.QueryRowContext(ctx, getInterestsByAccountId, accountID)
+func (q *Queries) GetInterestsByAccountID(ctx context.Context, accountID string) (Interest, error) {
+	row := q.db.QueryRowContext(ctx, getInterestsByAccountID, accountID)
 	var i Interest
 	err := row.Scan(
 		&i.AccountID,

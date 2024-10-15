@@ -41,13 +41,13 @@ func (q *Queries) DeleteProfiles(ctx context.Context, accountID string) error {
 	return err
 }
 
-const getProfilesByAccountId = `-- name: GetProfilesByAccountId :one
+const getProfilesByAccountID = `-- name: GetProfilesByAccountID :one
 SELECT account_id, bio, profile_image_url, banner_image_url, created_at, updated_at FROM profiles
 WHERE account_id = $1
 `
 
-func (q *Queries) GetProfilesByAccountId(ctx context.Context, accountID string) (Profile, error) {
-	row := q.db.QueryRowContext(ctx, getProfilesByAccountId, accountID)
+func (q *Queries) GetProfilesByAccountID(ctx context.Context, accountID string) (Profile, error) {
+	row := q.db.QueryRowContext(ctx, getProfilesByAccountID, accountID)
 	var i Profile
 	err := row.Scan(
 		&i.AccountID,

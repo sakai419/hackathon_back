@@ -2,7 +2,7 @@
 INSERT INTO profiles (account_id)
 VALUES ($1);
 
--- name: GetProfilesByAccountId :one
+-- name: GetProfilesByAccountID :one
 SELECT * FROM profiles
 WHERE account_id = $1;
 

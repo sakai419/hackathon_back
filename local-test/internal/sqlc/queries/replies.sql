@@ -2,13 +2,13 @@
 INSERT INTO replies (original_tweet_id, parent_reply_id, replying_account_id)
 VALUES ($1, $2, $3);
 
--- name: GetReplyById :one
+-- name: GetReplyByID :one
 SELECT * FROM replies WHERE tweet_id = $1;
 
 -- name: DeleteReply :exec
 DELETE FROM replies WHERE tweet_id = $1;
 
--- -- name: GetRepliesByOriginalTweetId :many
+-- -- name: GetRepliesByOriginalTweetID :many
 -- SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
 -- FROM replies r
 -- JOIN tweets t ON r.reply_id = t.id
@@ -17,7 +17,7 @@ DELETE FROM replies WHERE tweet_id = $1;
 -- ORDER BY r.created_at ASC
 -- LIMIT $2 OFFSET $3;
 
--- -- name: GetRepliesByParentReplyId :many
+-- -- name: GetRepliesByParentReplyID :many
 -- SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
 -- FROM replies r
 -- JOIN tweets t ON r.reply_id = t.id
@@ -26,7 +26,7 @@ DELETE FROM replies WHERE tweet_id = $1;
 -- ORDER BY r.created_at ASC
 -- LIMIT $2 OFFSET $3;
 
--- -- name: GetRepliesByAccountId :many
+-- -- name: GetRepliesByAccountID :many
 -- SELECT r.*, t.content AS reply_content, ot.content AS original_tweet_content
 -- FROM replies r
 -- JOIN tweets t ON r.reply_id = t.id

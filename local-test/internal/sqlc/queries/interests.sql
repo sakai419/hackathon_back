@@ -1,4 +1,4 @@
--- name: GetInterestsByAccountId :one
+-- name: GetInterestsByAccountID :one
 SELECT * FROM interests
 WHERE account_id = $1;
 

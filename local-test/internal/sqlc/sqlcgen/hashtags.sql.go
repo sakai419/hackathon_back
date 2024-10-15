@@ -62,12 +62,12 @@ func (q *Queries) GetAllHashtags(ctx context.Context, arg GetAllHashtagsParams) 
 	return items, nil
 }
 
-const getHashtagById = `-- name: GetHashtagById :one
+const getHashtagByID = `-- name: GetHashtagByID :one
 SELECT id, tag, created_at FROM hashtags WHERE id = $1
 `
 
-func (q *Queries) GetHashtagById(ctx context.Context, id int64) (Hashtag, error) {
-	row := q.db.QueryRowContext(ctx, getHashtagById, id)
+func (q *Queries) GetHashtagByID(ctx context.Context, id int64) (Hashtag, error) {
+	row := q.db.QueryRowContext(ctx, getHashtagByID, id)
 	var i Hashtag
 	err := row.Scan(&i.ID, &i.Tag, &i.CreatedAt)
 	return i, err

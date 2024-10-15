@@ -6,13 +6,13 @@ VALUES ($1, $2);
 DELETE FROM tweet_hashtags
 WHERE tweet_id = $1 AND hashtag_id = $2;
 
--- name: GetHashtagsByTweetId :many
+-- name: GetHashtagsByTweetID :many
 SELECT h.*
 FROM hashtags h
 JOIN tweet_hashtags th ON h.id = th.hashtag_id
 WHERE th.tweet_id = $1;
 
--- name: GetTweetsByHashtagId :many
+-- name: GetTweetsByHashtagID :many
 SELECT t.*
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
@@ -26,7 +26,7 @@ SELECT EXISTS(
     WHERE tweet_id = $1 AND hashtag_id = $2
 ) AS hashtag_exists;
 
--- name: GetTweetCountByHashtagId :one
+-- name: GetTweetCountByHashtagID :one
 SELECT COUNT(DISTINCT tweet_id)
 FROM tweet_hashtags
 WHERE hashtag_id = $1;

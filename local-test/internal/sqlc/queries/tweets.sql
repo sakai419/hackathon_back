@@ -18,10 +18,10 @@ INSERT INTO tweets (
     account_id, is_quote, content, code, media
 ) VALUES ($1, TRUE, $2, $3, $4);
 
--- name: GetTweetById :one
+-- name: GetTweetByID :one
 SELECT * FROM tweets WHERE id = $1;
 
--- name: GetTweetsByAccountId :many
+-- name: GetTweetsByAccountID :many
 SELECT * FROM tweets
 WHERE account_id = $1
 ORDER BY created_at DESC
@@ -80,5 +80,5 @@ WHERE content LIKE $1 OR code LIKE $2
 ORDER BY created_at DESC
 LIMIT $3 OFFSET $4;
 
--- name: GetTweetCountByAccountId :one
+-- name: GetTweetCountByAccountID :one
 SELECT COUNT(*) FROM tweets WHERE account_id = $1;

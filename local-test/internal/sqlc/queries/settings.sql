@@ -2,7 +2,7 @@
 INSERT INTO settings (account_id)
 VALUES ($1);
 
--- name: GetSettingsByAccountId :one
+-- name: GetSettingsByAccountID :one
 SELECT * FROM settings
 WHERE account_id = $1;
 

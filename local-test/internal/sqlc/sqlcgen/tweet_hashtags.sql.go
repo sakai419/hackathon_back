@@ -72,15 +72,15 @@ func (q *Queries) DeleteTweetHashtag(ctx context.Context, arg DeleteTweetHashtag
 	return err
 }
 
-const getHashtagsByTweetId = `-- name: GetHashtagsByTweetId :many
+const getHashtagsByTweetID = `-- name: GetHashtagsByTweetID :many
 SELECT h.id, h.tag, h.created_at
 FROM hashtags h
 JOIN tweet_hashtags th ON h.id = th.hashtag_id
 WHERE th.tweet_id = $1
 `
 
-func (q *Queries) GetHashtagsByTweetId(ctx context.Context, tweetID int64) ([]Hashtag, error) {
-	rows, err := q.db.QueryContext(ctx, getHashtagsByTweetId, tweetID)
+func (q *Queries) GetHashtagsByTweetID(ctx context.Context, tweetID int64) ([]Hashtag, error) {
+	rows, err := q.db.QueryContext(ctx, getHashtagsByTweetID, tweetID)
 	if err != nil {
 		return nil, err
 	}
@@ -226,20 +226,20 @@ func (q *Queries) GetRecentTweetsWithHashtag(ctx context.Context, arg GetRecentT
 	return items, nil
 }
 
-const getTweetCountByHashtagId = `-- name: GetTweetCountByHashtagId :one
+const getTweetCountByHashtagID = `-- name: GetTweetCountByHashtagID :one
 SELECT COUNT(DISTINCT tweet_id)
 FROM tweet_hashtags
 WHERE hashtag_id = $1
 `
 
-func (q *Queries) GetTweetCountByHashtagId(ctx context.Context, hashtagID int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getTweetCountByHashtagId, hashtagID)
+func (q *Queries) GetTweetCountByHashtagID(ctx context.Context, hashtagID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTweetCountByHashtagID, hashtagID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getTweetsByHashtagId = `-- name: GetTweetsByHashtagId :many
+const getTweetsByHashtagID = `-- name: GetTweetsByHashtagID :many
 SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
@@ -248,13 +248,13 @@ ORDER BY t.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
-type GetTweetsByHashtagIdParams struct {
+type GetTweetsByHashtagIDParams struct {
 	Limit  int32
 	Offset int32
 }
 
-func (q *Queries) GetTweetsByHashtagId(ctx context.Context, arg GetTweetsByHashtagIdParams) ([]Tweet, error) {
-	rows, err := q.db.QueryContext(ctx, getTweetsByHashtagId, arg.Limit, arg.Offset)
+func (q *Queries) GetTweetsByHashtagID(ctx context.Context, arg GetTweetsByHashtagIDParams) ([]Tweet, error) {
+	rows, err := q.db.QueryContext(ctx, getTweetsByHashtagID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

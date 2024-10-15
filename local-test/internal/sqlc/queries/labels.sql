@@ -2,7 +2,7 @@
 INSERT INTO labels (tweet_id, label1, label2, label3)
 VALUES ($1, $2, $3, $4);
 
--- name: GetLabelsByTweetId :one
+-- name: GetLabelsByTweetID :one
 SELECT * FROM labels
 WHERE tweet_id = $1;
 

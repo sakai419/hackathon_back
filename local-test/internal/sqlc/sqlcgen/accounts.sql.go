@@ -13,12 +13,12 @@ import (
 	"github.com/lib/pq"
 )
 
-const checkUserIdExists = `-- name: CheckUserIdExists :one
+const checkUserIDExists = `-- name: CheckUserIDExists :one
 SELECT EXISTS(SELECT 1 FROM accounts WHERE user_id = $1)
 `
 
-func (q *Queries) CheckUserIdExists(ctx context.Context, userID string) (bool, error) {
-	row := q.db.QueryRowContext(ctx, checkUserIdExists, userID)
+func (q *Queries) CheckUserIDExists(ctx context.Context, userID string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkUserIDExists, userID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
@@ -83,13 +83,13 @@ func (q *Queries) GetAccountCreationDate(ctx context.Context, id string) (time.T
 	return created_at, err
 }
 
-const getAccountIDByUserId = `-- name: GetAccountIDByUserId :one
+const getAccountIDByUserID = `-- name: GetAccountIDByUserID :one
 SELECT id FROM accounts
 WHERE user_id = $1
 `
 
-func (q *Queries) GetAccountIDByUserId(ctx context.Context, userID string) (string, error) {
-	row := q.db.QueryRowContext(ctx, getAccountIDByUserId, userID)
+func (q *Queries) GetAccountIDByUserID(ctx context.Context, userID string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getAccountIDByUserID, userID)
 	var id string
 	err := row.Scan(&id)
 	return id, err
@@ -117,7 +117,6 @@ type GetUserAndProfileInfoByAccountIDsRow struct {
 	ProfileImageUrl sql.NullString
 }
 
-// args: ids VARCHAR[]
 func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg GetUserAndProfileInfoByAccountIDsParams) ([]GetUserAndProfileInfoByAccountIDsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfoByAccountIDs, arg.Limit, arg.Offset, pq.Array(arg.Ids))
 	if err != nil {
@@ -146,21 +145,21 @@ func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg Get
 	return items, nil
 }
 
-const searchAccountsByUserId = `-- name: SearchAccountsByUserId :many
+const searchAccountsByUserID = `-- name: SearchAccountsByUserID :many
 SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
 WHERE user_id LIKE CONCAT('%', $1, '%')
 ORDER BY user_id
 LIMIT $2 OFFSET $3
 `
 
-type SearchAccountsByUserIdParams struct {
+type SearchAccountsByUserIDParams struct {
 	Concat interface{}
 	Limit  int32
 	Offset int32
 }
 
-func (q *Queries) SearchAccountsByUserId(ctx context.Context, arg SearchAccountsByUserIdParams) ([]Account, error) {
-	rows, err := q.db.QueryContext(ctx, searchAccountsByUserId, arg.Concat, arg.Limit, arg.Offset)
+func (q *Queries) SearchAccountsByUserID(ctx context.Context, arg SearchAccountsByUserIDParams) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, searchAccountsByUserID, arg.Concat, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -252,19 +251,19 @@ func (q *Queries) UnsuspendAccount(ctx context.Context, id string) (sql.Result, 
 	return q.db.ExecContext(ctx, unsuspendAccount, id)
 }
 
-const updateAccountUserId = `-- name: UpdateAccountUserId :exec
+const updateAccountUserID = `-- name: UpdateAccountUserID :exec
 UPDATE accounts
 SET user_id = $1
 WHERE id = $2
 `
 
-type UpdateAccountUserIdParams struct {
+type UpdateAccountUserIDParams struct {
 	UserID string
 	ID     string
 }
 
-func (q *Queries) UpdateAccountUserId(ctx context.Context, arg UpdateAccountUserIdParams) error {
-	_, err := q.db.ExecContext(ctx, updateAccountUserId, arg.UserID, arg.ID)
+func (q *Queries) UpdateAccountUserID(ctx context.Context, arg UpdateAccountUserIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateAccountUserID, arg.UserID, arg.ID)
 	return err
 }
 

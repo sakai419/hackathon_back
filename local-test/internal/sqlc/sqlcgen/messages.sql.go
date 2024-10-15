@@ -131,13 +131,13 @@ func (q *Queries) GetLatestMessageForEachConversation(ctx context.Context, arg G
 	return items, nil
 }
 
-const getMessageById = `-- name: GetMessageById :one
+const getMessageByID = `-- name: GetMessageByID :one
 SELECT id, sender_account_id, recipient_account_id, content, is_read, created_at FROM messages
 WHERE id = $1
 `
 
-func (q *Queries) GetMessageById(ctx context.Context, id int64) (Message, error) {
-	row := q.db.QueryRowContext(ctx, getMessageById, id)
+func (q *Queries) GetMessageByID(ctx context.Context, id int64) (Message, error) {
+	row := q.db.QueryRowContext(ctx, getMessageByID, id)
 	var i Message
 	err := row.Scan(
 		&i.ID,

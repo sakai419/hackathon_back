@@ -6,13 +6,13 @@ VALUES ($1, $2);
 DELETE FROM likes
 WHERE liking_account_id = $1 AND original_tweet_id = $2;
 
--- name: GetLikesByTweetId :many
+-- name: GetLikesByTweetID :many
 SELECT * FROM likes
 WHERE original_tweet_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
--- name: GetLikesByAccountId :many
+-- name: GetLikesByAccountID :many
 SELECT * FROM likes
 WHERE liking_account_id = $1
 ORDER BY created_at DESC

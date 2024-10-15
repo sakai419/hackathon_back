@@ -48,13 +48,13 @@ func (q *Queries) GetRetweetAndQuoteCount(ctx context.Context, originalTweetID i
 	return count, err
 }
 
-const getRetweetOrQuoteById = `-- name: GetRetweetOrQuoteById :one
+const getRetweetOrQuoteByID = `-- name: GetRetweetOrQuoteByID :one
 SELECT tweet_id, retweeting_account_id, original_tweet_id, created_at FROM retweets_and_quotes
 WHERE tweet_id = $1
 `
 
-func (q *Queries) GetRetweetOrQuoteById(ctx context.Context, tweetID int64) (RetweetsAndQuote, error) {
-	row := q.db.QueryRowContext(ctx, getRetweetOrQuoteById, tweetID)
+func (q *Queries) GetRetweetOrQuoteByID(ctx context.Context, tweetID int64) (RetweetsAndQuote, error) {
+	row := q.db.QueryRowContext(ctx, getRetweetOrQuoteByID, tweetID)
 	var i RetweetsAndQuote
 	err := row.Scan(
 		&i.TweetID,
@@ -65,7 +65,7 @@ func (q *Queries) GetRetweetOrQuoteById(ctx context.Context, tweetID int64) (Ret
 	return i, err
 }
 
-const getRetweetsAndQuotesByAccountId = `-- name: GetRetweetsAndQuotesByAccountId :many
+const getRetweetsAndQuotesByAccountID = `-- name: GetRetweetsAndQuotesByAccountID :many
 SELECT r.tweet_id, r.retweeting_account_id, r.original_tweet_id, r.created_at, t.content AS original_tweet_content
 FROM retweets_and_quotes r
 JOIN tweets t ON r.original_tweet_id = t.id
@@ -74,13 +74,13 @@ ORDER BY r.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetRetweetsAndQuotesByAccountIdParams struct {
+type GetRetweetsAndQuotesByAccountIDParams struct {
 	RetweetingAccountID string
 	Limit               int32
 	Offset              int32
 }
 
-type GetRetweetsAndQuotesByAccountIdRow struct {
+type GetRetweetsAndQuotesByAccountIDRow struct {
 	TweetID              int64
 	RetweetingAccountID  string
 	OriginalTweetID      int64
@@ -88,15 +88,15 @@ type GetRetweetsAndQuotesByAccountIdRow struct {
 	OriginalTweetContent sql.NullString
 }
 
-func (q *Queries) GetRetweetsAndQuotesByAccountId(ctx context.Context, arg GetRetweetsAndQuotesByAccountIdParams) ([]GetRetweetsAndQuotesByAccountIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRetweetsAndQuotesByAccountId, arg.RetweetingAccountID, arg.Limit, arg.Offset)
+func (q *Queries) GetRetweetsAndQuotesByAccountID(ctx context.Context, arg GetRetweetsAndQuotesByAccountIDParams) ([]GetRetweetsAndQuotesByAccountIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRetweetsAndQuotesByAccountID, arg.RetweetingAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetRetweetsAndQuotesByAccountIdRow
+	var items []GetRetweetsAndQuotesByAccountIDRow
 	for rows.Next() {
-		var i GetRetweetsAndQuotesByAccountIdRow
+		var i GetRetweetsAndQuotesByAccountIDRow
 		if err := rows.Scan(
 			&i.TweetID,
 			&i.RetweetingAccountID,
@@ -117,7 +117,7 @@ func (q *Queries) GetRetweetsAndQuotesByAccountId(ctx context.Context, arg GetRe
 	return items, nil
 }
 
-const getRetweetsAndQuotesByOriginalTweetId = `-- name: GetRetweetsAndQuotesByOriginalTweetId :many
+const getRetweetsAndQuotesByOriginalTweetID = `-- name: GetRetweetsAndQuotesByOriginalTweetID :many
 SELECT r.tweet_id, r.retweeting_account_id, r.original_tweet_id, r.created_at, t.content AS retweet_content
 FROM retweets_and_quotes r
 JOIN tweets t ON r.tweet_id = t.id
@@ -126,13 +126,13 @@ ORDER BY r.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetRetweetsAndQuotesByOriginalTweetIdParams struct {
+type GetRetweetsAndQuotesByOriginalTweetIDParams struct {
 	OriginalTweetID int64
 	Limit           int32
 	Offset          int32
 }
 
-type GetRetweetsAndQuotesByOriginalTweetIdRow struct {
+type GetRetweetsAndQuotesByOriginalTweetIDRow struct {
 	TweetID             int64
 	RetweetingAccountID string
 	OriginalTweetID     int64
@@ -140,15 +140,15 @@ type GetRetweetsAndQuotesByOriginalTweetIdRow struct {
 	RetweetContent      sql.NullString
 }
 
-func (q *Queries) GetRetweetsAndQuotesByOriginalTweetId(ctx context.Context, arg GetRetweetsAndQuotesByOriginalTweetIdParams) ([]GetRetweetsAndQuotesByOriginalTweetIdRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRetweetsAndQuotesByOriginalTweetId, arg.OriginalTweetID, arg.Limit, arg.Offset)
+func (q *Queries) GetRetweetsAndQuotesByOriginalTweetID(ctx context.Context, arg GetRetweetsAndQuotesByOriginalTweetIDParams) ([]GetRetweetsAndQuotesByOriginalTweetIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRetweetsAndQuotesByOriginalTweetID, arg.OriginalTweetID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetRetweetsAndQuotesByOriginalTweetIdRow
+	var items []GetRetweetsAndQuotesByOriginalTweetIDRow
 	for rows.Next() {
-		var i GetRetweetsAndQuotesByOriginalTweetIdRow
+		var i GetRetweetsAndQuotesByOriginalTweetIDRow
 		if err := rows.Scan(
 			&i.TweetID,
 			&i.RetweetingAccountID,

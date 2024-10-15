@@ -2,7 +2,7 @@
 INSERT INTO hashtags (tag) VALUES ($1)
 ON CONFLICT (tag) DO NOTHING;
 
--- name: GetHashtagById :one
+-- name: GetHashtagByID :one
 SELECT * FROM hashtags WHERE id = $1;
 
 -- name: GetHashtagByTag :one

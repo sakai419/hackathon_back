@@ -187,8 +187,8 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 	return nil
 }
 
-func (r *Repository) GetAccountIDByUserId(ctx context.Context, userId string) (string, error) {
-	AccountID, err := r.q.GetAccountIDByUserId(ctx, userId)
+func (r *Repository) GetAccountIDByUserID(ctx context.Context, userId string) (string, error) {
+	AccountID, err := r.q.GetAccountIDByUserID(ctx, userId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", apperrors.WrapRepositoryError(
