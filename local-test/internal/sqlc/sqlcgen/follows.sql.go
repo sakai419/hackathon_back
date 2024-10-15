@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const acceptFollowRequest = `-- name: AcceptFollowRequest :exec
+const acceptFollowRequest = `-- name: AcceptFollowRequest :execresult
 UPDATE follows
 SET status = 'accepted'
 WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'pending'
@@ -22,9 +22,8 @@ type AcceptFollowRequestParams struct {
 	FollowingAccountID string
 }
 
-func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, acceptFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
-	return err
+func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowRequestParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, acceptFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
 const createFollow = `-- name: CreateFollow :exec
@@ -71,7 +70,7 @@ func (q *Queries) DeleteFollow(ctx context.Context, arg DeleteFollowParams) (sql
 	return q.db.ExecContext(ctx, deleteFollow, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
-const deleteFollowRequest = `-- name: DeleteFollowRequest :exec
+const deleteFollowRequest = `-- name: DeleteFollowRequest :execresult
 DELETE FROM follows
 WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'pending'
 `
@@ -81,9 +80,8 @@ type DeleteFollowRequestParams struct {
 	FollowingAccountID string
 }
 
-func (q *Queries) DeleteFollowRequest(ctx context.Context, arg DeleteFollowRequestParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
-	return err
+func (q *Queries) DeleteFollowRequest(ctx context.Context, arg DeleteFollowRequestParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
 const getFollowStatus = `-- name: GetFollowStatus :one

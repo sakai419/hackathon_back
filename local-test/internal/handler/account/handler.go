@@ -27,12 +27,12 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
     accountID, err := key.GetAccountID(r.Context())
     if err != nil {
         utils.RespondError(w, &apperrors.AppError{
-            Status:  http.StatusInternalServerError,
-            Code:    "INTERNAL_SERVER_ERROR",
-            Message: "User ID not found in context",
+			Status:  http.StatusUnauthorized,
+			Code:    "UNAUTHORIZED",
+			Message: "Account ID not found in context",
             Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get user ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),
@@ -97,12 +97,12 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	accountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-            Status:  http.StatusInternalServerError,
-            Code:    "INTERNAL_SERVER_ERROR",
-            Message: "User ID not found in context",
+			Status:  http.StatusUnauthorized,
+			Code:    "UNAUTHORIZED",
+			Message: "Account ID not found in context",
             Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get user ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),

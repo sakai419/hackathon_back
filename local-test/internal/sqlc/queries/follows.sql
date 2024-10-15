@@ -6,7 +6,7 @@ VALUES ($1, $2, 'accepted');
 INSERT INTO follows (follower_account_id, following_account_id, status)
 VALUES ($1, $2, 'pending');
 
--- name: AcceptFollowRequest :exec
+-- name: AcceptFollowRequest :execresult
 UPDATE follows
 SET status = 'accepted'
 WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'pending';
@@ -15,7 +15,7 @@ WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'pendi
 DELETE FROM follows
 WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'accepted';
 
--- name: DeleteFollowRequest :exec
+-- name: DeleteFollowRequest :execresult
 DELETE FROM follows
 WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'pending';
 

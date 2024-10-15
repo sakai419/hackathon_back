@@ -270,12 +270,33 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 		FollowerAccountID: arg.RequesterAccountID,
 		FollowingAccountID: arg.RequestedAccountID,
 	}
-	if err := q.AcceptFollowRequest(ctx, acceptFollowRequestParams); err != nil {
+	res, err := q.AcceptFollowRequest(ctx, acceptFollowRequestParams)
+	if err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "accept follow request",
 				Err: err,
+			},
+		)
+	}
+
+	// Check if follow request is accepted
+	num, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check if follow request is accepted",
+				Err: err,
+			},
+		)
+	}
+	if num == 0 {
+		tx.Rollback()
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "follow request",
 			},
 		)
 	}
@@ -329,13 +350,33 @@ func (r *Repository) DeleteFollowRequest(ctx context.Context, arg *model.DeleteF
 		FollowerAccountID: arg.RequesterAccountID,
 		FollowingAccountID: arg.RequestedAccountID,
 	}
-
-	if err := q.DeleteFollowRequest(ctx, deleteFollowRequestParams); err != nil {
+	res, err := q.DeleteFollowRequest(ctx, deleteFollowRequestParams)
+	if err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "delete follow request",
 				Err: err,
+			},
+		)
+	}
+
+	// Check if follow request is deleted
+	num, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check if follow request is deleted",
+				Err: err,
+			},
+		)
+	}
+	if num == 0 {
+		tx.Rollback()
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "follow request",
 			},
 		)
 	}

@@ -29,10 +29,10 @@ func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request, userI
 		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
-			Message: "User ID not found in context",
+			Message: "Account ID not found in context",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get user ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),
@@ -60,12 +60,12 @@ func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request, use
 	followerAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusInternalServerError,
-			Code:    "INTERNAL_SERVER_ERROR",
-			Message: "User ID not found in context",
+			Status:  http.StatusUnauthorized,
+			Code:    "UNAUTHORIZED",
+			Message: "Account ID not found in context",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get user ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),
@@ -89,6 +89,22 @@ func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request, use
 // Get followers
 // (GET /users/{user_id}/followers)
 func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request, userID string, params GetFollowersParams) {
+	// Validate request
+	if err := params.validate(); err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Invalid request",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "validate request",
+					Err: err,
+				},
+			),
+		})
+		return
+	}
+
 	// Get followers
 	arg := &model.GetFollowerInfosParams{
 		FollowingUserID: userID,
@@ -101,6 +117,7 @@ func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
+
 	// Convert to response
 	resp := convertToUserAndProfileInfos(followerInfos)
 
@@ -110,6 +127,22 @@ func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request, use
 // Get followings
 // (GET /users/{user_id}/followings)
 func (h *FollowHandler) GetFollowings(w http.ResponseWriter, r *http.Request, userID string, params GetFollowingsParams) {
+	// Validate request
+	if err := params.validate(); err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Invalid request",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "validate request",
+					Err: err,
+				},
+			),
+		})
+		return
+	}
+
 	// Get followings
 	arg := &model.GetFollowingInfosParams{
 		FollowerUserID: userID,
@@ -135,12 +168,12 @@ func (h *FollowHandler) SendFollowRequest(w http.ResponseWriter, r *http.Request
 	requesterAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusInternalServerError,
-			Code:    "INTERNAL_SERVER_ERROR",
-			Message: "User ID not found in context",
+			Status:  http.StatusUnauthorized,
+			Code:    "UNAUTHORIZED",
+			Message: "Account ID not found in context",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get user ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),
@@ -168,12 +201,12 @@ func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Reque
 	requestedAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusInternalServerError,
-			Code:    "INTERNAL_SERVER_ERROR",
-			Message: "User ID not found in context",
+			Status:  http.StatusUnauthorized,
+			Code:    "UNAUTHORIZED",
+			Message: "Account ID not found in context",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get user ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),
@@ -201,12 +234,12 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 	requestedAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusInternalServerError,
-			Code:    "INTERNAL_SERVER_ERROR",
-			Message: "User ID not found in context",
+			Status:  http.StatusUnauthorized,
+			Code:    "UNAUTHORIZED",
+			Message: "Account ID not found in context",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get user ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),
@@ -253,4 +286,24 @@ func convertToUserAndProfileInfos(followerInfos []*model.UserAndProfileInfo) []U
 		})
 	}
 	return resp
+}
+
+func (r *GetFollowersParams) validate() error {
+	if r.Limit == nil {
+		return errors.New("limit is required")
+	}
+	if r.Offset == nil {
+		return errors.New("offset is required")
+	}
+	return nil
+}
+
+func (r *GetFollowingsParams) validate() error {
+	if r.Limit == nil {
+		return errors.New("limit is required")
+	}
+	if r.Offset == nil {
+		return errors.New("offset is required")
+	}
+	return nil
 }

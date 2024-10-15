@@ -28,12 +28,12 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
 	reporterAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusInternalServerError,
-			Code:    "INTERNAL_SERVER_ERROR",
-			Message: "Reporter ID not found in context",
+			Status:  http.StatusUnauthorized,
+			Code:    "UNAUTHORIZED",
+			Message: "Account ID not found in context",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
-					Operation: "get reporter ID",
+					Operation: "get account ID",
 					Err: err,
 				},
 			),
