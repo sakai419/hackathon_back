@@ -1,6 +1,8 @@
 package model
 
-import "local-test/pkg/utils"
+import (
+	"local-test/pkg/apperrors"
+)
 
 type CreateAccountParams struct {
 	ID       string
@@ -10,13 +12,13 @@ type CreateAccountParams struct {
 
 func (p *CreateAccountParams) Validate() error {
 	if len(p.ID) != 28 {
-		return &utils.ErrInvalidInput{Message: "invalid firebase uid"}
+		return &apperrors.ErrInvalidInput{Message: "invalid firebase uid"}
 	}
 	if len(p.UserID) > 30 {
-		return &utils.ErrInvalidInput{Message: "user id is too long"}
+		return &apperrors.ErrInvalidInput{Message: "user id is too long"}
 	}
 	if len(p.UserName) > 30 {
-		return &utils.ErrInvalidInput{Message: "user name is too long"}
+		return &apperrors.ErrInvalidInput{Message: "user name is too long"}
 	}
 	return nil
 }

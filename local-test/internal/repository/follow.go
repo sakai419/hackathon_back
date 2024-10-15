@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
-	"local-test/pkg/utils"
+	"local-test/pkg/apperrors"
 
 	"github.com/lib/pq"
 )
@@ -14,8 +14,8 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
 			},
@@ -33,16 +33,16 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 	if err := q.CreateFollow(ctx, createFollowParams); err != nil {
 		tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
-			return utils.WrapRepositoryError(
-				&utils.ErrDuplicateEntry{
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrDuplicateEntry{
 					Entity: "follower/following account id",
 					Err: err,
 				},
 			)
 		}
 
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create follow",
 				Err: err,
 			},
@@ -57,8 +57,8 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 	}
 	if err := q.CreateNotification(ctx, createNotificationParams); err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create notification",
 				Err: err,
 			},
@@ -67,8 +67,8 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
 			},
@@ -82,8 +82,8 @@ func (r *Repository) DeleteFollow(ctx context.Context, arg *model.DeleteFollowPa
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
 			},
@@ -101,8 +101,8 @@ func (r *Repository) DeleteFollow(ctx context.Context, arg *model.DeleteFollowPa
 	res, err := q.DeleteFollow(ctx, deleteFollowParams)
 	if err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "delete follow",
 				Err: err,
 			},
@@ -113,8 +113,8 @@ func (r *Repository) DeleteFollow(ctx context.Context, arg *model.DeleteFollowPa
 	num, err := res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "check if follow is deleted",
 				Err: err,
 			},
@@ -122,8 +122,8 @@ func (r *Repository) DeleteFollow(ctx context.Context, arg *model.DeleteFollowPa
 	}
 	if num == 0 {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrRecordNotFound{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
 				Condition: "follow",
 			},
 		)
@@ -131,8 +131,8 @@ func (r *Repository) DeleteFollow(ctx context.Context, arg *model.DeleteFollowPa
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
 			},
@@ -151,8 +151,8 @@ func (r *Repository) GetFollowerAccountIDs(ctx context.Context, arg *model.GetFo
 	}
 	followerAccountIDs, err := r.q.GetFollowerAccountIDs(ctx, query)
 	if err != nil {
-		return nil, utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "get follower account ids",
 				Err: err,
 			},
@@ -171,8 +171,8 @@ func (r *Repository) GetFollowingAccountIDs(ctx context.Context, arg *model.GetF
 	}
 	followingAccountIDs, err := r.q.GetFollowingAccountIDs(ctx, query)
 	if err != nil {
-		return nil, utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "get following account ids",
 				Err: err,
 			},
@@ -186,8 +186,8 @@ func (r *Repository) RequestFollowAndNotify(ctx context.Context, arg *model.Requ
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
 			},
@@ -205,16 +205,16 @@ func (r *Repository) RequestFollowAndNotify(ctx context.Context, arg *model.Requ
 	if err := q.CreateFollowRequest(ctx, createFollowRequestParams); err != nil {
 		tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
-			return utils.WrapRepositoryError(
-				&utils.ErrDuplicateEntry{
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrDuplicateEntry{
 					Entity: "requester/requested account id",
 					Err: err,
 				},
 			)
 		}
 
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create follow request",
 				Err: err,
 			},
@@ -229,8 +229,8 @@ func (r *Repository) RequestFollowAndNotify(ctx context.Context, arg *model.Requ
 	}
 	if err := q.CreateNotification(ctx, createNotificationParams); err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create notification",
 				Err: err,
 			},
@@ -239,8 +239,8 @@ func (r *Repository) RequestFollowAndNotify(ctx context.Context, arg *model.Requ
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
 			},
@@ -254,8 +254,8 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
 			},
@@ -272,8 +272,8 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 	}
 	if err := q.AcceptFollowRequest(ctx, acceptFollowRequestParams); err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "accept follow request",
 				Err: err,
 			},
@@ -288,8 +288,8 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 	}
 	if err := q.CreateNotification(ctx, createNotificationParams); err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create notification",
 				Err: err,
 			},
@@ -298,8 +298,8 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
 			},
@@ -313,8 +313,8 @@ func (r *Repository) DeleteFollowRequest(ctx context.Context, arg *model.DeleteF
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
 			},
@@ -332,8 +332,8 @@ func (r *Repository) DeleteFollowRequest(ctx context.Context, arg *model.DeleteF
 
 	if err := q.DeleteFollowRequest(ctx, deleteFollowRequestParams); err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "delete follow request",
 				Err: err,
 			},
@@ -342,8 +342,8 @@ func (r *Repository) DeleteFollowRequest(ctx context.Context, arg *model.DeleteF
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
 			},

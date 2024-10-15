@@ -34,7 +34,7 @@ func main() {
 	server := v1.NewServer(db, client)
 
 	// Start server
-	if err := server.Start(cfg.Port); err != nil {
+	if err := server.Start(cfg.ServerConfig.Port); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }

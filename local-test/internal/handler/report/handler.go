@@ -6,6 +6,7 @@ import (
 	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
+	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
 	"net/http"
 )
@@ -26,12 +27,12 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
 	// Get Reporter Account ID
 	reporterAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
-		utils.RespondError(w, &utils.AppError{
+		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "Reporter ID not found in context",
-			Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "get reporter ID",
 					Err: err,
 				},
@@ -43,12 +44,12 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
     // Decode request
     var req CreateReportByUserIdJSONRequestBody
     if err := utils.Decode(r, &req); err != nil {
-        utils.RespondError(w, &utils.AppError{
+        utils.RespondError(w, &apperrors.AppError{
             Status:  http.StatusBadRequest,
             Code:    "BAD_REQUEST",
             Message: "Failed to decode request",
-            Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+            Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "decode request",
 					Err: err,
 				},
@@ -59,12 +60,12 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
 
     // Validate request
     if err := req.validate(); err != nil {
-        utils.RespondError(w, &utils.AppError{
+        utils.RespondError(w, &apperrors.AppError{
             Status:  http.StatusBadRequest,
             Code:    "BAD_REQUEST",
             Message: "Invalid request",
-            Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+            Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "validate request",
 					Err: err,
 				},
@@ -77,8 +78,8 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
     arg.ReporterAccountID = reporterAccountID
     arg.ReportedUserID = reportedUserID
     if err := h.svc.CreateReportByUserID(r.Context(), arg); err != nil {
-        utils.RespondError(w, utils.WrapHandlerError(
-			&utils.ErrOperationFailed{
+        utils.RespondError(w, apperrors.WrapHandlerError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create report",
 				Err: err,
 			},
@@ -92,7 +93,7 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
 func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
     var invalidParamFormatError *InvalidParamFormatError
     if errors.As(err, &invalidParamFormatError) {
-        utils.RespondError(w, &utils.AppError{
+        utils.RespondError(w, &apperrors.AppError{
             Status:  http.StatusBadRequest,
             Code:    "BAD_REQUEST",
             Message: "Invalid parameter format",

@@ -5,6 +5,7 @@ import (
 	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
+	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
 	"net/http"
 )
@@ -25,12 +26,12 @@ func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request, userI
 	// Get user ID
 	followerAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
-		utils.RespondError(w, &utils.AppError{
+		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "User ID not found in context",
-			Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "get user ID",
 					Err: err,
 				},
@@ -58,12 +59,12 @@ func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request, use
 	// Get user ID
 	followerAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
-		utils.RespondError(w, &utils.AppError{
+		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "User ID not found in context",
-			Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "get user ID",
 					Err: err,
 				},
@@ -133,12 +134,12 @@ func (h *FollowHandler) SendFollowRequest(w http.ResponseWriter, r *http.Request
 	// Get user ID
 	requesterAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
-		utils.RespondError(w, &utils.AppError{
+		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "User ID not found in context",
-			Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "get user ID",
 					Err: err,
 				},
@@ -166,12 +167,12 @@ func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Reque
 	// Get user ID
 	requestedAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
-		utils.RespondError(w, &utils.AppError{
+		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "User ID not found in context",
-			Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "get user ID",
 					Err: err,
 				},
@@ -199,12 +200,12 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 	// Get user ID
 	requestedAccountID, err := key.GetAccountID(r.Context())
 	if err != nil {
-		utils.RespondError(w, &utils.AppError{
+		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
 			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "User ID not found in context",
-			Err:     utils.WrapHandlerError(
-				&utils.ErrOperationFailed{
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
 					Operation: "get user ID",
 					Err: err,
 				},
@@ -229,7 +230,7 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError
 	if errors.As(err, &invalidParamFormatError) {
-		utils.RespondError(w, &utils.AppError{
+		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
 			Message: "Invalid parameter format",

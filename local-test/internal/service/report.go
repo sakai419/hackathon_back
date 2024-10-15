@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"local-test/internal/model"
-	"local-test/pkg/utils"
+	"local-test/pkg/apperrors"
 	"net/http"
 )
 
@@ -12,13 +12,13 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 	// Get account id by user id
 	RepotedAccountID, err := s.repo.GetAccountIDByUserId(ctx, arg.ReportedUserID)
 	if err != nil {
-		if errors.Is(err, &utils.ErrRecordNotFound{}) {
-			return &utils.AppError{
+		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
+			return &apperrors.AppError{
 				Status:  http.StatusNotFound,
 				Code:    "ACCOUNT_NOT_FOUND",
 				Message: "Account not found",
-				Err:     utils.WrapServiceError(
-					&utils.ErrOperationFailed{
+				Err:     apperrors.WrapServiceError(
+					&apperrors.ErrOperationFailed{
 						Operation: "get account ID by user ID",
 						Err: err,
 					},
@@ -26,8 +26,8 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 			}
 		}
 
-		return utils.WrapServiceError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapServiceError(
+			&apperrors.ErrOperationFailed{
 				Operation: "get account ID by user ID",
 				Err: err,
 			},
@@ -44,12 +44,12 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 
 	// Validate request
 	if err := createReportParams.Validate(); err != nil {
-		return &utils.AppError{
+		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
 			Message: "Invalid request",
-			Err:     utils.WrapServiceError(
-				&utils.ErrOperationFailed{
+			Err:     apperrors.WrapServiceError(
+				&apperrors.ErrOperationFailed{
 					Operation: "validate request",
 					Err: err,
 				},
@@ -59,8 +59,8 @@ func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateRep
 
 	// Create report
 	if err := s.repo.CreateReport(ctx, createReportParams); err != nil {
-		return utils.WrapServiceError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapServiceError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create report",
 				Err: err,
 			},

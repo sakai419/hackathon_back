@@ -26,5 +26,20 @@ db:
     conn_max_lifetime: 5
     read_timeout: 30
     write_timeout: 30
+    required_table:
+        - "accounts"
+        - "blocks"
+        - "follows"
+        - "hashtags"
+        - "interests"
+        - "likes"
+        - "messages"
+        - "notifications"
+        - "profiles"
+        - "replies"
+        - "reports"
+        - "settings"
+        - "tweet_hashtags"
+        - "tweets"
 server:
     port: 8080

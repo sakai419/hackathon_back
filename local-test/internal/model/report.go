@@ -2,7 +2,7 @@ package model
 
 import (
 	"database/sql"
-	"local-test/pkg/utils"
+	"local-test/pkg/apperrors"
 )
 
 type ReportReason string
@@ -30,7 +30,7 @@ type CreateReportParams struct {
 
 func (p *CreateReportParams) Validate() error {
 	if p.ReporterAccountID == p.ReportedAccountID {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Reporter account ID and reported account ID must be different",
 		}
 	}
@@ -44,13 +44,13 @@ func (p *CreateReportParams) Validate() error {
 		return nil
 	case ReportReasonOther:
 		if !p.Content.Valid {
-			return &utils.ErrInvalidInput{
+			return &apperrors.ErrInvalidInput{
 				Message: "Content is required for other reason",
 			}
 		}
 		return nil
 	default:
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Invalid report reason",
 		}
 	}

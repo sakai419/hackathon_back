@@ -4,17 +4,76 @@ import (
 	"database/sql"
 	"fmt"
 	"local-test/internal/config"
+	"local-test/pkg/apperrors"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 type Queries struct {
-    createTableQuery string
+	createTableQuery string
     dropTableQuery   string
     insertQuery      string
     selectQuery      string
     deleteQuery      string
     updateQuery      string
+}
+
+func ValidateDBConfig(c *config.DBConfig) error {
+	fields := map[string]interface{}{
+		"driver":            c.Driver,
+		"user":              c.User,
+		"password":          c.Pwd,
+		"host":              c.Host,
+		"port":              c.Port,
+		"sslmode":           c.SSLMode,
+		"database":          c.Database,
+		"charset":           c.Charset,
+		"max open conns":    c.MaxOpenConns,
+		"max idle conns":    c.MaxIdleConns,
+		"conn max lifetime": c.ConnMaxLifetime,
+		"conn max idle time": c.ConnMaxIdleTime,
+		"timeout":           c.Timeout,
+		"read timeout":      c.ReadTimeout,
+		"write timeout":     c.WriteTimeout,
+	}
+
+	// Validate each field
+	for fieldName, fieldValue := range fields {
+		if err := validateField(fieldName, fieldValue); err != nil {
+			return apperrors.WrapValidationError(
+				&apperrors.ErrOperationFailed{
+					Operation: fmt.Sprintf("validate %s", fieldName),
+					Err: err,
+				},
+			)
+		}
+	}
+
+	return nil
+}
+
+func ValidateDB(db *sql.DB, c *config.DBConfig) error {
+	// Validate database configuration
+	if err := checkRequiredTables(db, c); err != nil {
+		return apperrors.WrapValidationError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check required tables",
+				Err: err,
+			},
+		)
+	}
+
+	// Validate user permissions
+	if err := checkUserPermissions(db, c.Driver); err != nil {
+		return apperrors.WrapValidationError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check user permissions",
+				Err: err,
+			},
+		)
+	}
+
+	return nil
 }
 
 func validateField(fieldName string, fieldValue interface{}) error {
@@ -35,25 +94,8 @@ func validateField(fieldName string, fieldValue interface{}) error {
 	return nil
 }
 
-func checkRequiredTables(db *sql.DB) error {
-	requiredTables := []string{
-        "accounts",
-        "blocks",
-        "follow_requests",
-        "follows",
-        "hashtags",
-        "interests",
-        "likes",
-        "messages",
-        "notifications",
-        "profiles",
-        "replies",
-		"reports",
-        "retweets_and_quotes",
-        "tweet_hashtags",
-        "tweets",
-    }
-	for _, table := range requiredTables {
+func checkRequiredTables(db *sql.DB, c *config.DBConfig) error {
+	for _, table := range c.RequiredTables {
 		if _, err := db.Exec(fmt.Sprintf("SELECT 1 FROM %s LIMIT 1", table)); err != nil {
 			return fmt.Errorf("table %s does not exist or is not accessible: %v", table, err)
 		}
@@ -63,7 +105,7 @@ func checkRequiredTables(db *sql.DB) error {
 
 func generateQueries(driver string) (*Queries) {
     switch driver {
-    case "mysql":
+	case "mysql":
 		return &Queries{
 			createTableQuery: "CREATE TABLE test_table (id INT)",
 			dropTableQuery:   "DROP TABLE test_table",
@@ -81,9 +123,9 @@ func generateQueries(driver string) (*Queries) {
 			deleteQuery:      "DELETE FROM test_table",
 			updateQuery:      "UPDATE test_table SET id = 2",
 		}
-    default:
+	default:
 		return nil
-    }
+	}
 }
 
 func checkUserPermissions(db *sql.DB, driver string) error {
@@ -145,42 +187,4 @@ func executeQuery(tx *sql.Tx, query, action string) error {
         return fmt.Errorf("user does not have permission to %s: %v", action, err)
     }
     return nil
-}
-
-func ValidateDBConfig(c *config.DBConfig) error {
-    fields := map[string]interface{}{
-        "driver":            c.Driver,
-        "user":              c.User,
-        "password":          c.Pwd,
-        "host":              c.Host,
-        "database":          c.Database,
-        "charset":           c.Charset,
-        "max open conns":    c.MaxOpenConns,
-        "max idle conns":    c.MaxIdleConns,
-        "conn max lifetime": c.ConnMaxLifetime,
-        "conn max idle time": c.ConnMaxIdleTime,
-        "timeout":           c.Timeout,
-        "read timeout":      c.ReadTimeout,
-        "write timeout":     c.WriteTimeout,
-    }
-
-	// Validate each field
-    for fieldName, fieldValue := range fields {
-        if err := validateField(fieldName, fieldValue); err != nil {
-            return fmt.Errorf("validation: %v", err)
-        }
-    }
-
-    return nil
-}
-
-func ValidateDB(db *sql.DB, c *config.DBConfig) error {
-    // Validate database configuration
-	if err := checkRequiredTables(db); err != nil {
-		return fmt.Errorf("validation: %v", err)
-	}
-	if err := checkUserPermissions(db, c.Driver); err != nil {
-		return fmt.Errorf("validation: %v", err)
-	}
-	return nil
 }

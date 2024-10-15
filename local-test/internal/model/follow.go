@@ -1,6 +1,8 @@
 package model
 
-import "local-test/pkg/utils"
+import (
+	"local-test/pkg/apperrors"
+)
 
 type FollowUserParams struct {
 	FollowerAccountID   string
@@ -14,7 +16,7 @@ type FollowAndNotifyParams struct {
 
 func (p *FollowAndNotifyParams) Validate() error {
 	if p.FollowerAccountID == p.FollowingAccountID {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Follower account ID and following account ID must be different",
 		}
 	}
@@ -33,7 +35,7 @@ type DeleteFollowParams struct {
 
 func (p *DeleteFollowParams) Validate() error {
 	if p.FollowerAccountID == p.FollowingAccountID {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Follower account ID and following account ID must be different",
 		}
 	}
@@ -48,12 +50,12 @@ type GetFollowerInfosParams struct {
 
 func (p *GetFollowerInfosParams) Validate() error {
 	if p.Limit < 1 {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Limit must be greater than 0",
 		}
 	}
 	if p.Offset < 0 {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Offset must be greater than or equal to 0",
 		}
 	}
@@ -74,12 +76,12 @@ type GetFollowingInfosParams struct {
 
 func (p *GetFollowingInfosParams) Validate() error {
 	if p.Limit < 1 {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Limit must be greater than 0",
 		}
 	}
 	if p.Offset < 0 {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Offset must be greater than or equal to 0",
 		}
 	}
@@ -104,7 +106,7 @@ type RequestFollowAndNotifyParams struct {
 
 func (p *RequestFollowAndNotifyParams) Validate() error {
 	if p.RequesterAccountID == p.RequestedAccountID {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Requester account ID and requested user ID must be different",
 		}
 	}
@@ -123,7 +125,7 @@ type AcceptFollowRequestAndNotifyParams struct {
 
 func (p *AcceptFollowRequestAndNotifyParams) Validate() error {
 	if p.RequestedAccountID == p.RequesterAccountID {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Requested account ID and requester account ID must be different",
 		}
 	}
@@ -142,7 +144,7 @@ type DeleteFollowRequestParams struct {
 
 func (p *DeleteFollowRequestParams) Validate() error {
 	if p.RequesterAccountID == p.RequestedAccountID {
-		return &utils.ErrInvalidInput{
+		return &apperrors.ErrInvalidInput{
 			Message: "Requester account ID and requested account ID must be different",
 		}
 	}

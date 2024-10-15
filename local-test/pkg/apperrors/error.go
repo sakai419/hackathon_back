@@ -1,4 +1,4 @@
-package utils
+package apperrors
 
 import (
 	"fmt"
@@ -57,6 +57,10 @@ type AppError struct {
     Err     error
 }
 
+func (e *AppError) Error() string {
+    return e.Err.Error()
+}
+
 func WrapRepositoryError(err error) error {
 	return fmt.Errorf("repository: %w", err)
 }
@@ -67,4 +71,12 @@ func WrapServiceError(err error) error {
 
 func WrapHandlerError(err error) error {
 	return fmt.Errorf("handler: %w", err)
+}
+
+func WrapValidationError(err error) error {
+	return fmt.Errorf("validation: %w", err)
+}
+
+func WrapConfigError(err error) error {
+	return fmt.Errorf("config: %w", err)
 }

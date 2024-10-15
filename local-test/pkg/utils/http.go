@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"local-test/pkg/apperrors"
 	"log"
 	"net/http"
 )
@@ -12,14 +13,10 @@ type errorResponse struct {
     Message string `json:"message"`
 }
 
-func (e *AppError) Error() string {
-    return e.Err.Error()
-}
-
 func Decode(r *http.Request, v interface{}) error {
     // Check if the request body is empty
     if r.Body == nil {
-        return &AppError{
+        return &apperrors.AppError{
             Status:  http.StatusBadRequest,
             Code:    "EMPTY_BODY",
             Message: "Request body is empty",
@@ -29,7 +26,7 @@ func Decode(r *http.Request, v interface{}) error {
 
     // Decode the request body
     if err := json.NewDecoder(r.Body).Decode(v); err != nil {
-        return &AppError{
+        return &apperrors.AppError{
             Status:  http.StatusBadRequest,
             Code:    "INVALID_REQUEST",
             Message: "Failed to decode request",
@@ -60,7 +57,7 @@ func Respond(w http.ResponseWriter, data interface{}, statusCode ...int) {
 }
 
 func RespondError(w http.ResponseWriter, err error) {
-    var appErr *AppError
+    var appErr *apperrors.AppError
     if errors.As(err, &appErr) {
         w.WriteHeader(appErr.Status)
         if encodeErr := json.NewEncoder(w).Encode(errorResponse{

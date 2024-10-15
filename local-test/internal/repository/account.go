@@ -6,7 +6,7 @@ import (
 	"errors"
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
-	"local-test/pkg/utils"
+	"local-test/pkg/apperrors"
 
 	"github.com/lib/pq"
 )
@@ -15,8 +15,8 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     // Begin transaction
     tx, err := r.db.Begin()
     if err != nil {
-        return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+        return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
 			},
@@ -35,16 +35,16 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     if err := q.CreateAccount(ctx, createAccountParams); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
-			return utils.WrapRepositoryError(
-				&utils.ErrDuplicateEntry{
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrDuplicateEntry{
 					Entity: "account id",
 					Err: err,
 				},
 			)
 		}
 
-        return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+        return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create account",
 				Err: err,
 			},
@@ -55,16 +55,16 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     if err := q.CreateProfilesWithDefaultValues(ctx, arg.ID); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
-			return utils.WrapRepositoryError(
-				&utils.ErrDuplicateEntry{
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrDuplicateEntry{
 					Entity: "account id",
 					Err: err,
 				},
 			)
 		}
 
-        return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+        return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create profile",
 				Err: err,
 			},
@@ -75,16 +75,16 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     if err := q.CreateSettingsWithDefaultValues(ctx, arg.ID); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
-			return utils.WrapRepositoryError(
-				&utils.ErrDuplicateEntry{
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrDuplicateEntry{
 					Entity: "account id",
 					Err: err,
 				},
 			)
 		}
 
-        return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+        return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create setting",
 				Err: err,
 			},
@@ -95,16 +95,16 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
 	if err := q.CreateInterestsWithDefaultValues(ctx, arg.ID); err != nil {
 		tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
-			return utils.WrapRepositoryError(
-				&utils.ErrDuplicateEntry{
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrDuplicateEntry{
 					Entity: "account id",
 					Err: err,
 				},
 			)
 		}
 
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "create interest",
 				Err: err,
 			},
@@ -114,8 +114,8 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     // Commit transaction
     if err := tx.Commit(); err != nil {
         tx.Rollback()
-        return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+        return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
 			},
@@ -130,8 +130,8 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
 			},
@@ -145,8 +145,8 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 	res, err := q.DeleteAccount(ctx, id)
 	if err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "delete account",
 				Err: err,
 			},
@@ -157,8 +157,8 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
     num, err := res.RowsAffected()
     if err != nil {
         tx.Rollback()
-        return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+        return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "get rows affected",
 				Err: err,
 			},
@@ -166,8 +166,8 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
     }
     if num == 0 {
         tx.Rollback()
-        return utils.WrapRepositoryError(
-			&utils.ErrRecordNotFound{
+        return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
 				Condition: "account id",
 			},
 		)
@@ -176,8 +176,8 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		tx.Rollback()
-		return utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
 			},
@@ -191,15 +191,15 @@ func (r *Repository) GetAccountIDByUserId(ctx context.Context, userId string) (s
 	AccountID, err := r.q.GetAccountIDByUserId(ctx, userId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", utils.WrapRepositoryError(
-				&utils.ErrRecordNotFound{
+			return "", apperrors.WrapRepositoryError(
+				&apperrors.ErrRecordNotFound{
 					Condition: "user id",
 				},
 			)
 		}
 
-		return "", utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return "", apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "get account id by user id",
 				Err: err,
 			},
@@ -218,8 +218,8 @@ func (r *Repository) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg 
 	}
 	res, err := r.q.GetUserAndProfileInfoByAccountIDs(ctx, query)
 	if err != nil {
-		return nil, utils.WrapRepositoryError(
-			&utils.ErrOperationFailed{
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
 				Operation: "get user and profile info by account ids",
 				Err: err,
 			},
