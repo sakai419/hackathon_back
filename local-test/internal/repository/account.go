@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
+func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccountRepositoryParams) error {
     // Begin transaction
     tx, err := r.db.Begin()
     if err != nil {
@@ -27,12 +27,12 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     q := r.q.WithTx(tx)
 
     // Create account
-    createAccountParams := sqlcgen.CreateAccountParams{
+    params := sqlcgen.CreateAccountParams{
         ID:       arg.ID,
         UserID:   arg.UserID,
         UserName: arg.UserName,
     }
-    if err := q.CreateAccount(ctx, createAccountParams); err != nil {
+    if err := q.CreateAccount(ctx, params); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return apperrors.WrapRepositoryError(
@@ -126,7 +126,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
 }
 
 
-func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
+func (r *Repository) DeleteMyAccount(ctx context.Context, arg *model.DeleteMyAccountRepositoryParams) (error) {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -142,7 +142,7 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, id string) (error) {
 	q := r.q.WithTx(tx)
 
 	// Delete account
-	res, err := q.DeleteAccount(ctx, id)
+	res, err := q.DeleteAccount(ctx, arg.ID)
 	if err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(

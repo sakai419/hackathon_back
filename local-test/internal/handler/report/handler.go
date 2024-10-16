@@ -22,10 +22,10 @@ func NewReportHandler(svc *service.Service) ServerInterface {
 }
 
 // Create a new report
-// (POST /reports)
-func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Request, reportedUserID string) {
-	// Get Reporter Account ID
-	reporterAccountID, err := key.GetAccountID(r.Context())
+// (POST /reports/{user_id})
+func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, userID string) {
+	// Get reporter account id
+	reporterAccountID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusUnauthorized,
@@ -42,7 +42,7 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
 	}
 
     // Decode request
-    var req CreateReportByUserIdJSONRequestBody
+    var req CreateReportJSONRequestBody
     if err := utils.Decode(r, &req); err != nil {
         utils.RespondError(w, &apperrors.AppError{
             Status:  http.StatusBadRequest,
@@ -74,9 +74,7 @@ func (h *ReportHandler) CreateReportByUserId(w http.ResponseWriter, r *http.Requ
     }
 
     // Create report
-    arg := req.toParams()
-    arg.ReporterAccountID = reporterAccountID
-    arg.ReportedUserID = reportedUserID
+    arg := req.toParams(reporterAccountID, userID)
     if err := h.svc.CreateReportByUserID(r.Context(), arg); err != nil {
         utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
@@ -105,22 +103,21 @@ func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
     }
 }
 
-func (r *CreateReportByUserIdJSONRequestBody) validate() error {
-    if r.Reason == "" {
-        return errors.New("reason is required")
-    }
-    return nil
+func (r *CreateReportJSONRequestBody) validate() error {
+	if r.Reason == "" {
+		return &InvalidParamFormatError{
+			ParamName: "reason",
+			Err:   errors.New("reason is required"),
+		}
+	}
+	return nil
 }
 
-func (r *CreateReportByUserIdJSONRequestBody) toParams() *model.CreateReportByUserIDParams {
-    if r.Content == nil {
-        return &model.CreateReportByUserIDParams{
-            Reason: model.ReportReason(r.Reason),
-        }
-    }
-
-    return &model.CreateReportByUserIDParams{
-        Reason: model.ReportReason(r.Reason),
-        Content: sql.NullString{String: *r.Content, Valid: r.Content != nil},
-    }
+func (r *CreateReportJSONRequestBody) toParams(reporterAccountID, reportedUserID string) *model.CreateReportServiceParams {
+	return &model.CreateReportServiceParams{
+		ReporterAccountID: reporterAccountID,
+		ReportedUserID: reportedUserID,
+		Reason:  model.ReportReason(r.Reason),
+		Content: sql.NullString{String: *r.Content, Valid: r.Content != nil && *r.Content != ""},
+	}
 }

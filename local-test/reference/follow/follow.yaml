@@ -8,7 +8,7 @@ paths:
     /users/{user_id}/follow:
         post:
             summary: Follow a user
-            operationId: FollowUser
+            operationId: FollowAndNotify
             parameters:
                 - name: user_id
                   in: path
@@ -24,7 +24,7 @@ paths:
                     description: Internal server error
         delete:
             summary: Unfollow a user
-            operationId: UnfollowUser
+            operationId: Unfollow
             parameters:
                 - name: user_id
                   in: path
@@ -42,7 +42,7 @@ paths:
     /users/{user_id}/followers:
         get:
             summary: Get followers of a user
-            operationId: GetFollowers
+            operationId: GetFollowerInfos
             parameters:
                 - name: user_id
                   in: path
@@ -72,7 +72,7 @@ paths:
     /users/{user_id}/following:
         get:
             summary: Get users followed by a user
-            operationId: GetFollowings
+            operationId: GetFollowingInfos
             parameters:
                 - name: user_id
                   in: path
@@ -102,7 +102,7 @@ paths:
     /users/{user_id}/follow-request:
         post:
             summary: Send a follow request to a user
-            operationId: SendFollowRequest
+            operationId: RequestFollowAndNotify
             parameters:
                 - name: user_id
                   in: path
@@ -117,10 +117,10 @@ paths:
                 "500":
                     description: Internal server error
 
-    /users/{user_id}/follow-request/accept:
-        post:
+    /users/me/follow-request/{user_id}/accept:
+        put:
             summary: Accept a follow request
-            operationId: AcceptFollowRequest
+            operationId: AcceptFollowRequestAndNotify
             parameters:
                 - name: user_id
                   in: path
@@ -135,8 +135,8 @@ paths:
                 "500":
                     description: Internal server error
 
-    /users/{user_id}/follow-request/reject:
-        post:
+    /users/me/follow-request/{user_id}/reject:
+        delete:
             summary: Reject a follow request
             operationId: RejectFollowRequest
             parameters:

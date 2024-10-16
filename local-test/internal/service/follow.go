@@ -8,33 +8,9 @@ import (
 	"net/http"
 )
 
-func (s *Service) FollowUser(ctx context.Context, arg *model.FollowUserParams) error {
-	// Get account id by user id
-	FollowingAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowingUserID)
-	if err != nil {
-		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-			return &apperrors.AppError{
-				Status:  http.StatusNotFound,
-				Code:    "ACCOUNT_NOT_FOUND",
-				Message: "Account not found",
-				Err:     apperrors.WrapServiceError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID by user ID",
-						Err: err,
-					},
-				),
-			}
-		}
-	}
-
-	// Convert params
-	followAndNotifyParams := &model.FollowAndNotifyParams{
-		FollowerAccountID: arg.FollowerAccountID,
-		FollowingAccountID: FollowingAccountID,
-	}
-
+func (s *Service) FollowAndNotify(ctx context.Context, arg *model.FollowAndNotifyParams) error {
 	// Validate params
-	if err := followAndNotifyParams.Validate(); err != nil {
+	if err := arg.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -49,7 +25,7 @@ func (s *Service) FollowUser(ctx context.Context, arg *model.FollowUserParams) e
 	}
 
 	// Create follow
-	if err := s.repo.FollowAndNotify(ctx, followAndNotifyParams); err != nil {
+	if err := s.repo.FollowAndNotify(ctx, arg); err != nil {
 		// Check if the error is a duplicate entry error
 		var duplicateErr *apperrors.ErrDuplicateEntry
 		if errors.As(err, &duplicateErr) {
@@ -82,33 +58,9 @@ func (s *Service) FollowUser(ctx context.Context, arg *model.FollowUserParams) e
 	return nil
 }
 
-func (s *Service) UnfollowUser(ctx context.Context, arg *model.UnfollowUserParams) error {
-	// Get account id by user id
-	FollowingAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowingUserID)
-	if err != nil {
-		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-			return &apperrors.AppError{
-				Status:  http.StatusNotFound,
-				Code:    "ACCOUNT_NOT_FOUND",
-				Message: "Account not found",
-				Err:     apperrors.WrapServiceError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID by user ID",
-						Err: err,
-					},
-				),
-			}
-		}
-	}
-
-	// Convert params
-	unfollowParams := &model.DeleteFollowParams{
-		FollowerAccountID: arg.FollowerAccountID,
-		FollowingAccountID: FollowingAccountID,
-	}
-
+func (s *Service) Unfollow(ctx context.Context, arg *model.UnfollowParams) error {
 	// Validate params
-	if err := unfollowParams.Validate(); err != nil {
+	if err := arg.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -123,7 +75,7 @@ func (s *Service) UnfollowUser(ctx context.Context, arg *model.UnfollowUserParam
 	}
 
 	// Unfollow
-	if err := s.repo.DeleteFollow(ctx, unfollowParams); err != nil {
+	if err := s.repo.Unfollow(ctx, arg); err != nil {
 		// Check if the error is a record not found error
 		var notFoundErr *apperrors.ErrRecordNotFound
 		if errors.As(err, &notFoundErr) {
@@ -172,34 +124,9 @@ func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerIn
 		}
 	}
 
-	// Get account id by user id
-	FollowingAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowingUserID)
-	if err != nil {
-		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-			return nil, &apperrors.AppError{
-				Status:  http.StatusNotFound,
-				Code:    "ACCOUNT_NOT_FOUND",
-				Message: "Account not found",
-				Err:     apperrors.WrapServiceError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID by user ID",
-						Err: err,
-					},
-				),
-			}
-		}
-
-		return nil, apperrors.WrapServiceError(
-			&apperrors.ErrOperationFailed{
-				Operation: "get account ID by user ID",
-				Err: err,
-			},
-		)
-	}
-
 	// Convert params
 	getFollowerAccountIDsParams := &model.GetFollowerAccountIDsParams{
-		FollowingAccountID: FollowingAccountID,
+		FollowingAccountID: arg.FollowingAccountID,
 		Limit:              arg.Limit,
 		Offset:             arg.Offset,
 	}
@@ -252,34 +179,9 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 		}
 	}
 
-	// Get account id by user id
-	FollowerAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.FollowerUserID)
-	if err != nil {
-		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-			return nil, &apperrors.AppError{
-				Status:  http.StatusNotFound,
-				Code:    "ACCOUNT_NOT_FOUND",
-				Message: "Account not found",
-				Err:     apperrors.WrapServiceError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID by user ID",
-						Err: err,
-					},
-				),
-			}
-		}
-
-		return nil, apperrors.WrapServiceError(
-			&apperrors.ErrOperationFailed{
-				Operation: "get account ID by user ID",
-				Err: err,
-			},
-		)
-	}
-
 	// Convert params
 	getFollowingAccountIDsParams := &model.GetFollowingAccountIDsParams{
-		FollowerAccountID: FollowerAccountID,
+		FollowerAccountID: arg.FollowerAccountID,
 		Limit:             arg.Limit,
 		Offset:            arg.Offset,
 	}
@@ -316,33 +218,9 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 	return followingInfos, nil
 }
 
-func (s *Service) RequestFollow(ctx context.Context, arg *model.RequestFollowParams) error {
-	// Get account id by user id
-	RequestedAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.RequestedUserID)
-	if err != nil {
-		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-			return &apperrors.AppError{
-				Status:  http.StatusNotFound,
-				Code:    "ACCOUNT_NOT_FOUND",
-				Message: "Account not found",
-				Err:     apperrors.WrapServiceError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID by user ID",
-						Err: err,
-					},
-				),
-			}
-		}
-	}
-
-	// Convert params
-	createFollowRequestParams := &model.RequestFollowAndNotifyParams{
-		RequesterAccountID: arg.RequesterAccountID,
-		RequestedAccountID: RequestedAccountID,
-	}
-
+func (s *Service) RequestFollowAndNotify(ctx context.Context, arg *model.RequestFollowAndNotifyParams) error {
 	// Validate params
-	if err := createFollowRequestParams.Validate(); err != nil {
+	if err := arg.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -357,7 +235,7 @@ func (s *Service) RequestFollow(ctx context.Context, arg *model.RequestFollowPar
 	}
 
 	// Request follow
-	if err := s.repo.RequestFollowAndNotify(ctx, createFollowRequestParams); err != nil {
+	if err := s.repo.RequestFollowAndNotify(ctx, arg); err != nil {
 		// Check if the error is a duplicate entry error
 		var duplicateErr *apperrors.ErrDuplicateEntry
 		if errors.As(err, &duplicateErr) {
@@ -390,33 +268,24 @@ func (s *Service) RequestFollow(ctx context.Context, arg *model.RequestFollowPar
 	return nil
 }
 
-func (s *Service) AcceptFollowRequest(ctx context.Context, arg *model.AcceptFollowRequestParams) error {
-    // Get account id by user id
-    RequesterAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.RequesterUserID)
-    if err != nil {
-        if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-            return &apperrors.AppError{
-                Status:  http.StatusNotFound,
-                Code:    "ACCOUNT_NOT_FOUND",
-                Message: "Account not found",
-                Err:     apperrors.WrapServiceError(
-                    &apperrors.ErrOperationFailed{
-                        Operation: "get account ID by user ID",
-                        Err: err,
-                    },
-                ),
-            }
-        }
-    }
-
-    // Convert params
-    acceptFollowRequestParams := &model.AcceptFollowRequestAndNotifyParams{
-        RequestedAccountID: arg.RequestedAccountID,
-        RequesterAccountID: RequesterAccountID,
-    }
+func (s *Service) AcceptFollowRequestAndNotify(ctx context.Context, arg *model.AcceptFollowRequestAndNotifyParams) error {
+	// Validate params
+	if err := arg.Validate(); err != nil {
+		return &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Invalid request",
+			Err:     apperrors.WrapServiceError(
+				&apperrors.ErrOperationFailed{
+					Operation: "validate request",
+					Err: err,
+				},
+			),
+		}
+	}
 
     // Accept follow request
-    if err := s.repo.AcceptFollowRequestAndNotify(ctx, acceptFollowRequestParams); err != nil {
+    if err := s.repo.AcceptFollowRequestAndNotify(ctx, arg); err != nil {
         // Check if the error is a record not found error
         var notFoundErr *apperrors.ErrRecordNotFound
         if errors.As(err, &notFoundErr) {
@@ -450,32 +319,8 @@ func (s *Service) AcceptFollowRequest(ctx context.Context, arg *model.AcceptFoll
 }
 
 func (s *Service) RejectFollowRequest(ctx context.Context, arg *model.RejectFollowRequestParams) error {
-	// Get account id by user id
-	RequesterAccountID, err := s.repo.GetAccountIDByUserID(ctx, arg.RequesterUserID)
-	if err != nil {
-		if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-			return &apperrors.AppError{
-				Status:  http.StatusNotFound,
-				Code:    "ACCOUNT_NOT_FOUND",
-				Message: "Account not found",
-				Err:     apperrors.WrapServiceError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID by user ID",
-						Err: err,
-					},
-				),
-			}
-		}
-	}
-
-	// Convert params
-	deleteFollowRequestParams := &model.DeleteFollowRequestParams{
-		RequesterAccountID: RequesterAccountID,
-		RequestedAccountID: arg.RequestedAccountID,
-	}
-
 	// Validate params
-	if err := deleteFollowRequestParams.Validate(); err != nil {
+	if err := arg.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -489,8 +334,8 @@ func (s *Service) RejectFollowRequest(ctx context.Context, arg *model.RejectFoll
 		}
 	}
 
-	// Delete follow request
-	if err := s.repo.DeleteFollowRequest(ctx, deleteFollowRequestParams); err != nil {
+	// Reject follow request
+	if err := s.repo.RejectFollowRequest(ctx, arg); err != nil {
 		// Check if the error is a record not found error
 		var notFoundErr *apperrors.ErrRecordNotFound
 		if errors.As(err, &notFoundErr) {

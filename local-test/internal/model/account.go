@@ -1,26 +1,39 @@
 package model
 
-import (
-	"local-test/pkg/apperrors"
-)
-
-type CreateAccountParams struct {
+// CreateAccount
+type CreateAccountServiceParams struct {
 	ID       string
 	UserID   string
 	UserName string
 }
 
-func (p *CreateAccountParams) Validate() error {
-	if len(p.ID) != 28 {
-		return &apperrors.ErrInvalidInput{Message: "invalid firebase uid"}
+func (p *CreateAccountServiceParams) ToParams() *CreateAccountRepositoryParams {
+	return &CreateAccountRepositoryParams{
+		ID:       p.ID,
+		UserID:   p.UserID,
+		UserName: p.UserName,
 	}
-	if len(p.UserID) > 30 {
-		return &apperrors.ErrInvalidInput{Message: "user id is too long"}
+}
+
+type CreateAccountRepositoryParams struct {
+	ID       string
+	UserID   string
+	UserName string
+}
+
+// DeleteMyAccount
+type DeleteMyAccountServiceParams struct {
+	ID string
+}
+
+func (p *DeleteMyAccountServiceParams) ToParams() *DeleteMyAccountRepositoryParams {
+	return &DeleteMyAccountRepositoryParams{
+		ID: p.ID,
 	}
-	if len(p.UserName) > 30 {
-		return &apperrors.ErrInvalidInput{Message: "user name is too long"}
-	}
-	return nil
+}
+
+type DeleteMyAccountRepositoryParams struct {
+	ID string
 }
 
 type GetUserAndProfileInfoByAccountIDsParams struct {

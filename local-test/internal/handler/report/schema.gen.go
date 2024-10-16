@@ -11,20 +11,20 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// CreateReportByUserIdRequest defines model for CreateReportByUserIdRequest.
-type CreateReportByUserIdRequest struct {
+// CreateReportRequest defines model for CreateReportRequest.
+type CreateReportRequest struct {
 	Content *string `json:"content"`
 	Reason  string  `json:"reason"`
 }
 
-// CreateReportByUserIdJSONRequestBody defines body for CreateReportByUserId for application/json ContentType.
-type CreateReportByUserIdJSONRequestBody = CreateReportByUserIdRequest
+// CreateReportJSONRequestBody defines body for CreateReport for application/json ContentType.
+type CreateReportJSONRequestBody = CreateReportRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Create a new report
 	// (POST /reports/{user_id})
-	CreateReportByUserId(w http.ResponseWriter, r *http.Request, userId string)
+	CreateReport(w http.ResponseWriter, r *http.Request, userId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -36,8 +36,8 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// CreateReportByUserId operation middleware
-func (siw *ServerInterfaceWrapper) CreateReportByUserId(w http.ResponseWriter, r *http.Request) {
+// CreateReport operation middleware
+func (siw *ServerInterfaceWrapper) CreateReport(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -51,7 +51,7 @@ func (siw *ServerInterfaceWrapper) CreateReportByUserId(w http.ResponseWriter, r
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateReportByUserId(w, r, userId)
+		siw.Handler.CreateReport(w, r, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -174,7 +174,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/reports/{user_id}", wrapper.CreateReportByUserId).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/reports/{user_id}", wrapper.CreateReport).Methods("POST")
 
 	return r
 }

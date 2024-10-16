@@ -78,7 +78,7 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 	return nil
 }
 
-func (r *Repository) DeleteFollow(ctx context.Context, arg *model.DeleteFollowParams) error {
+func (r *Repository) Unfollow(ctx context.Context, arg *model.UnfollowParams) error {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -305,7 +305,7 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 	createNotificationParams := sqlcgen.CreateNotificationParams{
 		SenderAccountID: sql.NullString{String: arg.RequestedAccountID, Valid: true},
 		RecipientAccountID: arg.RequesterAccountID,
-		Type: sqlcgen.NotificationTypeFollow,
+		Type: sqlcgen.NotificationTypeRequestAccepted,
 	}
 	if err := q.CreateNotification(ctx, createNotificationParams); err != nil {
 		tx.Rollback()
@@ -330,7 +330,7 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 	return nil
 }
 
-func (r *Repository) DeleteFollowRequest(ctx context.Context, arg *model.DeleteFollowRequestParams) error {
+func (r *Repository) RejectFollowRequest(ctx context.Context, arg *model.RejectFollowRequestParams) error {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {

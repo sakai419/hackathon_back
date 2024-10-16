@@ -22,9 +22,9 @@ func NewFollowHandler(svc *service.Service) ServerInterface {
 
 // Follow a user
 // (POST /users/{user_id}/follow)
-func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request, userID string) {
-	// Get user ID
-	followerAccountID, err := key.GetAccountID(r.Context())
+func (h *FollowHandler) FollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
+	// Get client ID
+	clientID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusInternalServerError,
@@ -40,12 +40,29 @@ func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request, userI
 		return
 	}
 
-	// Follow user
-	arg := &model.FollowUserParams{
-		FollowerAccountID: followerAccountID,
-		FollowingUserID:    userID,
+	// Get account id from path
+	accountIDFromPath, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Account ID not found in path",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get account ID",
+					Err: err,
+				},
+			),
+		})
+		return
 	}
-	if err := h.svc.FollowUser(r.Context(), arg); err != nil {
+
+	// Follow user
+	arg := &model.FollowAndNotifyParams{
+		FollowerAccountID:  clientID,
+		FollowingAccountID: accountIDFromPath,
+	}
+	if err := h.svc.FollowAndNotify(r.Context(), arg); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -55,9 +72,9 @@ func (h *FollowHandler) FollowUser(w http.ResponseWriter, r *http.Request, userI
 
 // Unfollow a user
 // (DELETE /users/{user_id}/follow)
-func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request, userID string) {
+func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, _ string) {
 	// Get user ID
-	followerAccountID, err := key.GetAccountID(r.Context())
+	clientAccountID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusUnauthorized,
@@ -73,12 +90,29 @@ func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
-	// Unfollow user
-	arg := &model.UnfollowUserParams{
-		FollowerAccountID: followerAccountID,
-		FollowingUserID:    userID,
+	// Get account id from path
+	accountIDFromPath, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Account ID not found in path",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get account ID",
+					Err: err,
+				},
+			),
+		})
+		return
 	}
-	if err := h.svc.UnfollowUser(r.Context(), arg); err != nil {
+
+	// Unfollow user
+	arg := &model.UnfollowParams{
+		FollowerAccountID:  clientAccountID,
+		FollowingAccountID: accountIDFromPath,
+	}
+	if err := h.svc.Unfollow(r.Context(), arg); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -88,7 +122,24 @@ func (h *FollowHandler) UnfollowUser(w http.ResponseWriter, r *http.Request, use
 
 // Get followers
 // (GET /users/{user_id}/followers)
-func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request, userID string, params GetFollowersParams) {
+func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowerInfosParams) {
+	// Get account id from path
+	accountIDFromPath, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Account ID not found in path",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get account ID",
+					Err: err,
+				},
+			),
+		})
+		return
+	}
+
 	// Validate request
 	if err := params.validate(); err != nil {
 		utils.RespondError(w, &apperrors.AppError{
@@ -107,9 +158,9 @@ func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request, use
 
 	// Get followers
 	arg := &model.GetFollowerInfosParams{
-		FollowingUserID: userID,
-		Limit:  int32(*params.Limit),
-		Offset: int32(*params.Offset),
+		FollowingAccountID: accountIDFromPath,
+		Limit:              int32(*params.Limit),
+		Offset:             int32(*params.Offset),
 	}
 	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), arg)
 	if err != nil {
@@ -126,7 +177,24 @@ func (h *FollowHandler) GetFollowers(w http.ResponseWriter, r *http.Request, use
 
 // Get followings
 // (GET /users/{user_id}/followings)
-func (h *FollowHandler) GetFollowings(w http.ResponseWriter, r *http.Request, userID string, params GetFollowingsParams) {
+func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowingInfosParams) {
+	// Get account id from path
+	accountIDFromPath, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Account ID not found in path",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get account ID",
+					Err: err,
+				},
+			),
+		})
+		return
+	}
+
 	// Validate request
 	if err := params.validate(); err != nil {
 		utils.RespondError(w, &apperrors.AppError{
@@ -145,9 +213,9 @@ func (h *FollowHandler) GetFollowings(w http.ResponseWriter, r *http.Request, us
 
 	// Get followings
 	arg := &model.GetFollowingInfosParams{
-		FollowerUserID: userID,
-		Limit:  int32(*params.Limit),
-		Offset: int32(*params.Offset),
+		FollowerAccountID: accountIDFromPath,
+		Limit:             int32(*params.Limit),
+		Offset:            int32(*params.Offset),
 	}
 	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), arg)
 	if err != nil {
@@ -163,13 +231,13 @@ func (h *FollowHandler) GetFollowings(w http.ResponseWriter, r *http.Request, us
 
 // Send follow request
 // (POST /users/{user_id}/follow-request)
-func (h *FollowHandler) SendFollowRequest(w http.ResponseWriter, r *http.Request, userID string) {
-	// Get user ID
-	requesterAccountID, err := key.GetAccountID(r.Context())
+func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
+	// Get client ID
+	clientID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusUnauthorized,
-			Code:    "UNAUTHORIZED",
+			Status:  http.StatusInternalServerError,
+			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "Account ID not found in context",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
@@ -181,12 +249,30 @@ func (h *FollowHandler) SendFollowRequest(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Send follow request
-	arg := &model.RequestFollowParams{
-		RequesterAccountID: requesterAccountID,
-		RequestedUserID:    userID,
+	// Get account id from path
+	accountIDFromPath, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Account ID not found in path",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get account ID",
+					Err: err,
+				},
+			),
+		})
+		return
+
 	}
-	if err := h.svc.RequestFollow(r.Context(), arg); err != nil {
+
+	// Send follow request
+	arg := &model.RequestFollowAndNotifyParams{
+		RequesterAccountID: clientID,
+		RequestedAccountID: accountIDFromPath,
+	}
+	if err := h.svc.RequestFollowAndNotify(r.Context(), arg); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -195,15 +281,32 @@ func (h *FollowHandler) SendFollowRequest(w http.ResponseWriter, r *http.Request
 }
 
 // Accept follow request
-// (POST /users/{user_id}/follow-request/accept)
-func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Request, userID string) {
-	// Get user ID
-	requestedAccountID, err := key.GetAccountID(r.Context())
+// (PUT /users/me/follow-request/{user_id}/accept)
+func (h *FollowHandler) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
+	// Ger client ID
+	clientID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusUnauthorized,
-			Code:    "UNAUTHORIZED",
+			Status:  http.StatusInternalServerError,
+			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "Account ID not found in context",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get account ID",
+					Err: err,
+				},
+			),
+		})
+		return
+	}
+
+	// Get account id from path
+	accountIDFromPath, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Account ID not found in path",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
 					Operation: "get account ID",
@@ -215,11 +318,11 @@ func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Accept follow request
-	arg := &model.AcceptFollowRequestParams{
-		RequestedAccountID: requestedAccountID,
-		RequesterUserID:    userID,
+	arg := &model.AcceptFollowRequestAndNotifyParams{
+		RequestedAccountID: clientID,
+		RequesterAccountID: accountIDFromPath,
 	}
-	if err := h.svc.AcceptFollowRequest(r.Context(), arg); err != nil {
+	if err := h.svc.AcceptFollowRequestAndNotify(r.Context(), arg); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -228,15 +331,32 @@ func (h *FollowHandler) AcceptFollowRequest(w http.ResponseWriter, r *http.Reque
 }
 
 // Reject follow request
-// (POST /users/{user_id}/follow-request/reject)
-func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Request, userID string) {
-	// Get user ID
-	requestedAccountID, err := key.GetAccountID(r.Context())
+// (DELETE /users/me/follow-request/{user_id}/reject)
+func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Request, _ string) {
+	// Get client id
+	clientID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusUnauthorized,
-			Code:    "UNAUTHORIZED",
+			Status:  http.StatusInternalServerError,
+			Code:    "INTERNAL_SERVER_ERROR",
 			Message: "Account ID not found in context",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get account ID",
+					Err: err,
+				},
+			),
+		})
+		return
+	}
+
+	// Get account id from path
+	accountIDFromPath, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusBadRequest,
+			Code:    "BAD_REQUEST",
+			Message: "Account ID not found in path",
 			Err:     apperrors.WrapHandlerError(
 				&apperrors.ErrOperationFailed{
 					Operation: "get account ID",
@@ -249,8 +369,8 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 
 	// Reject follow request
 	arg := &model.RejectFollowRequestParams{
-		RequestedAccountID: requestedAccountID,
-		RequesterUserID:    userID,
+		RequestedAccountID: clientID,
+		RequesterAccountID: accountIDFromPath,
 	}
 	if err := h.svc.RejectFollowRequest(r.Context(), arg); err != nil {
 		utils.RespondError(w, err)
@@ -288,7 +408,7 @@ func convertToUserAndProfileInfos(followerInfos []*model.UserAndProfileInfo) []U
 	return resp
 }
 
-func (r *GetFollowersParams) validate() error {
+func (r *GetFollowerInfosParams) validate() error {
 	if r.Limit == nil {
 		return errors.New("limit is required")
 	}
@@ -298,7 +418,7 @@ func (r *GetFollowersParams) validate() error {
 	return nil
 }
 
-func (r *GetFollowingsParams) validate() error {
+func (r *GetFollowingInfosParams) validate() error {
 	if r.Limit == nil {
 		return errors.New("limit is required")
 	}

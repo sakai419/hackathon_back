@@ -8,9 +8,9 @@ import (
 	"net/http"
 )
 
-func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
+func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountServiceParams) error {
 	// Validate params
-	if err := arg.Validate(); err != nil {
+	if err := validateAccountParams(arg.ID, arg.UserID, arg.UserName); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -24,8 +24,9 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountPar
 		}
 	}
 
-	// Create account
-    if err := s.repo.CreateAccount(ctx, arg); err != nil {
+	// Convert params
+	params := arg.ToParams()
+    if err := s.repo.CreateAccount(ctx, params); err != nil {
 		// Check if the error is a duplicate entry error
 		var duplicateErr *apperrors.ErrDuplicateEntry
 		if errors.As(err, &duplicateErr) {
@@ -58,8 +59,10 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountPar
     return nil
 }
 
-func (s *Service) DeleteMyAccount(ctx context.Context, id string) error {
-	if err := s.repo.DeleteMyAccount(ctx, id); err != nil {
+func (s *Service) DeleteMyAccount(ctx context.Context, arg *model.DeleteMyAccountServiceParams) error {
+	// Delete account
+	params := arg.ToParams()
+	if err := s.repo.DeleteMyAccount(ctx, params); err != nil {
 		// Check if the error is a record not found error
 		var notFoundErr *apperrors.ErrRecordNotFound
 		if errors.As(err, &notFoundErr) {

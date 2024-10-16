@@ -58,16 +58,17 @@ func (ns NullFollowStatus) Value() (driver.Value, error) {
 type NotificationType string
 
 const (
-	NotificationTypeFollow        NotificationType = "follow"
-	NotificationTypeLike          NotificationType = "like"
-	NotificationTypeRetweet       NotificationType = "retweet"
-	NotificationTypeReply         NotificationType = "reply"
-	NotificationTypeMessage       NotificationType = "message"
-	NotificationTypeQuote         NotificationType = "quote"
-	NotificationTypeFollowRequest NotificationType = "follow_request"
-	NotificationTypeReport        NotificationType = "report"
-	NotificationTypeWarning       NotificationType = "warning"
-	NotificationTypeOther         NotificationType = "other"
+	NotificationTypeFollow          NotificationType = "follow"
+	NotificationTypeLike            NotificationType = "like"
+	NotificationTypeRetweet         NotificationType = "retweet"
+	NotificationTypeReply           NotificationType = "reply"
+	NotificationTypeMessage         NotificationType = "message"
+	NotificationTypeQuote           NotificationType = "quote"
+	NotificationTypeFollowRequest   NotificationType = "follow_request"
+	NotificationTypeRequestAccepted NotificationType = "request_accepted"
+	NotificationTypeReport          NotificationType = "report"
+	NotificationTypeWarning         NotificationType = "warning"
+	NotificationTypeOther           NotificationType = "other"
 )
 
 func (e *NotificationType) Scan(src interface{}) error {

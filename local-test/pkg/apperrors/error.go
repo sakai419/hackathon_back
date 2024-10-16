@@ -33,7 +33,7 @@ type ErrInvalidInput struct {
 }
 
 func (e *ErrInvalidInput) Error() string {
-	return fmt.Sprintf("invalid request: %s", e.Message)
+	return fmt.Sprintf("invalid input: %s", e.Message)
 }
 
 // ErrDuplicateEntry is a custom error type that indicates a duplicate entry

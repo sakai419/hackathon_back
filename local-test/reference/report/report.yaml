@@ -8,7 +8,7 @@ paths:
     /reports/{user_id}:
         post:
             summary: Create a new report
-            operationId: CreateReportByUserId
+            operationId: CreateReport
             parameters:
                 - name: user_id
                   in: path
@@ -20,7 +20,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/CreateReportByUserIdRequest"
+                            $ref: "#/components/schemas/CreateReportRequest"
             responses:
                 "200":
                     description: Report created successfully
@@ -31,7 +31,7 @@ paths:
 
 components:
     schemas:
-        CreateReportByUserIdRequest:
+        CreateReportRequest:
             type: object
             required:
                 - reason

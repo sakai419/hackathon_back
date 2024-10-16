@@ -266,6 +266,7 @@ CREATE TYPE notification_type AS ENUM (
     'message',
     'quote',
     'follow_request',
+    'request_accepted',
     'report',
     'warning',
     'other'

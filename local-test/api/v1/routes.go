@@ -52,7 +52,7 @@ func setUpAccountRoutes(r *mux.Router, svc *service.Service, client *auth.Client
 	account.HandlerWithOptions(h, opts)
 }
 
-func setUpReportRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+func setUpReportRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
 	// Register the report handler
 	h := report.NewReportHandler(svc)
 
@@ -70,7 +70,7 @@ func setUpReportRoutes(r *mux.Router, svc *service.Service, client *auth.Client)
 	report.HandlerWithOptions(h, opts)
 }
 
-func setUpFollowRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+func setUpFollowRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
 	// Register the follow handler
 	h := follow.NewFollowHandler(svc)
 
@@ -80,6 +80,7 @@ func setUpFollowRoutes(r *mux.Router, svc *service.Service, client *auth.Client)
 		BaseRouter: r,
 		Middlewares: []follow.MiddlewareFunc{
 			middleware.AuthMiddleware(client),
+			middleware.AccountIDMiddleware(repo),
 		},
 		ErrorHandlerFunc: follow.ErrHandleFunc,
 	}
@@ -100,8 +101,8 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 
 	// Register the account routes
 	setUpAccountRoutes(apiV1, svc, client)
-	setUpReportRoutes(apiV1, svc, client)
-	setUpFollowRoutes(apiV1, svc, client)
+	setUpReportRoutes(apiV1, repo, svc, client)
+	setUpFollowRoutes(apiV1, repo, svc, client)
 
 	return apiV1
 }

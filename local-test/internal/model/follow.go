@@ -4,11 +4,6 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-type FollowUserParams struct {
-	FollowerAccountID   string
-	FollowingUserID 	string
-}
-
 type FollowAndNotifyParams struct {
 	FollowerAccountID  string
 	FollowingAccountID  string
@@ -23,17 +18,12 @@ func (p *FollowAndNotifyParams) Validate() error {
 	return nil
 }
 
-type UnfollowUserParams struct {
-	FollowerAccountID   string
-	FollowingUserID 	string
-}
-
-type DeleteFollowParams struct {
+type UnfollowParams struct {
 	FollowerAccountID  string
 	FollowingAccountID  string
 }
 
-func (p *DeleteFollowParams) Validate() error {
+func (p *UnfollowParams) Validate() error {
 	if p.FollowerAccountID == p.FollowingAccountID {
 		return &apperrors.ErrInvalidInput{
 			Message: "Follower account ID and following account ID must be different",
@@ -43,7 +33,7 @@ func (p *DeleteFollowParams) Validate() error {
 }
 
 type GetFollowerInfosParams struct {
-	FollowingUserID    string
+	FollowingAccountID    string
 	Limit			   int32
 	Offset			   int32
 }
@@ -69,7 +59,7 @@ type GetFollowerAccountIDsParams struct {
 }
 
 type GetFollowingInfosParams struct {
-	FollowerUserID    string
+	FollowerAccountID  string
 	Limit			   int32
 	Offset			   int32
 }
@@ -89,14 +79,9 @@ func (p *GetFollowingInfosParams) Validate() error {
 }
 
 type GetFollowingAccountIDsParams struct {
-	FollowerAccountID string
+	FollowerAccountID  string
 	Limit			   int32
 	Offset			   int32
-}
-
-type RequestFollowParams struct {
-	RequesterAccountID string
-	RequestedUserID string
 }
 
 type RequestFollowAndNotifyParams struct {
@@ -111,11 +96,6 @@ func (p *RequestFollowAndNotifyParams) Validate() error {
 		}
 	}
 	return nil
-}
-
-type AcceptFollowRequestParams struct {
-	RequesterUserID string
-	RequestedAccountID string
 }
 
 type AcceptFollowRequestAndNotifyParams struct {
@@ -133,16 +113,11 @@ func (p *AcceptFollowRequestAndNotifyParams) Validate() error {
 }
 
 type RejectFollowRequestParams struct {
-	RequesterUserID string
-	RequestedAccountID string
-}
-
-type DeleteFollowRequestParams struct {
 	RequesterAccountID string
 	RequestedAccountID string
 }
 
-func (p *DeleteFollowRequestParams) Validate() error {
+func (p *RejectFollowRequestParams) Validate() error {
 	if p.RequesterAccountID == p.RequestedAccountID {
 		return &apperrors.ErrInvalidInput{
 			Message: "Requester account ID and requested account ID must be different",

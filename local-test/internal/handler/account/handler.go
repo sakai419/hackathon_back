@@ -24,7 +24,7 @@ func NewAccountHandler(svc *service.Service) ServerInterface {
 // (POST /accounts)
 func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
     // Get user ID
-    accountID, err := key.GetAccountID(r.Context())
+    accountID, err := key.GetClientAccountID(r.Context())
     if err != nil {
         utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusUnauthorized,
@@ -74,9 +74,8 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create account
-	arg := req.toParams()
-    arg.ID = accountID
-	if err := h.svc.CreateAccount(r.Context(), arg); err != nil {
+	params := req.toParams(accountID)
+	if err := h.svc.CreateAccount(r.Context(), params); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
 				Operation: "create account",
@@ -86,7 +85,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := CreateAccountResponse{Id: arg.ID}
+	resp := CreateAccountResponse{Id: accountID}
 	utils.Respond(w, resp)
 }
 
@@ -94,7 +93,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 // (DELETE /accounts/me)
 func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 	// Get user ID
-	accountID, err := key.GetAccountID(r.Context())
+	accountID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusUnauthorized,
@@ -111,7 +110,10 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	}
 
     // Delete account
-	if err := h.svc.DeleteMyAccount(r.Context(), accountID); err != nil {
+	params := &model.DeleteMyAccountServiceParams{
+		ID: accountID,
+	}
+	if err := h.svc.DeleteMyAccount(r.Context(), params); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
 				Operation: "delete account",
@@ -136,8 +138,9 @@ func (r *CreateAccountJSONRequestBody) validate() error {
 }
 
 // convert request to params
-func (r *CreateAccountJSONRequestBody) toParams() *model.CreateAccountParams {
-	return &model.CreateAccountParams{
+func (r *CreateAccountJSONRequestBody) toParams(id string) *model.CreateAccountServiceParams {
+	return &model.CreateAccountServiceParams{
+		ID:       id,
 		UserID:   r.UserId,
 		UserName: r.UserName,
 	}
