@@ -79,28 +79,13 @@ func (r *Repository) FollowAndNotify(ctx context.Context, arg *model.FollowAndNo
 }
 
 func (r *Repository) Unfollow(ctx context.Context, arg *model.UnfollowParams) error {
-	// Begin transaction
-	tx, err := r.db.Begin()
-	if err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "begin transaction",
-				Err: err,
-			},
-		)
-	}
-
-	// Create query object with transaction
-	q := r.q.WithTx(tx)
-
 	// Delete follow
 	deleteFollowParams := sqlcgen.DeleteFollowParams{
 		FollowerAccountID: arg.FollowerAccountID,
 		FollowingAccountID: arg.FollowingAccountID,
 	}
-	res, err := q.DeleteFollow(ctx, deleteFollowParams)
+	res, err := r.q.DeleteFollow(ctx, deleteFollowParams)
 	if err != nil {
-		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "delete follow",
@@ -112,7 +97,6 @@ func (r *Repository) Unfollow(ctx context.Context, arg *model.UnfollowParams) er
 	// Check if follow is deleted
 	num, err := res.RowsAffected()
 	if err != nil {
-		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "check if follow is deleted",
@@ -121,20 +105,9 @@ func (r *Repository) Unfollow(ctx context.Context, arg *model.UnfollowParams) er
 		)
 	}
 	if num == 0 {
-		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrRecordNotFound{
 				Condition: "follow",
-			},
-		)
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "commit transaction",
-				Err: err,
 			},
 		)
 	}
@@ -331,28 +304,13 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, arg *mode
 }
 
 func (r *Repository) RejectFollowRequest(ctx context.Context, arg *model.RejectFollowRequestParams) error {
-	// Begin transaction
-	tx, err := r.db.Begin()
-	if err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "begin transaction",
-				Err: err,
-			},
-		)
-	}
-
-	// Create query object with transaction
-	q := r.q.WithTx(tx)
-
 	// Delete follow request
 	deleteFollowRequestParams := sqlcgen.DeleteFollowRequestParams{
 		FollowerAccountID: arg.RequesterAccountID,
 		FollowingAccountID: arg.RequestedAccountID,
 	}
-	res, err := q.DeleteFollowRequest(ctx, deleteFollowRequestParams)
+	res, err := r.q.DeleteFollowRequest(ctx, deleteFollowRequestParams)
 	if err != nil {
-		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "delete follow request",
@@ -364,7 +322,6 @@ func (r *Repository) RejectFollowRequest(ctx context.Context, arg *model.RejectF
 	// Check if follow request is deleted
 	num, err := res.RowsAffected()
 	if err != nil {
-		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "check if follow request is deleted",
@@ -373,20 +330,9 @@ func (r *Repository) RejectFollowRequest(ctx context.Context, arg *model.RejectF
 		)
 	}
 	if num == 0 {
-		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrRecordNotFound{
 				Condition: "follow request",
-			},
-		)
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "commit transaction",
-				Err: err,
 			},
 		)
 	}

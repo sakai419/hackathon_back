@@ -127,24 +127,9 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
 
 
 func (r *Repository) DeleteMyAccount(ctx context.Context, accountID string) (error) {
-	// Begin transaction
-	tx, err := r.db.Begin()
-	if err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "begin transaction",
-				Err: err,
-			},
-		)
-	}
-
-	// Create query object with transaction
-	q := r.q.WithTx(tx)
-
 	// Delete account
-	res, err := q.DeleteAccount(ctx, accountID)
+	res, err := r.q.DeleteAccount(ctx, accountID)
 	if err != nil {
-		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "delete account",
@@ -156,7 +141,6 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, accountID string) (err
     // Check if account is deleted
     num, err := res.RowsAffected()
     if err != nil {
-        tx.Rollback()
         return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "get rows affected",
@@ -165,24 +149,12 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, accountID string) (err
 		)
     }
     if num == 0 {
-        tx.Rollback()
         return apperrors.WrapRepositoryError(
 			&apperrors.ErrRecordNotFound{
 				Condition: "account id",
 			},
 		)
     }
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		tx.Rollback()
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "commit transaction",
-				Err: err,
-			},
-		)
-	}
 
 	return nil
 }

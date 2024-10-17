@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"local-test/pkg/apperrors"
+	"time"
+)
 
 type Notification struct {
 	ID                 int64     `json:"id"`
@@ -18,18 +21,45 @@ type GetNotificationsParams struct {
 	Offset			   int32
 }
 
+func (p GetNotificationsParams) Validate() error {
+	if p.Limit <= 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Limit must be greater than 0",
+		}
+	}
+
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Offset must be greater than or equal to 0",
+		}
+	}
+
+	return nil
+}
+
 type GetUnreadNotificationParams struct {
 	RecipientAccountID string
 	Limit			   int32
 	Offset			   int32
 }
 
-type MarkNotificationAsReadParams struct {
-	ID                 int64
-	RecipientAccountID string
+func (p GetUnreadNotificationParams) Validate() error {
+	if p.Limit <= 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Limit must be greater than 0",
+		}
+	}
+
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Offset must be greater than or equal to 0",
+		}
+	}
+
+	return nil
 }
 
-type DeleteNotificationParams struct {
+type MarkNotificationAsReadParams struct {
 	ID                 int64
 	RecipientAccountID string
 }

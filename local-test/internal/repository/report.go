@@ -8,20 +8,6 @@ import (
 )
 
 func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportParams) error {
-	// Begin transaction
-	tx, err := r.db.Begin()
-	if err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "begin transaction",
-				Err: err,
-				},
-			)
-	}
-
-	// Create query object with transaction
-	q := r.q.WithTx(tx)
-
 	// Create report
 	params := sqlcgen.CreateReportParams{
 		ReporterAccountID: arg.ReporterAccountID,
@@ -29,21 +15,10 @@ func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportPa
 		Reason:            sqlcgen.ReportReason(arg.Reason),
 		Content:           arg.Content,
 	}
-	if err := q.CreateReport(ctx, params); err != nil {
-		tx.Rollback()
+	if err := r.q.CreateReport(ctx, params); err != nil {
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "create report",
-				Err: err,
-			},
-		)
-	}
-
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "commit transaction",
 				Err: err,
 			},
 		)
