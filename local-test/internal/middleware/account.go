@@ -65,28 +65,8 @@ func AccountInfoMiddleware(repo *repository.Repository) func(http.Handler) http.
             // set account_id in context
             ctx = context.WithValue(ctx, key.PathAccountID, pathAccountID)
 
-			// Check if account is admin
-			isAdmin, err := repo.IsAdmin(ctx, pathAccountID)
-			if err != nil {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusInternalServerError,
-						Code:   "INTERNAL_SERVER_ERROR",
-						Message: "Failed to check if account is admin",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "check if account is admin",
-							Err: err,
-						},
-					},
-				)
-				return
-			}
-
-			// set is_admin in context
-			ctx = context.WithValue(ctx, key.IsAdmin, isAdmin)
-
 			// Check if account is suspended
-			isSuspended, err := repo.IsSuspended(ctx, pathAccountID)
+			isTargetSuspended, err := repo.IsSuspended(ctx, pathAccountID)
 			if err != nil {
 				utils.RespondError(w,
 					&apperrors.AppError{
@@ -103,7 +83,7 @@ func AccountInfoMiddleware(repo *repository.Repository) func(http.Handler) http.
 			}
 
 			// set is_suspended in context
-			ctx = context.WithValue(ctx, key.IsSuspended, isSuspended)
+			ctx = context.WithValue(ctx, key.IsTargetSuspended, isTargetSuspended)
 
 			// Call the next handler, which can be another middleware in the chain, or the final handler.
             next.ServeHTTP(w, r.WithContext(ctx))

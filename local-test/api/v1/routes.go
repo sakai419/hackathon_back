@@ -61,7 +61,7 @@ func setUpReportRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []report.MiddlewareFunc{
-			middleware.AuthMiddleware(client),
+			middleware.AuthAndGetInfoMiddleware(repo, client),
 			middleware.AccountInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: report.ErrHandleFunc,
@@ -80,7 +80,7 @@ func setUpFollowRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []follow.MiddlewareFunc{
-			middleware.AuthMiddleware(client),
+			middleware.AuthAndGetInfoMiddleware(repo, client),
 			middleware.AccountInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: follow.ErrHandleFunc,

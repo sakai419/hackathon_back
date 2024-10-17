@@ -8,15 +8,16 @@ import (
 type ctxKey string
 
 const (
-	ClientAccountIDKey ctxKey = "client_account_id"
+	ClientAccountID ctxKey = "client_account_id"
 	PathUserID ctxKey = "user_id"
 	PathAccountID ctxKey = "account_id"
 	IsAdmin ctxKey = "is_admin"
-	IsSuspended ctxKey = "is_suspended"
+	IsTargetSuspended ctxKey = "is_target_suspended"
+	IsClientSuspended ctxKey = "is_client_suspended"
 )
 
 func GetClientAccountID(ctx context.Context) (string, error) {
-	id, ok := ctx.Value(ClientAccountIDKey).(string)
+	id, ok := ctx.Value(ClientAccountID).(string)
 	if !ok {
 		return "", errors.New("account_id not found in context")
 	}
@@ -47,8 +48,16 @@ func GetIsAdmin(ctx context.Context) (bool, error) {
 	return isAdmin, nil
 }
 
-func GetIsSuspended(ctx context.Context) (bool, error) {
-	isSuspended, ok := ctx.Value(IsSuspended).(bool)
+func GetIsTargetSuspended(ctx context.Context) (bool, error) {
+	isSuspended, ok := ctx.Value(IsTargetSuspended).(bool)
+	if !ok {
+		return false, errors.New("is_suspended not found in context")
+	}
+	return isSuspended, nil
+}
+
+func GetIsClientSuspended(ctx context.Context) (bool, error) {
+	isSuspended, ok := ctx.Value(IsClientSuspended).(bool)
 	if !ok {
 		return false, errors.New("is_suspended not found in context")
 	}

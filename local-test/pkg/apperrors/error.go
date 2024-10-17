@@ -50,6 +50,15 @@ func (e *ErrDuplicateEntry) Unwrap() error {
 	return e.Err
 }
 
+// ErrForbidden is a custom error type that indicates a forbidden operation
+type ErrForbidden struct {
+	Message string
+}
+
+func (e *ErrForbidden) Error() string {
+	return fmt.Sprintf("forbidden: %s", e.Message)
+}
+
 type AppError struct {
     Status  int
     Code    string

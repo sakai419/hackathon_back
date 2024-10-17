@@ -24,20 +24,14 @@ func NewReportHandler(svc *service.Service) ServerInterface {
 // Create a new report
 // (POST /reports/{user_id})
 func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, userID string) {
-	// Get reporter account id
-	reporterAccountID, err := key.GetClientAccountID(r.Context())
-	if err != nil {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusUnauthorized,
-			Code:    "UNAUTHORIZED",
-			Message: "Account ID not found in context",
-			Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "get account ID",
-					Err: err,
-				},
-			),
-		})
+	// Check if the user is suspended
+	if isClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := getClientAccountID(w, r)
+	if !ok {
 		return
 	}
 
@@ -74,7 +68,7 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, use
     }
 
     // Create report
-    arg := req.toParams(reporterAccountID, userID)
+    arg := req.toParams(clientAccountID, userID)
     if err := h.svc.CreateReportByUserID(r.Context(), arg); err != nil {
         utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
@@ -101,6 +95,82 @@ func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
     } else {
         utils.RespondError(w, err)
     }
+}
+
+func isClientSuspended(w http.ResponseWriter, r *http.Request) bool {
+	isClientSuspended, err := key.GetIsClientSuspended(r.Context())
+	if err != nil {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusInternalServerError,
+			Code:    "INTERNAL_SERVER_ERROR",
+			Message: "Failed to get is_suspended",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get is_suspended",
+					Err: err,
+				},
+			),
+		})
+		return true
+	}
+
+	if isClientSuspended {
+		utils.RespondError(w, &apperrors.AppError{
+			Status:  http.StatusForbidden,
+			Code:    "FORBIDDEN",
+			Message: "User is suspended",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrForbidden{
+					Message: "User is suspended",
+				},
+			),
+		})
+		return true
+	}
+
+	return false
+}
+
+func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	clientID, err := key.GetClientAccountID(r.Context())
+	if err != nil {
+		utils.RespondError(w,
+			&apperrors.AppError{
+				Status:  http.StatusInternalServerError,
+				Code:    "INTERNAL_SERVER_ERROR",
+				Message: "Account ID not found in context",
+				Err:     apperrors.WrapHandlerError(
+					&apperrors.ErrOperationFailed{
+						Operation: "get account ID",
+						Err: err,
+					},
+				),
+			},
+		)
+		return "", false
+	}
+	return clientID, true
+}
+
+func getAccountIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
+	accountID, err := key.GetAccountIDFromPath(r.Context())
+	if err != nil {
+		utils.RespondError(w,
+			&apperrors.AppError{
+				Status:  http.StatusBadRequest,
+				Code:    "BAD_REQUEST",
+				Message: "Account ID not found in path",
+				Err:     apperrors.WrapHandlerError(
+					&apperrors.ErrOperationFailed{
+						Operation: "get account ID",
+						Err: err,
+					},
+				),
+			},
+		)
+		return "", false
+	}
+	return accountID, true
 }
 
 func (r *CreateReportJSONRequestBody) validate() error {
