@@ -23,7 +23,7 @@ func NewReportHandler(svc *service.Service) ServerInterface {
 
 // Create a new report
 // (POST /reports/{user_id})
-func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, userID string) {
+func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if isClientSuspended(w, r) {
 		return
@@ -31,6 +31,12 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, use
 
 	// Get client account ID
 	clientAccountID, ok := getClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get account ID from path
+	accountIDFromPath, ok := getAccountIDFromPath(w, r)
 	if !ok {
 		return
 	}
@@ -68,7 +74,7 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, use
     }
 
     // Create report
-    arg := req.toParams(clientAccountID, userID)
+    arg := req.toParams(clientAccountID, accountIDFromPath)
     if err := h.svc.CreateReportByUserID(r.Context(), arg); err != nil {
         utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
@@ -183,10 +189,10 @@ func (r *CreateReportJSONRequestBody) validate() error {
 	return nil
 }
 
-func (r *CreateReportJSONRequestBody) toParams(reporterAccountID, reportedUserID string) *model.CreateReportServiceParams {
-	return &model.CreateReportServiceParams{
+func (r *CreateReportJSONRequestBody) toParams(reporterAccountID, reportedAccountID string) *model.CreateReportParams {
+	return &model.CreateReportParams{
 		ReporterAccountID: reporterAccountID,
-		ReportedUserID: reportedUserID,
+		ReportedAccountID: reportedAccountID,
 		Reason:  model.ReportReason(r.Reason),
 		Content: sql.NullString{String: *r.Content, Valid: r.Content != nil && *r.Content != ""},
 	}

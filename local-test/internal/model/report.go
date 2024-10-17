@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"local-test/pkg/apperrors"
 )
 
 type ReportReason string
@@ -14,16 +15,34 @@ const (
 )
 
 // CreateReport
-type CreateReportServiceParams struct {
-	ReporterAccountID string
-	ReportedUserID    string
-	Reason            ReportReason
-	Content           sql.NullString
-}
-
-type CreateReportRepositoryParams struct {
+type CreateReportParams struct {
 	ReporterAccountID string
 	ReportedAccountID    string
 	Reason            ReportReason
 	Content           sql.NullString
+}
+
+func (p *CreateReportParams) Validate() error {
+	if p.ReporterAccountID == p.ReportedAccountID {
+		return &apperrors.ErrInvalidInput{
+			Message: "reporter and reported account ID must be different",
+		}
+	}
+
+	switch p.Reason {
+	case ReportReasonSpam, ReportReasonHarrassment, ReportReasonInappropriateContent:
+		return nil
+	case ReportReasonOther:
+		if !p.Content.Valid || p.Content.String == "" {
+			return &apperrors.ErrInvalidInput{
+				Message: "content is required for other report reason",
+			}
+		}
+	default:
+		return &apperrors.ErrInvalidInput{
+			Message: "invalid report reason",
+		}
+	}
+
+	return nil
 }

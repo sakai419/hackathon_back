@@ -1,6 +1,8 @@
 package model
 
-import "errors"
+import (
+	"local-test/pkg/apperrors"
+)
 
 // CreateAccount
 type CreateAccountParams struct {
@@ -11,13 +13,19 @@ type CreateAccountParams struct {
 
 func (p *CreateAccountParams) Validate() error {
 	if len(p.ID) != 28 {
-		return errors.New("ID must be 28 characters")
+		return &apperrors.ErrInvalidInput{
+			Message: "ID must be 28 characters",
+		}
 	}
 	if len(p.UserID) > 30 {
-		return errors.New("UserID must be less than 30 characters")
+		return &apperrors.ErrInvalidInput{
+			Message: "UserID must be less than 30 characters",
+		}
 	}
 	if len(p.UserName) > 30 {
-		return errors.New("UserName must be less than 30 characters")
+		return &apperrors.ErrInvalidInput{
+			Message: "UserName must be less than 30 characters",
+		}
 	}
 	return nil
 }

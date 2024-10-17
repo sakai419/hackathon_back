@@ -7,7 +7,7 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportRepositoryParams) error {
+func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportParams) error {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {

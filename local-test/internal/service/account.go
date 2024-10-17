@@ -9,8 +9,8 @@ import (
 )
 
 func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
-	// Validate params
-	if err := validateAccountParams(arg.ID, arg.UserID, arg.UserName); err != nil {
+	// Validate input
+	if err := arg.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
