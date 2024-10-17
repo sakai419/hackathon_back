@@ -109,11 +109,7 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-    // Delete account
-	params := &model.DeleteMyAccountServiceParams{
-		ID: accountID,
-	}
-	if err := h.svc.DeleteMyAccount(r.Context(), params); err != nil {
+	if err := h.svc.DeleteMyAccount(r.Context(), accountID); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
 				Operation: "delete account",
@@ -138,8 +134,8 @@ func (r *CreateAccountJSONRequestBody) validate() error {
 }
 
 // convert request to params
-func (r *CreateAccountJSONRequestBody) toParams(id string) *model.CreateAccountServiceParams {
-	return &model.CreateAccountServiceParams{
+func (r *CreateAccountJSONRequestBody) toParams(id string) *model.CreateAccountParams {
+	return &model.CreateAccountParams{
 		ID:       id,
 		UserID:   r.UserId,
 		UserName: r.UserName,

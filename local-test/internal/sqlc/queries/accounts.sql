@@ -6,7 +6,7 @@ VALUES ($1, $2, $3);
 SELECT id FROM accounts
 WHERE user_id = $1;
 
--- name: GetUserAndProfileInfoByAccountIDs :many
+-- name: GetUserAndProfileInfos :many
 SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id

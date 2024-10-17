@@ -62,7 +62,7 @@ func (q *Queries) GetAccountIDByUserID(ctx context.Context, userID string) (stri
 	return id, err
 }
 
-const getUserAndProfileInfoByAccountIDs = `-- name: GetUserAndProfileInfoByAccountIDs :many
+const getUserAndProfileInfos = `-- name: GetUserAndProfileInfos :many
 SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
@@ -71,28 +71,28 @@ ORDER BY a.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
-type GetUserAndProfileInfoByAccountIDsParams struct {
+type GetUserAndProfileInfosParams struct {
 	Limit  int32
 	Offset int32
 	Ids    []string
 }
 
-type GetUserAndProfileInfoByAccountIDsRow struct {
+type GetUserAndProfileInfosRow struct {
 	UserID          string
 	UserName        string
 	Bio             sql.NullString
 	ProfileImageUrl sql.NullString
 }
 
-func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg GetUserAndProfileInfoByAccountIDsParams) ([]GetUserAndProfileInfoByAccountIDsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfoByAccountIDs, arg.Limit, arg.Offset, pq.Array(arg.Ids))
+func (q *Queries) GetUserAndProfileInfos(ctx context.Context, arg GetUserAndProfileInfosParams) ([]GetUserAndProfileInfosRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfos, arg.Limit, arg.Offset, pq.Array(arg.Ids))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUserAndProfileInfoByAccountIDsRow
+	var items []GetUserAndProfileInfosRow
 	for rows.Next() {
-		var i GetUserAndProfileInfoByAccountIDsRow
+		var i GetUserAndProfileInfosRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.UserName,

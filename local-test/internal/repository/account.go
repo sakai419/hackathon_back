@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccountRepositoryParams) error {
+func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
     // Begin transaction
     tx, err := r.db.Begin()
     if err != nil {
@@ -27,12 +27,12 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     q := r.q.WithTx(tx)
 
     // Create account
-    params := sqlcgen.CreateAccountParams{
+    query := sqlcgen.CreateAccountParams{
         ID:       arg.ID,
         UserID:   arg.UserID,
         UserName: arg.UserName,
     }
-    if err := q.CreateAccount(ctx, params); err != nil {
+    if err := q.CreateAccount(ctx, query); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return apperrors.WrapRepositoryError(
@@ -126,7 +126,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
 }
 
 
-func (r *Repository) DeleteMyAccount(ctx context.Context, arg *model.DeleteMyAccountRepositoryParams) (error) {
+func (r *Repository) DeleteMyAccount(ctx context.Context, accountID string) (error) {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -142,7 +142,7 @@ func (r *Repository) DeleteMyAccount(ctx context.Context, arg *model.DeleteMyAcc
 	q := r.q.WithTx(tx)
 
 	// Delete account
-	res, err := q.DeleteAccount(ctx, arg.ID)
+	res, err := q.DeleteAccount(ctx, accountID)
 	if err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(
@@ -209,14 +209,14 @@ func (r *Repository) GetAccountIDByUserID(ctx context.Context, userId string) (s
 	return AccountID, nil
 }
 
-func (r *Repository) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg *model.GetUserAndProfileInfoByAccountIDsParams) ([]*model.UserAndProfileInfo, error) {
+func (r *Repository) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg *model.GetUserAndProfileInfosParams) ([]*model.UserAndProfileInfo, error) {
 	// Get user and profile info
-	query := sqlcgen.GetUserAndProfileInfoByAccountIDsParams{
+	query := sqlcgen.GetUserAndProfileInfosParams{
 		Limit:  int32(arg.Limit),
 		Offset: int32(arg.Offset),
 		Ids: arg.IDs,
 	}
-	res, err := r.q.GetUserAndProfileInfoByAccountIDs(ctx, query)
+	res, err := r.q.GetUserAndProfileInfos(ctx, query)
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{

@@ -43,7 +43,7 @@ func (q *Queries) DeleteAllNotificationsForRecipient(ctx context.Context, recipi
 	return err
 }
 
-const deleteNotification = `-- name: DeleteNotification :exec
+const deleteNotification = `-- name: DeleteNotification :execresult
 DELETE FROM notifications
 WHERE id = $1 AND recipient_account_id = $2
 `
@@ -53,9 +53,8 @@ type DeleteNotificationParams struct {
 	RecipientAccountID string
 }
 
-func (q *Queries) DeleteNotification(ctx context.Context, arg DeleteNotificationParams) error {
-	_, err := q.db.ExecContext(ctx, deleteNotification, arg.ID, arg.RecipientAccountID)
-	return err
+func (q *Queries) DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteNotification, arg.ID, arg.RecipientAccountID)
 }
 
 const deleteOldReadNotifications = `-- name: DeleteOldReadNotifications :exec
@@ -73,53 +72,33 @@ func (q *Queries) DeleteOldReadNotifications(ctx context.Context, arg DeleteOldR
 	return err
 }
 
-const getNotificationByID = `-- name: GetNotificationByID :one
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
-WHERE id = $1
-`
-
-func (q *Queries) GetNotificationByID(ctx context.Context, id int64) (Notification, error) {
-	row := q.db.QueryRowContext(ctx, getNotificationByID, id)
-	var i Notification
-	err := row.Scan(
-		&i.ID,
-		&i.SenderAccountID,
-		&i.RecipientAccountID,
-		&i.Type,
-		&i.Content,
-		&i.IsRead,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const getNotificationCountByRecipientID = `-- name: GetNotificationCountByRecipientID :one
+const getNotificationCount = `-- name: GetNotificationCount :one
 SELECT COUNT(*) FROM notifications
 WHERE recipient_account_id = $1
 `
 
-func (q *Queries) GetNotificationCountByRecipientID(ctx context.Context, recipientAccountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getNotificationCountByRecipientID, recipientAccountID)
+func (q *Queries) GetNotificationCount(ctx context.Context, recipientAccountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getNotificationCount, recipientAccountID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getNotificationsByRecipientID = `-- name: GetNotificationsByRecipientID :many
+const getNotifications = `-- name: GetNotifications :many
 SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
 WHERE recipient_account_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetNotificationsByRecipientIDParams struct {
+type GetNotificationsParams struct {
 	RecipientAccountID string
 	Limit              int32
 	Offset             int32
 }
 
-func (q *Queries) GetNotificationsByRecipientID(ctx context.Context, arg GetNotificationsByRecipientIDParams) ([]Notification, error) {
-	rows, err := q.db.QueryContext(ctx, getNotificationsByRecipientID, arg.RecipientAccountID, arg.Limit, arg.Offset)
+func (q *Queries) GetNotifications(ctx context.Context, arg GetNotificationsParams) ([]Notification, error) {
+	rows, err := q.db.QueryContext(ctx, getNotifications, arg.RecipientAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -149,83 +128,33 @@ func (q *Queries) GetNotificationsByRecipientID(ctx context.Context, arg GetNoti
 	return items, nil
 }
 
-const getNotificationsByType = `-- name: GetNotificationsByType :many
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
-WHERE recipient_account_id = $1 AND type = $2
-ORDER BY created_at DESC
-LIMIT $3 OFFSET $4
-`
-
-type GetNotificationsByTypeParams struct {
-	RecipientAccountID string
-	Type               NotificationType
-	Limit              int32
-	Offset             int32
-}
-
-func (q *Queries) GetNotificationsByType(ctx context.Context, arg GetNotificationsByTypeParams) ([]Notification, error) {
-	rows, err := q.db.QueryContext(ctx, getNotificationsByType,
-		arg.RecipientAccountID,
-		arg.Type,
-		arg.Limit,
-		arg.Offset,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Notification
-	for rows.Next() {
-		var i Notification
-		if err := rows.Scan(
-			&i.ID,
-			&i.SenderAccountID,
-			&i.RecipientAccountID,
-			&i.Type,
-			&i.Content,
-			&i.IsRead,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getUnreadNotificationCountByRecipientID = `-- name: GetUnreadNotificationCountByRecipientID :one
+const getUnreadNotificationCount = `-- name: GetUnreadNotificationCount :one
 SELECT COUNT(*) FROM notifications
 WHERE recipient_account_id = $1 AND is_read = FALSE
 `
 
-func (q *Queries) GetUnreadNotificationCountByRecipientID(ctx context.Context, recipientAccountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getUnreadNotificationCountByRecipientID, recipientAccountID)
+func (q *Queries) GetUnreadNotificationCount(ctx context.Context, recipientAccountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getUnreadNotificationCount, recipientAccountID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const getUnreadNotificationsByRecipientID = `-- name: GetUnreadNotificationsByRecipientID :many
+const getUnreadNotifications = `-- name: GetUnreadNotifications :many
 SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
 WHERE recipient_account_id = $1 AND is_read = FALSE
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetUnreadNotificationsByRecipientIDParams struct {
+type GetUnreadNotificationsParams struct {
 	RecipientAccountID string
 	Limit              int32
 	Offset             int32
 }
 
-func (q *Queries) GetUnreadNotificationsByRecipientID(ctx context.Context, arg GetUnreadNotificationsByRecipientIDParams) ([]Notification, error) {
-	rows, err := q.db.QueryContext(ctx, getUnreadNotificationsByRecipientID, arg.RecipientAccountID, arg.Limit, arg.Offset)
+func (q *Queries) GetUnreadNotifications(ctx context.Context, arg GetUnreadNotificationsParams) ([]Notification, error) {
+	rows, err := q.db.QueryContext(ctx, getUnreadNotifications, arg.RecipientAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

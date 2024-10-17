@@ -1,42 +1,29 @@
 package model
 
+import "errors"
+
 // CreateAccount
-type CreateAccountServiceParams struct {
+type CreateAccountParams struct {
 	ID       string
 	UserID   string
 	UserName string
 }
 
-func (p *CreateAccountServiceParams) ToParams() *CreateAccountRepositoryParams {
-	return &CreateAccountRepositoryParams{
-		ID:       p.ID,
-		UserID:   p.UserID,
-		UserName: p.UserName,
+func (p *CreateAccountParams) Validate() error {
+	if len(p.ID) != 28 {
+		return errors.New("ID must be 28 characters")
 	}
-}
-
-type CreateAccountRepositoryParams struct {
-	ID       string
-	UserID   string
-	UserName string
-}
-
-// DeleteMyAccount
-type DeleteMyAccountServiceParams struct {
-	ID string
-}
-
-func (p *DeleteMyAccountServiceParams) ToParams() *DeleteMyAccountRepositoryParams {
-	return &DeleteMyAccountRepositoryParams{
-		ID: p.ID,
+	if len(p.UserID) > 30 {
+		return errors.New("UserID must be less than 30 characters")
 	}
+	if len(p.UserName) > 30 {
+		return errors.New("UserName must be less than 30 characters")
+	}
+	return nil
 }
 
-type DeleteMyAccountRepositoryParams struct {
-	ID string
-}
-
-type GetUserAndProfileInfoByAccountIDsParams struct {
+// GetUserAndProfileInfoByAccountIDs
+type GetUserAndProfileInfosParams struct {
 	Limit  int32
 	Offset int32
 	IDs    []string

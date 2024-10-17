@@ -143,7 +143,7 @@ func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerIn
 	}
 
 	// Convert params
-	getUserAndProfileInfoByAccountIDs := &model.GetUserAndProfileInfoByAccountIDsParams{
+	getUserAndProfileInfoByAccountIDs := &model.GetUserAndProfileInfosParams{
 		Limit:  arg.Limit,
 		Offset: arg.Offset,
 		IDs:    followerAccountIDs,
@@ -198,7 +198,7 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 	}
 
 	// Convert params
-	getUserAndProfileInfoByAccountIDs := &model.GetUserAndProfileInfoByAccountIDsParams{
+	getUserAndProfileInfoByAccountIDs := &model.GetUserAndProfileInfosParams{
 		Limit:  arg.Limit,
 		Offset: arg.Offset,
 		IDs:    followingAccountIDs,

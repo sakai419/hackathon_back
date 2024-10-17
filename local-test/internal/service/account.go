@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountServiceParams) error {
+func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
 	// Validate params
 	if err := validateAccountParams(arg.ID, arg.UserID, arg.UserName); err != nil {
 		return &apperrors.AppError{
@@ -24,9 +24,7 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountSer
 		}
 	}
 
-	// Convert params
-	params := arg.ToParams()
-    if err := s.repo.CreateAccount(ctx, params); err != nil {
+    if err := s.repo.CreateAccount(ctx, arg); err != nil {
 		// Check if the error is a duplicate entry error
 		var duplicateErr *apperrors.ErrDuplicateEntry
 		if errors.As(err, &duplicateErr) {
@@ -59,10 +57,9 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountSer
     return nil
 }
 
-func (s *Service) DeleteMyAccount(ctx context.Context, arg *model.DeleteMyAccountServiceParams) error {
+func (s *Service) DeleteMyAccount(ctx context.Context, accountID string) error {
 	// Delete account
-	params := arg.ToParams()
-	if err := s.repo.DeleteMyAccount(ctx, params); err != nil {
+	if err := s.repo.DeleteMyAccount(ctx, accountID); err != nil {
 		// Check if the error is a record not found error
 		var notFoundErr *apperrors.ErrRecordNotFound
 		if errors.As(err, &notFoundErr) {
