@@ -312,6 +312,7 @@ type Notification struct {
 	RecipientAccountID string
 	Type               NotificationType
 	Content            sql.NullString
+	TweetID            sql.NullInt64
 	IsRead             bool
 	CreatedAt          time.Time
 }

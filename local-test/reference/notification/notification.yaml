@@ -1,0 +1,157 @@
+openapi: 3.0.0
+info:
+    title: Notification Management API
+    version: 1.0.0
+    description: API for managing user notifications
+
+paths:
+    /notifications:
+        get:
+            summary: Get notifications
+            operationId: GetNotifications
+            parameters:
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                  required: true
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+                  required: true
+            responses:
+                "200":
+                    description: Notifications retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Notifications"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /notifications/unread:
+        get:
+            summary: Get unread notifications
+            operationId: GetUnreadNotifications
+            parameters:
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                  required: true
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+                  required: true
+            responses:
+                "200":
+                    description: Unread notifications retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Notifications"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /notifications/unread/count:
+        get:
+            summary: Get unread notifications count
+            operationId: GetUnreadNotificationsCount
+            responses:
+                "200":
+                    description: Unread notifications count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required:
+                                    - count
+                                properties:
+                                    count:
+                                        type: integer
+                                        description: The count of unread notifications
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /notifications/{notification_id}/read:
+        put:
+            summary: Mark a notification as read
+            operationId: MarkNotificationAsRead
+            parameters:
+                - name: notification_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+            responses:
+                "200":
+                    description: Notification marked as read successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+    /notifications/read/all:
+        put:
+            summary: Mark all notifications as read
+            operationId: MarkAllNotificationsAsRead
+            responses:
+                "200":
+                    description: All notifications marked as read successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        Notifications:
+            type: object
+            required:
+                - notifications
+            properties:
+                notifications:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/Notification"
+        Notification:
+            type: object
+            required:
+                - id
+                - recipient_account_id
+                - type
+                - is_read
+                - created_at
+            properties:
+                id:
+                    type: integer
+                    description: The ID of the notification
+                sender_account_id:
+                    type: string
+                    description: The ID of the sender account
+                recipient_account_id:
+                    type: string
+                    description: The ID of the recipient account
+                type:
+                    type: string
+                    description: The type of the notification
+                content:
+                    type: string
+                    description: The content of the notification
+                tweet_id:
+                    type: integer
+                    description: The ID of the tweet
+                is_read:
+                    type: boolean
+                    description: Whether the notification is read
+                created_at:
+                    type: string
+                    format: date-time
+                    description: The time when the notification is created

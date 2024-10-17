@@ -11,6 +11,7 @@ type Notification struct {
 	RecipientAccountID string    `json:"recipient_account_id"`
 	Type               string    `json:"notification_type"`
 	Content            string    `json:"content"`
+	TweetID            int64	 `json:"tweet_id"`
 	IsRead             bool      `json:"is_read"`
 	CreatedAt          time.Time `json:"created_at"`
 }
@@ -37,13 +38,13 @@ func (p GetNotificationsParams) Validate() error {
 	return nil
 }
 
-type GetUnreadNotificationParams struct {
+type GetUnreadNotificationsParams struct {
 	RecipientAccountID string
 	Limit			   int32
 	Offset			   int32
 }
 
-func (p GetUnreadNotificationParams) Validate() error {
+func (p GetUnreadNotificationsParams) Validate() error {
 	if p.Limit <= 0 {
 		return &apperrors.ErrInvalidInput{
 			Message: "Limit must be greater than 0",

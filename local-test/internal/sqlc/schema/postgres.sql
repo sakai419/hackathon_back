@@ -279,12 +279,15 @@ CREATE TABLE notifications (
     recipient_account_id CHAR(28) NOT NULL,
     type notification_type NOT NULL,
     content TEXT,
+    tweet_id BIGINT,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notifications_sender_account_id FOREIGN KEY (sender_account_id)
         REFERENCES accounts(id) ON DELETE SET NULL,
     CONSTRAINT fk_notifications_recipient_account_id FOREIGN KEY (recipient_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_tweet_id FOREIGN KEY (tweet_id)
+        REFERENCES tweets(id) ON DELETE SET NULL
 );
 
 

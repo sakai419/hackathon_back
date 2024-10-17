@@ -85,7 +85,7 @@ func (q *Queries) GetNotificationCount(ctx context.Context, recipientAccountID s
 }
 
 const getNotifications = `-- name: GetNotifications :many
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
+SELECT id, sender_account_id, recipient_account_id, type, content, tweet_id, is_read, created_at FROM notifications
 WHERE recipient_account_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
@@ -112,6 +112,7 @@ func (q *Queries) GetNotifications(ctx context.Context, arg GetNotificationsPara
 			&i.RecipientAccountID,
 			&i.Type,
 			&i.Content,
+			&i.TweetID,
 			&i.IsRead,
 			&i.CreatedAt,
 		); err != nil {
@@ -141,7 +142,7 @@ func (q *Queries) GetUnreadNotificationCount(ctx context.Context, recipientAccou
 }
 
 const getUnreadNotifications = `-- name: GetUnreadNotifications :many
-SELECT id, sender_account_id, recipient_account_id, type, content, is_read, created_at FROM notifications
+SELECT id, sender_account_id, recipient_account_id, type, content, tweet_id, is_read, created_at FROM notifications
 WHERE recipient_account_id = $1 AND is_read = FALSE
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
@@ -168,6 +169,7 @@ func (q *Queries) GetUnreadNotifications(ctx context.Context, arg GetUnreadNotif
 			&i.RecipientAccountID,
 			&i.Type,
 			&i.Content,
+			&i.TweetID,
 			&i.IsRead,
 			&i.CreatedAt,
 		); err != nil {

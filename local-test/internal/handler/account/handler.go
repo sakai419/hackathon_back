@@ -1,7 +1,6 @@
 package account
 
 import (
-	"errors"
 	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
@@ -24,21 +23,10 @@ func NewAccountHandler(svc *service.Service) ServerInterface {
 // (POST /accounts)
 func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
     // Get user ID
-    accountID, err := key.GetClientAccountID(r.Context())
-    if err != nil {
-        utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusUnauthorized,
-			Code:    "UNAUTHORIZED",
-			Message: "Account ID not found in context",
-            Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "get account ID",
-					Err: err,
-				},
-			),
-        })
-        return
-    }
+    clientAccountID, ok := getClientAccountID(w, r)
+	if !ok {
+		return
+	}
 
 	// Decode request
 	var req CreateAccountJSONRequestBody
@@ -57,24 +45,12 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate request
-	if err := req.validate(); err != nil {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusBadRequest,
-			Code:    "BAD_REQUEST",
-			Message: "Invalid request",
-			Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "validate request",
-					Err: err,
-				},
-			),
-		})
-		return
-	}
-
 	// Create account
-	params := req.toParams(accountID)
+	params := &model.CreateAccountParams{
+		ID:              clientAccountID,
+		UserID: 		 req.UserId,
+		UserName: 		 req.UserName,
+	}
 	if err := h.svc.CreateAccount(r.Context(), params); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
@@ -85,7 +61,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := CreateAccountResponse{Id: accountID}
+	resp := CreateAccountResponse{Id: clientAccountID}
 	utils.Respond(w, resp)
 }
 
@@ -93,23 +69,12 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 // (DELETE /accounts/me)
 func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 	// Get user ID
-	accountID, err := key.GetClientAccountID(r.Context())
-	if err != nil {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusUnauthorized,
-			Code:    "UNAUTHORIZED",
-			Message: "Account ID not found in context",
-            Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "get account ID",
-					Err: err,
-				},
-			),
-        })
+	clientAccountID, ok := getClientAccountID(w, r)
+	if !ok {
 		return
 	}
 
-	if err := h.svc.DeleteMyAccount(r.Context(), accountID); err != nil {
+	if err := h.svc.DeleteMyAccount(r.Context(), clientAccountID); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
 				Operation: "delete account",
@@ -122,22 +87,24 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	utils.Respond(w, nil)
 }
 
-// validate request
-func (r *CreateAccountJSONRequestBody) validate() error {
-	if r.UserId == "" {
-		return errors.New("UserID is required")
+// Get client account ID from context
+func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	clientID, err := key.GetClientAccountID(r.Context())
+	if err != nil {
+		utils.RespondError(w,
+			&apperrors.AppError{
+				Status:  http.StatusInternalServerError,
+				Code:    "INTERNAL_SERVER_ERROR",
+				Message: "Account ID not found in context",
+				Err:     apperrors.WrapHandlerError(
+					&apperrors.ErrOperationFailed{
+						Operation: "get account ID",
+						Err: err,
+					},
+				),
+			},
+		)
+		return "", false
 	}
-	if r.UserName == "" {
-		return errors.New("UserName is required")
-	}
-	return nil
-}
-
-// convert request to params
-func (r *CreateAccountJSONRequestBody) toParams(id string) *model.CreateAccountParams {
-	return &model.CreateAccountParams{
-		ID:       id,
-		UserID:   r.UserId,
-		UserName: r.UserName,
-	}
+	return clientID, true
 }

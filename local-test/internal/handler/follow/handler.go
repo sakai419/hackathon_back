@@ -95,27 +95,11 @@ func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// Validate request
-	if err := params.validate(); err != nil {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusBadRequest,
-			Code:    "BAD_REQUEST",
-			Message: "Invalid request",
-			Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "validate request",
-					Err: err,
-				},
-			),
-		})
-		return
-	}
-
 	// Get followers
 	arg := &model.GetFollowerInfosParams{
 		FollowingAccountID: accountIDFromPath,
-		Limit:              int32(*params.Limit),
-		Offset:             int32(*params.Offset),
+		Limit:              int32(params.Limit),
+		Offset:             int32(params.Offset),
 	}
 	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), arg)
 	if err != nil {
@@ -139,27 +123,11 @@ func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Validate request
-	if err := params.validate(); err != nil {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusBadRequest,
-			Code:    "BAD_REQUEST",
-			Message: "Invalid request",
-			Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "validate request",
-					Err: err,
-				},
-			),
-		})
-		return
-	}
-
 	// Get followings
 	arg := &model.GetFollowingInfosParams{
 		FollowerAccountID: accountIDFromPath,
-		Limit:             int32(*params.Limit),
-		Offset:            int32(*params.Offset),
+		Limit:             int32(params.Limit),
+		Offset:            int32(params.Offset),
 	}
 	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), arg)
 	if err != nil {
@@ -409,24 +377,4 @@ func convertToUserAndProfileInfos(followerInfos []*model.UserAndProfileInfo) []U
 		})
 	}
 	return resp
-}
-
-func (r *GetFollowerInfosParams) validate() error {
-	if r.Limit == nil {
-		return errors.New("limit is required")
-	}
-	if r.Offset == nil {
-		return errors.New("offset is required")
-	}
-	return nil
-}
-
-func (r *GetFollowingInfosParams) validate() error {
-	if r.Limit == nil {
-		return errors.New("limit is required")
-	}
-	if r.Offset == nil {
-		return errors.New("offset is required")
-	}
-	return nil
 }

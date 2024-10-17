@@ -31,14 +31,14 @@ type UserAndProfileInfoList = []UserAndProfileInfo
 
 // GetFollowerInfosParams defines parameters for GetFollowerInfos.
 type GetFollowerInfosParams struct {
-	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  int `form:"limit" json:"limit"`
+	Offset int `form:"offset" json:"offset"`
 }
 
 // GetFollowingInfosParams defines parameters for GetFollowingInfos.
 type GetFollowingInfosParams struct {
-	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
-	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+	Limit  int `form:"limit" json:"limit"`
+	Offset int `form:"offset" json:"offset"`
 }
 
 // ServerInterface represents all server handlers.
@@ -217,17 +217,31 @@ func (siw *ServerInterfaceWrapper) GetFollowerInfos(w http.ResponseWriter, r *ht
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetFollowerInfosParams
 
-	// ------------- Optional query parameter "limit" -------------
+	// ------------- Required query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
 		return
 	}
 
-	// ------------- Optional query parameter "offset" -------------
+	// ------------- Required query parameter "offset" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
 		return
@@ -261,17 +275,31 @@ func (siw *ServerInterfaceWrapper) GetFollowingInfos(w http.ResponseWriter, r *h
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetFollowingInfosParams
 
-	// ------------- Optional query parameter "limit" -------------
+	// ------------- Required query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
 		return
 	}
 
-	// ------------- Optional query parameter "offset" -------------
+	// ------------- Required query parameter "offset" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
 		return

@@ -41,7 +41,7 @@ func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotific
 	return items, nil
 }
 
-func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationParams) ([]*model.Notification, error) {
+func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.Notification, error) {
 	// Get unread notifications
 	query := sqlcgen.GetUnreadNotificationsParams{
 		RecipientAccountID: arg.RecipientAccountID,

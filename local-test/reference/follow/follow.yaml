@@ -53,10 +53,12 @@ paths:
                   in: query
                   schema:
                       type: integer
+                  required: true
                 - name: offset
                   in: query
                   schema:
                       type: integer
+                  required: true
             responses:
                 "200":
                     description: Followers retrieved successfully
@@ -83,10 +85,12 @@ paths:
                   in: query
                   schema:
                       type: integer
+                  required: true
                 - name: offset
                   in: query
                   schema:
                       type: integer
+                  required: true
             responses:
                 "200":
                     description: Users followed retrieved successfully
