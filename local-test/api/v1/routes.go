@@ -62,6 +62,7 @@ func setUpReportRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 		BaseRouter: r,
 		Middlewares: []report.MiddlewareFunc{
 			middleware.AuthMiddleware(client),
+			middleware.AccountIDMiddleware(repo),
 		},
 		ErrorHandlerFunc: report.ErrHandleFunc,
 	}
