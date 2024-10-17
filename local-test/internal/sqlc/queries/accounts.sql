@@ -54,11 +54,10 @@ LIMIT $2 OFFSET $3;
 SELECT created_at FROM accounts
 WHERE id = $1;
 
--- name: CountAccounts :one
-SELECT COUNT(*) FROM accounts;
+-- name: IsAdmin :one
+SELECT is_admin FROM accounts
+WHERE id = $1;
 
--- name: CheckUserNameExists :one
-SELECT EXISTS(SELECT 1 FROM accounts WHERE user_name = $1);
-
--- name: CheckUserIDExists :one
-SELECT EXISTS(SELECT 1 FROM accounts WHERE user_id = $1);
+-- name: IsSuspended :one
+SELECT is_suspended FROM accounts
+WHERE id = $1;

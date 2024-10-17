@@ -155,6 +155,7 @@ type Account struct {
 	UserID      string
 	UserName    string
 	IsSuspended bool
+	IsAdmin     bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

@@ -240,3 +240,31 @@ func (r *Repository) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg 
 
 	return userAndProfileInfos, nil
 }
+
+func (r *Repository) IsAdmin(ctx context.Context, accountID string) (bool, error) {
+	isAdmin, err := r.q.IsAdmin(ctx, accountID)
+	if err != nil {
+		return false, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get admin status",
+				Err: err,
+			},
+		)
+	}
+
+	return isAdmin, nil
+}
+
+func (r *Repository) IsSuspended(ctx context.Context, accountID string) (bool, error) {
+	isSuspended, err := r.q.IsSuspended(ctx, accountID)
+	if err != nil {
+		return false, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get suspended status",
+				Err: err,
+			},
+		)
+	}
+
+	return isSuspended, nil
+}

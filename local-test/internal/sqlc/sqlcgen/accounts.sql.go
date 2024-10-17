@@ -13,39 +13,6 @@ import (
 	"github.com/lib/pq"
 )
 
-const checkUserIDExists = `-- name: CheckUserIDExists :one
-SELECT EXISTS(SELECT 1 FROM accounts WHERE user_id = $1)
-`
-
-func (q *Queries) CheckUserIDExists(ctx context.Context, userID string) (bool, error) {
-	row := q.db.QueryRowContext(ctx, checkUserIDExists, userID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
-const checkUserNameExists = `-- name: CheckUserNameExists :one
-SELECT EXISTS(SELECT 1 FROM accounts WHERE user_name = $1)
-`
-
-func (q *Queries) CheckUserNameExists(ctx context.Context, userName string) (bool, error) {
-	row := q.db.QueryRowContext(ctx, checkUserNameExists, userName)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
-const countAccounts = `-- name: CountAccounts :one
-SELECT COUNT(*) FROM accounts
-`
-
-func (q *Queries) CountAccounts(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countAccounts)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const createAccount = `-- name: CreateAccount :exec
 INSERT INTO accounts (id, user_id, user_name)
 VALUES ($1, $2, $3)
@@ -145,8 +112,32 @@ func (q *Queries) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg Get
 	return items, nil
 }
 
+const isAdmin = `-- name: IsAdmin :one
+SELECT is_admin FROM accounts
+WHERE id = $1
+`
+
+func (q *Queries) IsAdmin(ctx context.Context, id string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isAdmin, id)
+	var is_admin bool
+	err := row.Scan(&is_admin)
+	return is_admin, err
+}
+
+const isSuspended = `-- name: IsSuspended :one
+SELECT is_suspended FROM accounts
+WHERE id = $1
+`
+
+func (q *Queries) IsSuspended(ctx context.Context, id string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isSuspended, id)
+	var is_suspended bool
+	err := row.Scan(&is_suspended)
+	return is_suspended, err
+}
+
 const searchAccountsByUserID = `-- name: SearchAccountsByUserID :many
-SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, is_admin, created_at, updated_at FROM accounts
 WHERE user_id LIKE CONCAT('%', $1, '%')
 ORDER BY user_id
 LIMIT $2 OFFSET $3
@@ -172,6 +163,7 @@ func (q *Queries) SearchAccountsByUserID(ctx context.Context, arg SearchAccounts
 			&i.UserID,
 			&i.UserName,
 			&i.IsSuspended,
+			&i.IsAdmin,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -189,7 +181,7 @@ func (q *Queries) SearchAccountsByUserID(ctx context.Context, arg SearchAccounts
 }
 
 const searchAccountsByUserName = `-- name: SearchAccountsByUserName :many
-SELECT id, user_id, user_name, is_suspended, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, is_admin, created_at, updated_at FROM accounts
 WHERE user_name LIKE CONCAT('%', $1, '%')
 ORDER BY user_name
 LIMIT $2 OFFSET $3
@@ -215,6 +207,7 @@ func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccoun
 			&i.UserID,
 			&i.UserName,
 			&i.IsSuspended,
+			&i.IsAdmin,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
