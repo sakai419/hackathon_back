@@ -62,7 +62,7 @@ type ServerInterface interface {
 	// (GET /notifications)
 	GetNotifications(w http.ResponseWriter, r *http.Request, params GetNotificationsParams)
 	// Mark all notifications as read
-	// (PUT /notifications/read/all)
+	// (PATCH /notifications/read/all)
 	MarkAllNotificationsAsRead(w http.ResponseWriter, r *http.Request)
 	// Get unread notifications
 	// (GET /notifications/unread)
@@ -71,7 +71,7 @@ type ServerInterface interface {
 	// (GET /notifications/unread/count)
 	GetUnreadNotificationsCount(w http.ResponseWriter, r *http.Request)
 	// Mark a notification as read
-	// (PUT /notifications/{notification_id}/read)
+	// (PATCH /notifications/{notification_id}/read)
 	MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationId int)
 }
 
@@ -350,13 +350,13 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/notifications", wrapper.GetNotifications).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/notifications/read/all", wrapper.MarkAllNotificationsAsRead).Methods("PUT")
+	r.HandleFunc(options.BaseURL+"/notifications/read/all", wrapper.MarkAllNotificationsAsRead).Methods("PATCH")
 
 	r.HandleFunc(options.BaseURL+"/notifications/unread", wrapper.GetUnreadNotifications).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/notifications/unread/count", wrapper.GetUnreadNotificationsCount).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/notifications/{notification_id}/read", wrapper.MarkNotificationAsRead).Methods("PUT")
+	r.HandleFunc(options.BaseURL+"/notifications/{notification_id}/read", wrapper.MarkNotificationAsRead).Methods("PATCH")
 
 	return r
 }
