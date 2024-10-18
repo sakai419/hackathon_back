@@ -7,7 +7,7 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.Notification, error) {
+func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Get notifications
 	query := sqlcgen.GetNotificationsParams{
 		RecipientAccountID: arg.RecipientAccountID,
@@ -25,23 +25,12 @@ func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotific
 	}
 
 	// Convert to model
-	var items []*model.Notification
-	for _, n := range notifications {
-		items = append(items, &model.Notification{
-			ID:                 n.ID,
-			SenderAccountID:    n.SenderAccountID.String,
-			RecipientAccountID: n.RecipientAccountID,
-			Type:               string(n.Type),
-			Content:            n.Content.String,
-			IsRead:             n.IsRead,
-			CreatedAt:          n.CreatedAt,
-		})
-	}
+	items := convertToNotificationResponse(notifications)
 
 	return items, nil
 }
 
-func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.Notification, error) {
+func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Get unread notifications
 	query := sqlcgen.GetUnreadNotificationsParams{
 		RecipientAccountID: arg.RecipientAccountID,
@@ -59,18 +48,7 @@ func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetU
 	}
 
 	// Convert to model
-	var items []*model.Notification
-	for _, n := range notifications {
-		items = append(items, &model.Notification{
-			ID:                 n.ID,
-			SenderAccountID:    n.SenderAccountID.String,
-			RecipientAccountID: n.RecipientAccountID,
-			Type:               string(n.Type),
-			Content:            n.Content.String,
-			IsRead:             n.IsRead,
-			CreatedAt:          n.CreatedAt,
-		})
-	}
+	items := convertToNotificationResponse(notifications)
 
 	return items, nil
 }
@@ -121,4 +99,21 @@ func (r *Repository) MarkAllNotificationsAsRead(ctx context.Context, recipientAc
 	}
 
 	return nil
+}
+
+func convertToNotificationResponse(notifications []sqlcgen.Notification) []*model.NotificationResponse {
+	var items []*model.NotificationResponse
+	for _, n := range notifications {
+		items = append(items, &model.NotificationResponse{
+			ID:                 n.ID,
+			SenderAccountID:    &n.SenderAccountID.String,
+			Type:               string(n.Type),
+			Content: 		    &n.Content.String,
+			TweetID:            &n.TweetID.Int64,
+			IsRead:             n.IsRead,
+			CreatedAt:          n.CreatedAt,
+		})
+	}
+
+	return items
 }

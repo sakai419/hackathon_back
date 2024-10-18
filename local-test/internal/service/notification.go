@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.Notification, error) {
+func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Validate input
 	if err := arg.Validate(); err != nil {
 		return nil, &apperrors.AppError{
@@ -32,7 +32,7 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 	return notifications, nil
 }
 
-func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.Notification, error) {
+func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Validate input
 	if err := arg.Validate(); err != nil {
 		return nil, &apperrors.AppError{

@@ -5,15 +5,14 @@ import (
 	"time"
 )
 
-type Notification struct {
-	ID                 int64     `json:"id"`
-	SenderAccountID    string    `json:"sender_account_id"`
-	RecipientAccountID string    `json:"recipient_account_id"`
-	Type               string    `json:"notification_type"`
-	Content            string    `json:"content"`
-	TweetID            int64	 `json:"tweet_id"`
-	IsRead             bool      `json:"is_read"`
-	CreatedAt          time.Time `json:"created_at"`
+type NotificationResponse struct {
+	ID                 int64      `json:"id"`
+	SenderAccountID    *string    `json:"sender_account_id"`
+	Type               string     `json:"notification_type"`
+	Content            *string    `json:"content"`
+	TweetID            *int64	  `json:"tweet_id"`
+	IsRead             bool       `json:"is_read"`
+	CreatedAt          time.Time  `json:"created_at"`
 }
 
 type GetNotificationsParams struct {
