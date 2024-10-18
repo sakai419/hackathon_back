@@ -7,6 +7,7 @@ import (
 	"local-test/internal/handler/follow"
 	"local-test/internal/handler/notification"
 	"local-test/internal/handler/report"
+	"local-test/internal/handler/setting"
 	"local-test/internal/middleware"
 	"local-test/internal/repository"
 	"local-test/internal/service"
@@ -109,6 +110,23 @@ func setUpNotificationRoutes(r *mux.Router, svc *service.Service, client *auth.C
 	notification.HandlerWithOptions(h, opts)
 }
 
+func setUpSettingRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the setting handler
+	h := setting.NewSettingHandler(svc)
+
+	// Create options for the setting handler
+	opts := setting.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []setting.MiddlewareFunc{
+			middleware.AuthAndGetInfoMiddleware(repo, client),
+		},
+	}
+
+	// Register the setting handler
+	setting.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -124,6 +142,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpReportRoutes(apiV1, repo, svc, client)
 	setUpFollowRoutes(apiV1, repo, svc, client)
 	setUpNotificationRoutes(apiV1, svc, client)
+	setUpSettingRoutes(apiV1, repo, svc, client)
 
 	return apiV1
 }

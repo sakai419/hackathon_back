@@ -7,18 +7,8 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
-
-const checkSettingsExist = `-- name: CheckSettingsExist :one
-SELECT EXISTS(SELECT 1 FROM settings WHERE account_id = $1)
-`
-
-func (q *Queries) CheckSettingsExist(ctx context.Context, accountID string) (bool, error) {
-	row := q.db.QueryRowContext(ctx, checkSettingsExist, accountID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
 
 const createSettingsWithDefaultValues = `-- name: CreateSettingsWithDefaultValues :exec
 INSERT INTO settings (account_id)
@@ -30,45 +20,17 @@ func (q *Queries) CreateSettingsWithDefaultValues(ctx context.Context, accountID
 	return err
 }
 
-const deleteSettings = `-- name: DeleteSettings :exec
-DELETE FROM settings
-WHERE account_id = $1
-`
-
-func (q *Queries) DeleteSettings(ctx context.Context, accountID string) error {
-	_, err := q.db.ExecContext(ctx, deleteSettings, accountID)
-	return err
-}
-
-const getSettingsByAccountID = `-- name: GetSettingsByAccountID :one
-SELECT account_id, is_private, created_at, updated_at FROM settings
-WHERE account_id = $1
-`
-
-func (q *Queries) GetSettingsByAccountID(ctx context.Context, accountID string) (Setting, error) {
-	row := q.db.QueryRowContext(ctx, getSettingsByAccountID, accountID)
-	var i Setting
-	err := row.Scan(
-		&i.AccountID,
-		&i.IsPrivate,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateSettingsPrivacy = `-- name: UpdateSettingsPrivacy :exec
+const updateSettings = `-- name: UpdateSettings :execresult
 UPDATE settings
-SET is_private = $1
+SET is_private = COALESCE($1, is_private)
 WHERE account_id = $2
 `
 
-type UpdateSettingsPrivacyParams struct {
+type UpdateSettingsParams struct {
 	IsPrivate bool
 	AccountID string
 }
 
-func (q *Queries) UpdateSettingsPrivacy(ctx context.Context, arg UpdateSettingsPrivacyParams) error {
-	_, err := q.db.ExecContext(ctx, updateSettingsPrivacy, arg.IsPrivate, arg.AccountID)
-	return err
+func (q *Queries) UpdateSettings(ctx context.Context, arg UpdateSettingsParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateSettings, arg.IsPrivate, arg.AccountID)
 }

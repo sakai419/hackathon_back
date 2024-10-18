@@ -1,4 +1,4 @@
-package account
+package setting
 
 import (
 	"local-test/internal/key"
@@ -9,27 +9,27 @@ import (
 	"net/http"
 )
 
-type AccountHandler struct {
+type SettingHandler struct {
 	svc *service.Service
 }
 
-func NewAccountHandler(svc *service.Service) ServerInterface {
-	return &AccountHandler{
+func NewSettingHandler(svc *service.Service) *SettingHandler {
+	return &SettingHandler{
 		svc: svc,
 	}
 }
 
-// Create a new account
-// (POST /accounts)
-func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
-    // Get client account ID
-    clientAccountID, ok := getClientAccountID(w, r)
+// Update settings
+// (PATCH /settings)
+func (h *SettingHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
+	// Get client account ID
+	clientAccountID, ok := getClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Decode request
-	var req CreateAccountJSONRequestBody
+	var req UpdateSettingsJSONRequestBody
 	if err := utils.Decode(r, &req); err != nil {
 		utils.RespondError(w, &apperrors.AppError{
 			Status:  http.StatusBadRequest,
@@ -45,43 +45,18 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create account
-	params := &model.CreateAccountParams{
-		ID:              clientAccountID,
-		UserID: 		 req.UserId,
-		UserName: 		 req.UserName,
+	// Update settings
+	params := &model.UpdateSettingsParams{
+		AccountID:       clientAccountID,
+		IsPrivate:       req.IsPrivate,
 	}
-	if err := h.svc.CreateAccount(r.Context(), params); err != nil {
+	if err := h.svc.UpdateSettings(r.Context(), params); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
-				Operation: "create account",
+				Operation: "update settings",
 				Err: err,
 			},
 		))
-		return
-	}
-
-	resp := CreateAccountResponse{Id: clientAccountID}
-	utils.Respond(w, resp)
-}
-
-// Delete my account
-// (DELETE /accounts/me)
-func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
-	// Get user ID
-	clientAccountID, ok := getClientAccountID(w, r)
-	if !ok {
-		return
-	}
-
-	if err := h.svc.DeleteMyAccount(r.Context(), clientAccountID); err != nil {
-		utils.RespondError(w, apperrors.WrapHandlerError(
-			&apperrors.ErrOperationFailed{
-				Operation: "delete account",
-				Err: err,
-			},
-		))
-		return
 	}
 
 	utils.Respond(w, nil)
