@@ -271,8 +271,8 @@ CREATE TABLE messages (
         REFERENCES accounts(id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_messages_conversation_id ON messages (conversation_id);
 CREATE INDEX idx_messages_sender_account_id ON messages (sender_account_id);
-CREATE INDEX idx_messages_recipient_account_id ON messages (recipient_account_id);
 CREATE INDEX idx_messages_created_at_account_id ON messages (created_at);
 
 -- Table: notifications

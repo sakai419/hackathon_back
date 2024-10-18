@@ -37,14 +37,8 @@ CREATE TABLE accounts (
     is_suspended BOOLEAN NOT NULL DEFAULT FALSE,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT idx_accounts_user_name UNIQUE (user_name)
 );
-
-CREATE TRIGGER trigger_update_account_timestamp
-BEFORE UPDATE ON accounts
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
 
 -- Table: tweets
 
@@ -92,23 +86,6 @@ CREATE TABLE blocks (
 );
 
 CREATE INDEX idx_blocks_created_at ON blocks(created_at);
-
--- Table: conversations
-
-CREATE TABLE conversations (
-    id BIGSERIAL PRIMARY KEY,
-    account1_id CHAR(28) NOT NULL,
-    account2_id CHAR(28) NOT NULL,
-    last_message_id BIGINT,
-    last_message_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (account1_id, account2_id),
-    CONSTRAINT fk_conversations_account1_id FOREIGN KEY (account1_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_conversations_account2_id FOREIGN KEY (account2_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_conversations_last_message_id FOREIGN KEY (last_message_id)
-        REFERENCES messages(id) ON DELETE SET NULL
-);
 
 -- Table: follows
 
@@ -272,16 +249,44 @@ CREATE TABLE messages (
     sender_account_id CHAR(28) NOT NULL,
     content TEXT,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_messages_conversation_id FOREIGN KEY (conversation_id)
-        REFERENCES conversations(id) ON DELETE CASCADE,
-    CONSTRAINT fk_messages_sender_account_id FOREIGN KEY (sender_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX idx_messages_conversation_id ON messages (conversation_id);
 CREATE INDEX idx_messages_sender_account_id ON messages (sender_account_id);
-CREATE INDEX idx_messages_recipient_account_id ON messages (recipient_account_id);
 CREATE INDEX idx_messages_created_at_account_id ON messages (created_at);
+
+-- Table: conversations
+
+CREATE TABLE conversations (
+    id BIGSERIAL PRIMARY KEY,
+    account1_id CHAR(28) NOT NULL,
+    account2_id CHAR(28) NOT NULL,
+    last_message_id BIGINT,
+    last_message_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (account1_id, account2_id)
+);
+
+ALTER TABLE conversations
+    ADD CONSTRAINT fk_conversations_account1_id FOREIGN KEY (account1_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+ALTER TABLE conversations
+    ADD CONSTRAINT fk_conversations_account2_id FOREIGN KEY (account2_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+ALTER TABLE conversations
+    ADD CONSTRAINT fk_conversations_last_message_id FOREIGN KEY (last_message_id)
+        REFERENCES messages(id) ON DELETE SET NULL;
+
+ALTER TABLE messages
+    ADD CONSTRAINT fk_messages_conversation_id FOREIGN KEY (conversation_id)
+        REFERENCES conversations(id) ON DELETE CASCADE;
+
+ALTER TABLE messages
+    ADD CONSTRAINT fk_messages_sender_account_id FOREIGN KEY (sender_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
 
 -- Table: notifications
 CREATE TYPE notification_type AS ENUM (
