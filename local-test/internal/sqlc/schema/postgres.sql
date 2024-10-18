@@ -74,6 +74,23 @@ CREATE TABLE blocks (
 
 CREATE INDEX idx_blocks_created_at ON blocks(created_at);
 
+-- Table: conversations
+
+CREATE TABLE conversations (
+    id BIGSERIAL PRIMARY KEY,
+    account1_id CHAR(28) NOT NULL,
+    account2_id CHAR(28) NOT NULL,
+    last_message_id BIGINT,
+    last_message_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (account1_id, account2_id),
+    CONSTRAINT fk_conversations_account1_id FOREIGN KEY (account1_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_conversations_account2_id FOREIGN KEY (account2_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_conversations_last_message_id FOREIGN KEY (last_message_id)
+        REFERENCES messages(id) ON DELETE SET NULL
+);
+
 -- Table: follows
 
 CREATE TYPE follow_status AS ENUM (
@@ -243,14 +260,14 @@ CREATE INDEX idx_likes_original_tweet_id ON likes(original_tweet_id);
 
 CREATE TABLE messages (
     id BIGSERIAL PRIMARY KEY,
+    conversation_id BIGINT NOT NULL,
     sender_account_id CHAR(28) NOT NULL,
-    recipient_account_id CHAR(28) NOT NULL,
     content TEXT,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_messages_conversation_id FOREIGN KEY (conversation_id)
+        REFERENCES conversations(id) ON DELETE CASCADE,
     CONSTRAINT fk_messages_sender_account_id FOREIGN KEY (sender_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_messages_recipient_account_id FOREIGN KEY (recipient_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE
 );
 
