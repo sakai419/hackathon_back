@@ -166,6 +166,14 @@ type Block struct {
 	CreatedAt        time.Time
 }
 
+type Conversation struct {
+	ID              int64
+	Account1ID      string
+	Account2ID      string
+	LastMessageID   sql.NullInt64
+	LastMessageTime time.Time
+}
+
 type Follow struct {
 	FollowerAccountID  string
 	FollowingAccountID string
@@ -298,12 +306,12 @@ type Like struct {
 }
 
 type Message struct {
-	ID                 int64
-	SenderAccountID    string
-	RecipientAccountID string
-	Content            sql.NullString
-	IsRead             bool
-	CreatedAt          time.Time
+	ID              int64
+	ConversationID  int64
+	SenderAccountID string
+	Content         string
+	IsRead          bool
+	CreatedAt       time.Time
 }
 
 type Notification struct {

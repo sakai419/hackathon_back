@@ -8,7 +8,6 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/lib/pq"
 )
@@ -38,18 +37,6 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) (sql.Result, err
 	return q.db.ExecContext(ctx, deleteAccount, id)
 }
 
-const getAccountCreationDate = `-- name: GetAccountCreationDate :one
-SELECT created_at FROM accounts
-WHERE id = $1
-`
-
-func (q *Queries) GetAccountCreationDate(ctx context.Context, id string) (time.Time, error) {
-	row := q.db.QueryRowContext(ctx, getAccountCreationDate, id)
-	var created_at time.Time
-	err := row.Scan(&created_at)
-	return created_at, err
-}
-
 const getAccountIDByUserID = `-- name: GetAccountIDByUserID :one
 SELECT id FROM accounts
 WHERE user_id = $1
@@ -62,37 +49,30 @@ func (q *Queries) GetAccountIDByUserID(ctx context.Context, userID string) (stri
 	return id, err
 }
 
-const getUserAndProfileInfos = `-- name: GetUserAndProfileInfos :many
+const getUserInfos = `-- name: GetUserInfos :many
 SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
-WHERE a.id = ANY($3::VARCHAR[])
+WHERE a.id = ANY($1::VARCHAR[]) and a.is_suspended = FALSE
 ORDER BY a.created_at DESC
-LIMIT $1 OFFSET $2
 `
 
-type GetUserAndProfileInfosParams struct {
-	Limit  int32
-	Offset int32
-	Ids    []string
-}
-
-type GetUserAndProfileInfosRow struct {
+type GetUserInfosRow struct {
 	UserID          string
 	UserName        string
 	Bio             sql.NullString
 	ProfileImageUrl sql.NullString
 }
 
-func (q *Queries) GetUserAndProfileInfos(ctx context.Context, arg GetUserAndProfileInfosParams) ([]GetUserAndProfileInfosRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserAndProfileInfos, arg.Limit, arg.Offset, pq.Array(arg.Ids))
+func (q *Queries) GetUserInfos(ctx context.Context, ids []string) ([]GetUserInfosRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserInfos, pq.Array(ids))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUserAndProfileInfosRow
+	var items []GetUserInfosRow
 	for rows.Next() {
-		var i GetUserAndProfileInfosRow
+		var i GetUserInfosRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.UserName,

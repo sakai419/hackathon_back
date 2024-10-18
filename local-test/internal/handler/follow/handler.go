@@ -366,10 +366,10 @@ func getAccountIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool)
 }
 
 
-func convertToUserAndProfileInfos(followerInfos []*model.UserAndProfileInfo) []UserAndProfileInfo {
-	var resp []UserAndProfileInfo
+func convertToUserAndProfileInfos(followerInfos []*model.UserInfo) []UserInfo {
+	var resp []UserInfo
 	for _, followerInfo := range followerInfos {
-		resp = append(resp, UserAndProfileInfo{
+		resp = append(resp, UserInfo{
 			Bio: 	followerInfo.Bio,
 			ProfileImageUrl: followerInfo.ProfileImageURL,
 			UserId: followerInfo.UserID,

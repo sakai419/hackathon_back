@@ -11,8 +11,8 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// UserAndProfileInfo defines model for UserAndProfileInfo.
-type UserAndProfileInfo struct {
+// UserInfo defines model for UserInfo.
+type UserInfo struct {
 	// Bio The bio of the user.
 	Bio string `json:"bio"`
 
@@ -26,8 +26,8 @@ type UserAndProfileInfo struct {
 	UserName string `json:"userName"`
 }
 
-// UserAndProfileInfoList defines model for UserAndProfileInfoList.
-type UserAndProfileInfoList = []UserAndProfileInfo
+// UserInfos defines model for UserInfos.
+type UserInfos = []UserInfo
 
 // GetFollowerInfosParams defines parameters for GetFollowerInfos.
 type GetFollowerInfosParams struct {

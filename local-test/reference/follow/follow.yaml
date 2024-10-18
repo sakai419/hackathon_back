@@ -65,7 +65,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/UserAndProfileInfoList"
+                                $ref: "#/components/schemas/UserInfos"
                 "400":
                     description: Bad request
                 "500":
@@ -97,7 +97,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/UserAndProfileInfoList"
+                                $ref: "#/components/schemas/UserInfos"
                 "400":
                     description: Bad request
                 "500":
@@ -159,7 +159,7 @@ paths:
 
 components:
     schemas:
-        UserAndProfileInfo:
+        UserInfo:
             type: object
             properties:
                 userId:
@@ -181,7 +181,7 @@ components:
                 - bio
                 - profileImageUrl
 
-        UserAndProfileInfoList:
+        UserInfos:
             type: array
             items:
-                $ref: "#/components/schemas/UserAndProfileInfo"
+                $ref: "#/components/schemas/UserInfo"

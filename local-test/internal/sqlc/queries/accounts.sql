@@ -6,13 +6,12 @@ VALUES ($1, $2, $3);
 SELECT id FROM accounts
 WHERE user_id = $1;
 
--- name: GetUserAndProfileInfos :many
+-- name: GetUserInfos :many
 SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
-WHERE a.id = ANY(@IDs::VARCHAR[])
-ORDER BY a.created_at DESC
-LIMIT $1 OFFSET $2;
+WHERE a.id = ANY(@IDs::VARCHAR[]) and a.is_suspended = FALSE
+ORDER BY a.created_at DESC;
 
 -- name: UpdateAccountUserName :exec
 UPDATE accounts
@@ -49,10 +48,6 @@ SELECT * FROM accounts
 WHERE user_name LIKE CONCAT('%', $1, '%')
 ORDER BY user_name
 LIMIT $2 OFFSET $3;
-
--- name: GetAccountCreationDate :one
-SELECT created_at FROM accounts
-WHERE id = $1;
 
 -- name: IsAdmin :one
 SELECT is_admin FROM accounts

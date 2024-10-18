@@ -262,7 +262,7 @@ CREATE TABLE messages (
     id BIGSERIAL PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
     sender_account_id CHAR(28) NOT NULL,
-    content TEXT,
+    content TEXT NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_messages_conversation_id FOREIGN KEY (conversation_id)

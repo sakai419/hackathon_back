@@ -108,7 +108,7 @@ func (s *Service) Unfollow(ctx context.Context, arg *model.UnfollowParams) error
 	return nil
 }
 
-func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerInfosParams) ([]*model.UserAndProfileInfo, error) {
+func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerInfosParams) ([]*model.UserInfo, error) {
 	// Validate params
 	if err := arg.Validate(); err != nil {
 		return nil, &apperrors.AppError{
@@ -142,15 +142,8 @@ func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerIn
 		)
 	}
 
-	// Convert params
-	getUserAndProfileInfoByAccountIDs := &model.GetUserAndProfileInfosParams{
-		Limit:  arg.Limit,
-		Offset: arg.Offset,
-		IDs:    followerAccountIDs,
-	}
-
 	// Get user and profile info
-	followerInfos, err := s.repo.GetUserAndProfileInfoByAccountIDs(ctx, getUserAndProfileInfoByAccountIDs)
+	followerInfos, err := s.repo.GetUserInfos(ctx, followerAccountIDs)
 	if err != nil {
 		return nil, apperrors.WrapServiceError(
 			&apperrors.ErrOperationFailed{
@@ -163,7 +156,7 @@ func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerIn
 	return followerInfos, nil
 }
 
-func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowingInfosParams) ([]*model.UserAndProfileInfo, error) {
+func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowingInfosParams) ([]*model.UserInfo, error) {
 	// Validate params
 	if err := arg.Validate(); err != nil {
 		return nil, &apperrors.AppError{
@@ -197,15 +190,8 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 		)
 	}
 
-	// Convert params
-	getUserAndProfileInfoByAccountIDs := &model.GetUserAndProfileInfosParams{
-		Limit:  arg.Limit,
-		Offset: arg.Offset,
-		IDs:    followingAccountIDs,
-	}
-
 	// Get user and profile info
-	followingInfos, err := s.repo.GetUserAndProfileInfoByAccountIDs(ctx, getUserAndProfileInfoByAccountIDs)
+	followingInfos, err := s.repo.GetUserInfos(ctx, followingAccountIDs)
 	if err != nil {
 		return nil, apperrors.WrapServiceError(
 			&apperrors.ErrOperationFailed{

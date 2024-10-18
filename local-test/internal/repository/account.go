@@ -181,14 +181,9 @@ func (r *Repository) GetAccountIDByUserID(ctx context.Context, userId string) (s
 	return AccountID, nil
 }
 
-func (r *Repository) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg *model.GetUserAndProfileInfosParams) ([]*model.UserAndProfileInfo, error) {
+func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.UserInfo, error) {
 	// Get user and profile info
-	query := sqlcgen.GetUserAndProfileInfosParams{
-		Limit:  int32(arg.Limit),
-		Offset: int32(arg.Offset),
-		Ids: arg.IDs,
-	}
-	res, err := r.q.GetUserAndProfileInfos(ctx, query)
+	res, err := r.q.GetUserInfos(ctx, ids)
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -199,9 +194,9 @@ func (r *Repository) GetUserAndProfileInfoByAccountIDs(ctx context.Context, arg 
 	}
 
 	// Convert to model
-	var userAndProfileInfos []*model.UserAndProfileInfo
+	var userAndProfileInfos []*model.UserInfo
 	for _, r := range res {
-		userAndProfileInfo := &model.UserAndProfileInfo{
+		userAndProfileInfo := &model.UserInfo{
 			UserID: r.UserID,
 			UserName: r.UserName,
 			Bio: r.Bio.String,
