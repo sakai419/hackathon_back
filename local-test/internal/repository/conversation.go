@@ -84,7 +84,7 @@ func convertToConversationModel(conversations []sqlcgen.GetConversationListRow, 
 			}(),
 			LastMessageTime: c.LastMessageTime,
 			Content:         c.Content.String,
-			SenderAccountID: c.SenderAccountID.String,
+			SenderUserID:    c.SenderUserID.String,
 			IsRead:          c.IsRead.Bool,
 		})
 	}

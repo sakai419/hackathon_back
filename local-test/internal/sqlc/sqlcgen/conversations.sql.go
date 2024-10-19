@@ -48,12 +48,14 @@ SELECT
     c.account2_id,
     c.last_message_time,
     m.content,
-    m.sender_account_id,
+    a.user_id AS sender_user_id,
     m.is_read
 FROM
     conversations c
 LEFT JOIN
     messages m ON c.last_message_id = m.id
+LEFT JOIN
+    accounts a ON m.sender_account_id = a.id
 WHERE
     c.account1_id = $1 OR c.account2_id = $1
 ORDER BY
@@ -73,7 +75,7 @@ type GetConversationListRow struct {
 	Account2ID      string
 	LastMessageTime time.Time
 	Content         sql.NullString
-	SenderAccountID sql.NullString
+	SenderUserID    sql.NullString
 	IsRead          sql.NullBool
 }
 
@@ -92,7 +94,7 @@ func (q *Queries) GetConversationList(ctx context.Context, arg GetConversationLi
 			&i.Account2ID,
 			&i.LastMessageTime,
 			&i.Content,
-			&i.SenderAccountID,
+			&i.SenderUserID,
 			&i.IsRead,
 		); err != nil {
 			return nil, err

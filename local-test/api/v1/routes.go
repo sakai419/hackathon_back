@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"local-test/internal/handler/account"
+	"local-test/internal/handler/conversation"
 	"local-test/internal/handler/follow"
 	"local-test/internal/handler/message"
 	"local-test/internal/handler/notification"
@@ -147,6 +148,25 @@ func setUpMessageRoutes(r *mux.Router, repo *repository.Repository, svc *service
 	message.HandlerWithOptions(h, opts)
 }
 
+func setUpConversationRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the conversation handler
+	h := conversation.NewConversationHandler(svc)
+
+	// Create options for the conversation handler
+	opts := conversation.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []conversation.MiddlewareFunc{
+			middleware.AuthAndGetInfoMiddleware(repo, client),
+			middleware.AccountInfoMiddleware(repo),
+		},
+		ErrorHandlerFunc: conversation.ErrHandleFunc,
+	}
+
+	// Register the conversation handler
+	conversation.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -163,6 +183,8 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpFollowRoutes(apiV1, repo, svc, client)
 	setUpNotificationRoutes(apiV1, repo, svc, client)
 	setUpSettingRoutes(apiV1, repo, svc, client)
+	setUpMessageRoutes(apiV1, repo, svc, client)
+	setUpConversationRoutes(apiV1, repo, svc, client)
 
 	return apiV1
 }

@@ -1,0 +1,105 @@
+openapi: 3.0.0
+info:
+    title: Conversation Management API
+    version: 1.0.0
+    description: API for managing user conversations
+
+paths:
+    /conversations:
+        get:
+            summary: Get conversations of a user
+            operationId: GetConversations
+            parameters:
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      format: int32
+                  required: true
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+                      format: int32
+                  required: true
+            responses:
+                "200":
+                    description: Conversations retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ConversationResponses"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+    /conversations/unread/count:
+        get:
+            summary: Get unread conversation count of a user
+            operationId: GetUnreadConversationCount
+            responses:
+                "200":
+                    description: Unread conversation count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UnreadConversationCountResponse"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        Conversation:
+            type: object
+            properties:
+                id:
+                    type: integer
+                    format: int64
+                opponent_info:
+                    $ref: "#/components/schemas/UserInfoWithoutBio"
+                last_message_time:
+                    type: string
+                    format: date-time
+                content:
+                    type: string
+                sender_user_id:
+                    type: string
+                is_read:
+                    type: boolean
+            required:
+                - id
+                - opponent_info
+                - last_message_time
+                - content
+                - sender_user_id
+                - is_read
+        ConversationResponses:
+            type: object
+            properties:
+                conversations:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/Conversation"
+        UnreadConversationCountResponse:
+            type: object
+            properties:
+                count:
+                    type: integer
+                    format: int64
+            required:
+                - count
+        UserInfoWithoutBio:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                username:
+                    type: string
+                profile_image_url:
+                    type: string
+            required:
+                - user_id
+                - username
+                - profile_image_url

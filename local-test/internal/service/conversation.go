@@ -60,7 +60,7 @@ func convertToConversationResponse(conversations []*model.Conversation, opponent
 			OpponentInfo:    info,
 			LastMessageTime: conversations[i].LastMessageTime,
 			Content:         conversations[i].Content,
-			SenderID:        conversations[i].SenderAccountID,
+			SenderUserID:    conversations[i].SenderUserID,
 			IsRead:          conversations[i].IsRead,
 		})
 	}

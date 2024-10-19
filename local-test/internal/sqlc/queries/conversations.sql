@@ -23,12 +23,14 @@ SELECT
     c.account2_id,
     c.last_message_time,
     m.content,
-    m.sender_account_id,
+    a.user_id AS sender_user_id,
     m.is_read
 FROM
     conversations c
 LEFT JOIN
     messages m ON c.last_message_id = m.id
+LEFT JOIN
+    accounts a ON m.sender_account_id = a.id
 WHERE
     c.account1_id = $1 OR c.account2_id = $1
 ORDER BY
