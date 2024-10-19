@@ -181,7 +181,7 @@ func (r *Repository) GetAccountIDByUserID(ctx context.Context, userId string) (s
 	return AccountID, nil
 }
 
-func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.UserInfo, error) {
+func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.UserInfoInternal, error) {
 	// Get user and profile info
 	res, err := r.q.GetUserInfos(ctx, ids)
 	if err != nil {
@@ -194,9 +194,10 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.U
 	}
 
 	// Convert to model
-	var userAndProfileInfos []*model.UserInfo
+	var userAndProfileInfos []*model.UserInfoInternal
 	for _, r := range res {
-		userAndProfileInfo := &model.UserInfo{
+		userAndProfileInfo := &model.UserInfoInternal{
+			ID: r.ID,
 			UserID: r.UserID,
 			UserName: r.UserName,
 			Bio: r.Bio.String,

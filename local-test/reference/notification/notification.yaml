@@ -14,11 +14,13 @@ paths:
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
                 - name: offset
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
             responses:
                 "200":
@@ -41,11 +43,13 @@ paths:
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
                 - name: offset
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
             responses:
                 "200":
@@ -91,6 +95,7 @@ paths:
                   required: true
                   schema:
                       type: integer
+                      format: int64
             responses:
                 "200":
                     description: Notification marked as read successfully
@@ -112,33 +117,46 @@ paths:
 
 components:
     schemas:
-        Notifications:
+        UserInfo:
             type: object
             required:
-                - notifications
+                - user_id
+                - user_name
+                - bio
+                - profile_image_url
             properties:
-                notifications:
-                    type: array
-                    items:
-                        $ref: "#/components/schemas/Notification"
+                user_id:
+                    type: string
+                    description: The ID of the user
+                user_name:
+                    type: string
+                    description: The username of the user
+                bio:
+                    type: string
+                    description: The bio of the user
+                profile_image_url:
+                    type: string
+                    format: uri
+                    description: The URL of the profile image of the user
+        Notifications:
+            type: array
+            items:
+                $ref: "#/components/schemas/Notification"
         Notification:
             type: object
             required:
                 - id
-                - recipient_account_id
                 - type
                 - is_read
                 - created_at
             properties:
                 id:
                     type: integer
+                    format: int64
                     description: The ID of the notification
-                sender_account_id:
-                    type: string
-                    description: The ID of the sender account
-                recipient_account_id:
-                    type: string
-                    description: The ID of the recipient account
+                sender_info:
+                    $ref: "#/components/schemas/UserInfo"
+                    description: The information of the sender
                 type:
                     type: string
                     description: The type of the notification
@@ -147,6 +165,7 @@ components:
                     description: The content of the notification
                 tweet_id:
                     type: integer
+                    format: int64
                     description: The ID of the tweet
                 is_read:
                     type: boolean

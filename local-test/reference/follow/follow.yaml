@@ -53,11 +53,13 @@ paths:
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
                 - name: offset
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
             responses:
                 "200":
@@ -85,11 +87,13 @@ paths:
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
                 - name: offset
                   in: query
                   schema:
                       type: integer
+                      format: int32
                   required: true
             responses:
                 "200":
@@ -162,25 +166,24 @@ components:
         UserInfo:
             type: object
             properties:
-                userId:
+                user_id:
                     type: string
                     description: The ID of the user.
-                userName:
+                user_name:
                     type: string
                     description: The name of the user.
                 bio:
                     type: string
                     description: The bio of the user.
-                profileImageUrl:
+                profile_image_url:
                     type: string
                     format: uri
                     description: URL of the user's profile image.
             required:
-                - userId
-                - userName
+                - user_id
+                - user_name
                 - bio
-                - profileImageUrl
-
+                - profile_image_url
         UserInfos:
             type: array
             items:

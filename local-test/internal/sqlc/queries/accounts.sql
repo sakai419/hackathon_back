@@ -7,7 +7,7 @@ SELECT id FROM accounts
 WHERE user_id = $1;
 
 -- name: GetUserInfos :many
-SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
+SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
 WHERE a.id = ANY(@IDs::VARCHAR[]) and a.is_suspended = FALSE

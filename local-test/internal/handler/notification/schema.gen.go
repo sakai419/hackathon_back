@@ -21,39 +21,47 @@ type Notification struct {
 	CreatedAt time.Time `json:"created_at"`
 
 	// Id The ID of the notification
-	Id int `json:"id"`
+	Id int64 `json:"id"`
 
 	// IsRead Whether the notification is read
-	IsRead bool `json:"is_read"`
-
-	// RecipientAccountId The ID of the recipient account
-	RecipientAccountId string `json:"recipient_account_id"`
-
-	// SenderAccountId The ID of the sender account
-	SenderAccountId *string `json:"sender_account_id,omitempty"`
+	IsRead     bool      `json:"is_read"`
+	SenderInfo *UserInfo `json:"sender_info,omitempty"`
 
 	// TweetId The ID of the tweet
-	TweetId *int `json:"tweet_id,omitempty"`
+	TweetId *int64 `json:"tweet_id,omitempty"`
 
 	// Type The type of the notification
 	Type string `json:"type"`
 }
 
 // Notifications defines model for Notifications.
-type Notifications struct {
-	Notifications []Notification `json:"notifications"`
+type Notifications = []Notification
+
+// UserInfo defines model for UserInfo.
+type UserInfo struct {
+	// Bio The bio of the user
+	Bio string `json:"bio"`
+
+	// ProfileImageUrl The URL of the profile image of the user
+	ProfileImageUrl string `json:"profile_image_url"`
+
+	// UserId The ID of the user
+	UserId string `json:"user_id"`
+
+	// UserName The username of the user
+	UserName string `json:"user_name"`
 }
 
 // GetNotificationsParams defines parameters for GetNotifications.
 type GetNotificationsParams struct {
-	Limit  int `form:"limit" json:"limit"`
-	Offset int `form:"offset" json:"offset"`
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
 }
 
 // GetUnreadNotificationsParams defines parameters for GetUnreadNotifications.
 type GetUnreadNotificationsParams struct {
-	Limit  int `form:"limit" json:"limit"`
-	Offset int `form:"offset" json:"offset"`
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
 }
 
 // ServerInterface represents all server handlers.
@@ -72,7 +80,7 @@ type ServerInterface interface {
 	GetUnreadNotificationsCount(w http.ResponseWriter, r *http.Request)
 	// Mark a notification as read
 	// (PATCH /notifications/{notification_id}/read)
-	MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationId int)
+	MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationId int64)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -216,7 +224,7 @@ func (siw *ServerInterfaceWrapper) MarkNotificationAsRead(w http.ResponseWriter,
 	var err error
 
 	// ------------- Path parameter "notification_id" -------------
-	var notificationId int
+	var notificationId int64
 
 	err = runtime.BindStyledParameterWithOptions("simple", "notification_id", mux.Vars(r)["notification_id"], &notificationId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {

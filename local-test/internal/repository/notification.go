@@ -7,7 +7,7 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.NotificationResponse, error) {
+func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.Notification, error) {
 	// Get notifications
 	query := sqlcgen.GetNotificationsParams{
 		RecipientAccountID: arg.RecipientAccountID,
@@ -30,7 +30,7 @@ func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotific
 	return items, nil
 }
 
-func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.NotificationResponse, error) {
+func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.Notification, error) {
 	// Get unread notifications
 	query := sqlcgen.GetUnreadNotificationsParams{
 		RecipientAccountID: arg.RecipientAccountID,
@@ -101,10 +101,10 @@ func (r *Repository) MarkAllNotificationsAsRead(ctx context.Context, recipientAc
 	return nil
 }
 
-func convertToNotificationResponse(notifications []sqlcgen.Notification) []*model.NotificationResponse {
-	var items []*model.NotificationResponse
+func convertToNotificationResponse(notifications []sqlcgen.Notification) []*model.Notification {
+	var items []*model.Notification
 	for _, n := range notifications {
-		items = append(items, &model.NotificationResponse{
+		items = append(items, &model.Notification{
 			ID:                 n.ID,
 			SenderAccountID:    &n.SenderAccountID.String,
 			Type:               string(n.Type),

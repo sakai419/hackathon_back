@@ -35,7 +35,6 @@ components:
             type: object
             required:
                 - reason
-                - content
             properties:
                 reason:
                     type: string

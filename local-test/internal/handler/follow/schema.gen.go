@@ -17,13 +17,13 @@ type UserInfo struct {
 	Bio string `json:"bio"`
 
 	// ProfileImageUrl URL of the user's profile image.
-	ProfileImageUrl string `json:"profileImageUrl"`
+	ProfileImageUrl string `json:"profile_image_url"`
 
 	// UserId The ID of the user.
-	UserId string `json:"userId"`
+	UserId string `json:"user_id"`
 
 	// UserName The name of the user.
-	UserName string `json:"userName"`
+	UserName string `json:"user_name"`
 }
 
 // UserInfos defines model for UserInfos.
@@ -31,14 +31,14 @@ type UserInfos = []UserInfo
 
 // GetFollowerInfosParams defines parameters for GetFollowerInfos.
 type GetFollowerInfosParams struct {
-	Limit  int `form:"limit" json:"limit"`
-	Offset int `form:"offset" json:"offset"`
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
 }
 
 // GetFollowingInfosParams defines parameters for GetFollowingInfos.
 type GetFollowingInfosParams struct {
-	Limit  int `form:"limit" json:"limit"`
-	Offset int `form:"offset" json:"offset"`
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
 }
 
 // ServerInterface represents all server handlers.

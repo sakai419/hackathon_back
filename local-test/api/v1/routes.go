@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"local-test/internal/handler/account"
 	"local-test/internal/handler/follow"
+	"local-test/internal/handler/message"
 	"local-test/internal/handler/notification"
 	"local-test/internal/handler/report"
 	"local-test/internal/handler/setting"
@@ -92,7 +93,7 @@ func setUpFollowRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 	follow.HandlerWithOptions(h, opts)
 }
 
-func setUpNotificationRoutes(r *mux.Router, svc *service.Service, client *auth.Client) {
+func setUpNotificationRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
 	// Register the notification handler
 	h := notification.NewNotificationHandler(svc)
 
@@ -101,7 +102,7 @@ func setUpNotificationRoutes(r *mux.Router, svc *service.Service, client *auth.C
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []notification.MiddlewareFunc{
-			middleware.AuthMiddleware(client),
+			middleware.AuthAndGetInfoMiddleware(repo, client),
 		},
 		ErrorHandlerFunc: notification.ErrHandleFunc,
 	}
@@ -127,6 +128,25 @@ func setUpSettingRoutes(r *mux.Router, repo *repository.Repository, svc *service
 	setting.HandlerWithOptions(h, opts)
 }
 
+func setUpMessageRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the message handler
+	h := message.NewMessageHandler(svc)
+
+	// Create options for the message handler
+	opts := message.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []message.MiddlewareFunc{
+			middleware.AuthAndGetInfoMiddleware(repo, client),
+			middleware.AccountInfoMiddleware(repo),
+		},
+		ErrorHandlerFunc: message.ErrHandleFunc,
+	}
+
+	// Register the message handler
+	message.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -141,7 +161,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpAccountRoutes(apiV1, svc, client)
 	setUpReportRoutes(apiV1, repo, svc, client)
 	setUpFollowRoutes(apiV1, repo, svc, client)
-	setUpNotificationRoutes(apiV1, svc, client)
+	setUpNotificationRoutes(apiV1, repo, svc, client)
 	setUpSettingRoutes(apiV1, repo, svc, client)
 
 	return apiV1

@@ -30,17 +30,25 @@ func (p *CreateAccountParams) Validate() error {
 	return nil
 }
 
-// GetUserInfos
-type GetUserInfosParams struct {
-	Limit  int32
-	Offset int32
-	IDs    []string
+type UserInfoInternal struct {
+	ID              string
+	UserID          string
+	UserName        string
+	Bio	            string
+	ProfileImageURL string
 }
 
 type UserInfo struct {
 	UserID          string
 	UserName        string
 	Bio	            string
+	ProfileImageURL string
+}
+
+type UserInfoWithoutBioInternal struct {
+	ID              string
+	UserID          string
+	UserName        string
 	ProfileImageURL string
 }
 

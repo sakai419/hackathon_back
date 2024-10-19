@@ -8,6 +8,21 @@ import (
 )
 
 func (s *Service) GetConversations(ctx context.Context, params *model.GetConversationsParams) ([]*model.ConversationResponse, error) {
+	// Validate input
+	if err := params.Validate(); err != nil {
+		return nil, &apperrors.AppError{
+			Status: http.StatusBadRequest,
+			Code:   "INVALID_INPUT",
+			Message: "Invalid input",
+			Err:    apperrors.WrapServiceError(
+				&apperrors.ErrOperationFailed{
+					Operation: "validate input",
+					Err:       err,
+				},
+			),
+		}
+	}
+
 	// Get conversations
 	getConversationListParams := &model.GetConversationListParams{
 		AccountID: params.ClientAccountID,
@@ -64,7 +79,7 @@ func (s *Service) GetUnreadConversationCount(ctx context.Context, AccountID stri
 	return count, nil
 }
 
-func convertToConversationResponse(conversations []*model.Conversation, opponentInfos []*model.UserInfo) []*model.ConversationResponse {
+func convertToConversationResponse(conversations []*model.Conversation, opponentInfos []*model.UserInfoInternal) []*model.ConversationResponse {
 	var conversationResponses []*model.ConversationResponse
 	for i := range len(conversations) {
 		temp := model.UserInfoWithoutBio{

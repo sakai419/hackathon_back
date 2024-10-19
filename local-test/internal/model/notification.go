@@ -5,14 +5,24 @@ import (
 	"time"
 )
 
+type Notification struct {
+	ID                 int64
+	SenderAccountID    *string
+	Type               string
+	Content            *string
+	TweetID            *int64
+	IsRead             bool
+	CreatedAt          time.Time
+}
+
 type NotificationResponse struct {
-	ID                 int64      `json:"id"`
-	SenderAccountID    *string    `json:"sender_account_id"`
-	Type               string     `json:"notification_type"`
-	Content            *string    `json:"content"`
-	TweetID            *int64	  `json:"tweet_id"`
-	IsRead             bool       `json:"is_read"`
-	CreatedAt          time.Time  `json:"created_at"`
+	ID                 int64
+	SenderInfo         *UserInfo
+	Type               string
+	Content            *string
+	TweetID            *int64
+	IsRead             bool
+	CreatedAt          time.Time
 }
 
 type GetNotificationsParams struct {

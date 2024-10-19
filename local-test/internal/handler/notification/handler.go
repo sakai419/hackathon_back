@@ -32,8 +32,8 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 	// Get notifications
 	arg := &model.GetNotificationsParams{
 		RecipientAccountID: clientID,
-		Limit:              int32(params.Limit),
-		Offset:             int32(params.Offset),
+		Limit:              params.Limit,
+		Offset:             params.Offset,
 	}
 	notifications, err := h.svc.GetNotifications(r.Context(), arg)
 	if err != nil {
@@ -56,8 +56,8 @@ func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *h
 	// Get unread notifications
 	arg := &model.GetUnreadNotificationsParams{
 		RecipientAccountID: clientID,
-		Limit:              int32(params.Limit),
-		Offset:             int32(params.Offset),
+		Limit:              params.Limit,
+		Offset:             params.Offset,
 	}
 	notifications, err := h.svc.GetUnreadNotifications(r.Context(), arg)
 	if err != nil {
@@ -65,7 +65,10 @@ func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *h
 		return
 	}
 
-	utils.Respond(w, notifications)
+	// Convert to response
+	resp := convertToNotificationResponse(notifications)
+
+	utils.Respond(w, resp)
 }
 
 // Get unread notifications count
@@ -89,7 +92,7 @@ func (h *NotificationHandler) GetUnreadNotificationsCount(w http.ResponseWriter,
 
 // Mark notification as read
 // (PUT /notifications/{notification_id}/read)
-func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationID int) {
+func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationID int64) {
 	// Get client ID
 	clientID, ok := getClientAccountID(w, r)
 	if !ok {
@@ -99,7 +102,7 @@ func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *h
 	// Mark notification as read
 	arg := &model.MarkNotificationAsReadParams{
 		RecipientAccountID: clientID,
-		ID:                 int64(notificationID),
+		ID:                 notificationID,
 	}
 	if err := h.svc.MarkNotificationAsRead(r.Context(), arg); err != nil {
 		utils.RespondError(w, err)
@@ -163,4 +166,24 @@ func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
 		return "", false
 	}
 	return clientID, true
+}
+
+func convertToNotificationResponse(notifications []*model.NotificationResponse) []Notification {
+	res := make([]Notification, len(notifications))
+	for i, notification := range notifications {
+		res[i] = Notification{
+			Id:        notification.ID,
+			SenderInfo: &UserInfo{
+				UserId:          notification.SenderInfo.UserID,
+				UserName:        notification.SenderInfo.UserName,
+				ProfileImageUrl: notification.SenderInfo.ProfileImageURL,
+			},
+			Type:      notification.Type,
+			Content:   notification.Content,
+			TweetId:   notification.TweetID,
+			IsRead:    notification.IsRead,
+			CreatedAt: notification.CreatedAt,
+		}
+	}
+	return res
 }

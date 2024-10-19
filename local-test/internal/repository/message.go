@@ -69,7 +69,7 @@ func (r *Repository) CreateMessage(ctx context.Context, arg *model.CreateMessage
 	return nil
 }
 
-func (r *Repository) GetMessageList(ctx context.Context, arg *model.GetMessageListParams) ([]model.MessageResponse, error) {
+func (r *Repository) GetMessageList(ctx context.Context, arg *model.GetMessageListParams) ([]*model.MessageResponse, error) {
 	// Get messages
 	query := sqlcgen.GetMessageListParams{
 		ConversationID: arg.ConversationID,
@@ -87,9 +87,9 @@ func (r *Repository) GetMessageList(ctx context.Context, arg *model.GetMessageLi
 	}
 
 	// Convert to model
-	var items []model.MessageResponse
+	var items []*model.MessageResponse
 	for _, m := range messages {
-		items = append(items, model.MessageResponse{
+		items = append(items, &model.MessageResponse{
 			SenderAccountID: m.SenderAccountID,
 			Content:         m.Content,
 			IsRead:          m.IsRead,

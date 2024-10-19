@@ -98,8 +98,8 @@ func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request,
 	// Get followers
 	arg := &model.GetFollowerInfosParams{
 		FollowingAccountID: accountIDFromPath,
-		Limit:              int32(params.Limit),
-		Offset:             int32(params.Offset),
+		Limit:              params.Limit,
+		Offset:             params.Offset,
 	}
 	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), arg)
 	if err != nil {
@@ -109,7 +109,7 @@ func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request,
 
 
 	// Convert to response
-	resp := convertToUserAndProfileInfos(followerInfos)
+	resp := convertToUserInfos(followerInfos)
 
 	utils.Respond(w, resp)
 }
@@ -126,8 +126,8 @@ func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request
 	// Get followings
 	arg := &model.GetFollowingInfosParams{
 		FollowerAccountID: accountIDFromPath,
-		Limit:             int32(params.Limit),
-		Offset:            int32(params.Offset),
+		Limit:             params.Limit,
+		Offset:            params.Offset,
 	}
 	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), arg)
 	if err != nil {
@@ -136,7 +136,7 @@ func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request
 	}
 
 	// Convert to response
-	resp := convertToUserAndProfileInfos(followingInfos)
+	resp := convertToUserInfos(followingInfos)
 
 	utils.Respond(w, resp)
 }
@@ -366,7 +366,7 @@ func getAccountIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool)
 }
 
 
-func convertToUserAndProfileInfos(followerInfos []*model.UserInfo) []UserInfo {
+func convertToUserInfos(followerInfos []*model.UserInfo) []UserInfo {
 	var resp []UserInfo
 	for _, followerInfo := range followerInfos {
 		resp = append(resp, UserInfo{

@@ -29,7 +29,33 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 		return nil, err
 	}
 
-	return notifications, nil
+	// Get sender info
+	var senderAccountIDs []string
+	for _, notification := range notifications {
+		if notification.SenderAccountID != nil {
+			senderAccountIDs = append(senderAccountIDs, *notification.SenderAccountID)
+		}
+	}
+	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
+	if err != nil {
+		return nil, &apperrors.AppError{
+			Status: http.StatusInternalServerError,
+			Code:   "DATABASE_ERROR",
+			Message: "Failed to get sender info",
+			Err: apperrors.WrapServiceError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get sender info",
+					Err:       err,
+				},
+			),
+		}
+	}
+
+	// Convert to response
+	notificationsResponse := convertToNotificationResponse(notifications, senderInfos)
+
+
+	return notificationsResponse, nil
 }
 
 func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.NotificationResponse, error) {
@@ -54,7 +80,32 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnre
 		return nil, err
 	}
 
-	return notifications, nil
+	// Get sender info
+	var senderAccountIDs []string
+	for _, notification := range notifications {
+		if notification.SenderAccountID != nil {
+			senderAccountIDs = append(senderAccountIDs, *notification.SenderAccountID)
+		}
+	}
+	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
+	if err != nil {
+		return nil, &apperrors.AppError{
+			Status: http.StatusInternalServerError,
+			Code:   "DATABASE_ERROR",
+			Message: "Failed to get sender info",
+			Err: apperrors.WrapServiceError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get sender info",
+					Err:       err,
+				},
+			),
+		}
+	}
+
+	// Convert to response
+	notificationsResponse := convertToNotificationResponse(notifications, senderInfos)
+
+	return notificationsResponse, nil
 }
 
 func (s *Service) GetUnreadNotificationCount(ctx context.Context, recipientAccountID string) (int64, error) {
@@ -103,4 +154,39 @@ func (s *Service) MarkAllNotificationsAsRead(ctx context.Context, recipientAccou
 	}
 
 	return nil
+}
+
+func convertToNotificationResponse(notifications []*model.Notification, senderInfos []*model.UserInfoInternal) []*model.NotificationResponse {
+	// Create user info map
+	userInfoMap := make(map[string]*model.UserInfoInternal)
+	for _, userInfo := range senderInfos {
+		userInfoMap[userInfo.ID] = userInfo
+	}
+
+	// Convert to response
+	items := make([]*model.NotificationResponse, len(notifications))
+	for _, notification := range notifications {
+		item := &model.NotificationResponse{
+			ID:        notification.ID,
+			Type:      notification.Type,
+			Content:   notification.Content,
+			TweetID:   notification.TweetID,
+			IsRead:    notification.IsRead,
+			CreatedAt: notification.CreatedAt,
+		}
+
+		if notification.SenderAccountID != nil {
+			senderInfo, ok := userInfoMap[*notification.SenderAccountID]
+			if ok {
+				item.SenderInfo = &model.UserInfo{
+					UserID:          senderInfo.UserID,
+					UserName:        senderInfo.UserName,
+					Bio:             senderInfo.Bio,
+					ProfileImageURL: senderInfo.ProfileImageURL,
+				}
+			}
+		}
+	}
+
+	return items
 }

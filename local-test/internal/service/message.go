@@ -57,7 +57,7 @@ func (s *Service) SendMessage(ctx context.Context, arg *model.SendMessageParams)
 	return nil
 }
 
-func (s *Service) GetMessages(ctx context.Context, arg *model.GetMessagesParams) ([]model.MessageResponse, error) {
+func (s *Service) GetMessages(ctx context.Context, arg *model.GetMessagesParams) ([]*model.MessageResponse, error) {
 	// Validate input
 	if err := arg.Validate(); err != nil {
 		return nil, &apperrors.AppError{

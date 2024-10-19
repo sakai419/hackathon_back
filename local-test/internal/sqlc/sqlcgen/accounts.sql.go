@@ -50,7 +50,7 @@ func (q *Queries) GetAccountIDByUserID(ctx context.Context, userID string) (stri
 }
 
 const getUserInfos = `-- name: GetUserInfos :many
-SELECT a.user_id, a.user_name, p.bio, p.profile_image_url
+SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
 WHERE a.id = ANY($1::VARCHAR[]) and a.is_suspended = FALSE
@@ -58,6 +58,7 @@ ORDER BY a.created_at DESC
 `
 
 type GetUserInfosRow struct {
+	ID              string
 	UserID          string
 	UserName        string
 	Bio             sql.NullString
@@ -74,6 +75,7 @@ func (q *Queries) GetUserInfos(ctx context.Context, ids []string) ([]GetUserInfo
 	for rows.Next() {
 		var i GetUserInfosRow
 		if err := rows.Scan(
+			&i.ID,
 			&i.UserID,
 			&i.UserName,
 			&i.Bio,

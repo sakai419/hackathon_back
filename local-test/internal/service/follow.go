@@ -143,7 +143,7 @@ func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerIn
 	}
 
 	// Get user and profile info
-	followerInfos, err := s.repo.GetUserInfos(ctx, followerAccountIDs)
+	temp, err := s.repo.GetUserInfos(ctx, followerAccountIDs)
 	if err != nil {
 		return nil, apperrors.WrapServiceError(
 			&apperrors.ErrOperationFailed{
@@ -152,6 +152,9 @@ func (s *Service) GetFollowerInfos(ctx context.Context, arg *model.GetFollowerIn
 			},
 		)
 	}
+
+	// Sort user infos
+	followerInfos := sortUserInfos(temp, followerAccountIDs)
 
 	return followerInfos, nil
 }
@@ -191,7 +194,7 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 	}
 
 	// Get user and profile info
-	followingInfos, err := s.repo.GetUserInfos(ctx, followingAccountIDs)
+	temp, err := s.repo.GetUserInfos(ctx, followingAccountIDs)
 	if err != nil {
 		return nil, apperrors.WrapServiceError(
 			&apperrors.ErrOperationFailed{
@@ -200,6 +203,9 @@ func (s *Service) GetFollowingInfos(ctx context.Context, arg *model.GetFollowing
 			},
 		)
 	}
+
+	// Sort user infos
+	followingInfos := sortUserInfos(temp, followingAccountIDs)
 
 	return followingInfos, nil
 }
@@ -352,4 +358,24 @@ func (s *Service) RejectFollowRequest(ctx context.Context, arg *model.RejectFoll
 	}
 
 	return nil
+}
+
+func sortUserInfos(userInfos []*model.UserInfoInternal, ids []string) []*model.UserInfo {
+	userInfoMap := make(map[string]*model.UserInfoInternal)
+	for _, userInfo := range userInfos {
+		userInfoMap[userInfo.ID] = userInfo
+	}
+
+	sortedUserInfos := make([]*model.UserInfo, len(ids))
+	for i, id := range ids {
+		temp := userInfoMap[id]
+		sortedUserInfos[i] = &model.UserInfo{
+			UserID:          temp.UserID,
+			UserName:        temp.UserName,
+			Bio:             temp.Bio,
+			ProfileImageURL: temp.ProfileImageURL,
+		}
+	}
+
+	return sortedUserInfos
 }
