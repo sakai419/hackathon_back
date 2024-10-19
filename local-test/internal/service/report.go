@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (s *Service) CreateReportByUserID(ctx context.Context, arg *model.CreateReportParams) error {
+func (s *Service) CreateReport(ctx context.Context, arg *model.CreateReportParams) error {
 	if err := arg.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,

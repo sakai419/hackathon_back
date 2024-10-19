@@ -46,12 +46,11 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create account
-	params := &model.CreateAccountParams{
+	if err := h.svc.CreateAccount(r.Context(), &model.CreateAccountParams{
 		ID:              clientAccountID,
 		UserID: 		 req.UserId,
 		UserName: 		 req.UserName,
-	}
-	if err := h.svc.CreateAccount(r.Context(), params); err != nil {
+	}); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
 				Operation: "create account",

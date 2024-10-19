@@ -11,7 +11,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
+func (r *Repository) CreateAccount(ctx context.Context, params *model.CreateAccountParams) error {
     // Begin transaction
     tx, err := r.db.Begin()
     if err != nil {
@@ -27,12 +27,11 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     q := r.q.WithTx(tx)
 
     // Create account
-    query := sqlcgen.CreateAccountParams{
-        ID:       arg.ID,
-        UserID:   arg.UserID,
-        UserName: arg.UserName,
-    }
-    if err := q.CreateAccount(ctx, query); err != nil {
+    if err := q.CreateAccount(ctx, sqlcgen.CreateAccountParams{
+		ID:       params.ID,
+		UserID:   params.UserID,
+		UserName: params.UserName,
+	}); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return apperrors.WrapRepositoryError(
@@ -52,7 +51,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     }
 
     // Create empty profile
-    if err := q.CreateProfilesWithDefaultValues(ctx, arg.ID); err != nil {
+    if err := q.CreateProfilesWithDefaultValues(ctx, params.ID); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return apperrors.WrapRepositoryError(
@@ -72,7 +71,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     }
 
     // Create empty setting
-    if err := q.CreateSettingsWithDefaultValues(ctx, arg.ID); err != nil {
+    if err := q.CreateSettingsWithDefaultValues(ctx, params.ID); err != nil {
         tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return apperrors.WrapRepositoryError(
@@ -92,7 +91,7 @@ func (r *Repository) CreateAccount(ctx context.Context, arg *model.CreateAccount
     }
 
 	// Create empty interest
-	if err := q.CreateInterestsWithDefaultValues(ctx, arg.ID); err != nil {
+	if err := q.CreateInterestsWithDefaultValues(ctx, params.ID); err != nil {
 		tx.Rollback()
 		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
 			return apperrors.WrapRepositoryError(

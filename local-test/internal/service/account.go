@@ -8,9 +8,9 @@ import (
 	"net/http"
 )
 
-func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountParams) error {
+func (s *Service) CreateAccount(ctx context.Context, params *model.CreateAccountParams) error {
 	// Validate input
-	if err := arg.Validate(); err != nil {
+	if err := params.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:  http.StatusBadRequest,
 			Code:    "BAD_REQUEST",
@@ -24,7 +24,7 @@ func (s *Service) CreateAccount(ctx context.Context, arg *model.CreateAccountPar
 		}
 	}
 
-    if err := s.repo.CreateAccount(ctx, arg); err != nil {
+    if err := s.repo.CreateAccount(ctx, params); err != nil {
 		// Check if the error is a duplicate entry error
 		var duplicateErr *apperrors.ErrDuplicateEntry
 		if errors.As(err, &duplicateErr) {

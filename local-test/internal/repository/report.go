@@ -7,15 +7,14 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (r *Repository) CreateReport(ctx context.Context, arg *model.CreateReportParams) error {
+func (r *Repository) CreateReport(ctx context.Context, params *model.CreateReportParams) error {
 	// Create report
-	params := sqlcgen.CreateReportParams{
-		ReporterAccountID: arg.ReporterAccountID,
-		ReportedAccountID: arg.ReportedAccountID,
-		Reason:            sqlcgen.ReportReason(arg.Reason),
-		Content:           arg.Content,
-	}
-	if err := r.q.CreateReport(ctx, params); err != nil {
+	if err := r.q.CreateReport(ctx, sqlcgen.CreateReportParams{
+		ReporterAccountID: params.ReporterAccountID,
+		ReportedAccountID: params.ReportedAccountID,
+		Reason:            sqlcgen.ReportReason(params.Reason),
+		Content:           params.Content,
+	}); err != nil {
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "create report",

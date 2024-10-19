@@ -7,15 +7,9 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (r *Repository) UpdateSettings(ctx context.Context, arg *model.UpdateSettingsParams) error {
+func (r *Repository) UpdateSettings(ctx context.Context, params *model.UpdateSettingsParams) error {
 	// Update settings
-	query := sqlcgen.UpdateSettingsParams{
-		AccountID: arg.AccountID,
-	}
-	if arg.IsPrivate != nil {
-		query.IsPrivate = *arg.IsPrivate
-	}
-	res, err := r.q.UpdateSettings(ctx, query)
+	res, err := r.q.UpdateSettings(ctx, convertToUpdateSettingsParams(params))
 	if err != nil {
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -44,4 +38,16 @@ func (r *Repository) UpdateSettings(ctx context.Context, arg *model.UpdateSettin
 	}
 
 	return nil
+}
+
+func convertToUpdateSettingsParams(params *model.UpdateSettingsParams) sqlcgen.UpdateSettingsParams {
+	ret := sqlcgen.UpdateSettingsParams{
+		AccountID: params.AccountID,
+	}
+
+	if params.IsPrivate != nil {
+		ret.IsPrivate = *params.IsPrivate
+	}
+
+	return ret
 }

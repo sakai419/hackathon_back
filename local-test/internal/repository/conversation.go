@@ -11,11 +11,10 @@ import (
 
 func (r *Repository) GetConversationID(ctx context.Context, params *model.GetConversationIDParams) (int64, error) {
 	// Get conversation id
-	query := sqlcgen.GetConversationIDParams{
-		Account1ID:    params.Account1ID,
-		Account2ID:    params.Account2ID,
-	}
-	conversationID, err := r.q.GetConversationID(ctx, query)
+	conversationID, err := r.q.GetConversationID(ctx, sqlcgen.GetConversationIDParams{
+		Account1ID: params.Account1ID,
+		Account2ID: params.Account2ID,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, apperrors.WrapRepositoryError(
@@ -38,12 +37,11 @@ func (r *Repository) GetConversationID(ctx context.Context, params *model.GetCon
 
 func (r *Repository) GetConversationList(ctx context.Context, params *model.GetConversationListParams) ([]*model.Conversation, error) {
 	// Get conversations
-	query := sqlcgen.GetConversationListParams{
+	conversations, err := r.q.GetConversationList(ctx, sqlcgen.GetConversationListParams{
 		Account1ID: params.AccountID,
 		Limit:      params.Limit,
 		Offset:     params.Offset,
-	}
-	conversations, err := r.q.GetConversationList(ctx, query)
+	})
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{

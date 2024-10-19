@@ -28,24 +28,23 @@ func (h *FollowHandler) FollowAndNotify(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 
-	// Get client ID
-	clientID, ok := getClientAccountID(w, r)
+	// Get client account ID
+	clientAccountID, ok := getClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Follow user
-	arg := &model.FollowAndNotifyParams{
-		FollowerAccountID:  clientID,
-		FollowingAccountID: accountIDFromPath,
-	}
-	if err := h.svc.FollowAndNotify(r.Context(), arg); err != nil {
+	if err := h.svc.FollowAndNotify(r.Context(), &model.FollowAndNotifyParams{
+		FollowerAccountID:  clientAccountID,
+		FollowingAccountID: targetAccountID,
+	}); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -56,29 +55,28 @@ func (h *FollowHandler) FollowAndNotify(w http.ResponseWriter, r *http.Request, 
 // Unfollow a user
 // (DELETE /users/{user_id}/follow)
 func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, _ string) {
-	// Check if the user is suspended
+	// Check if the clident is suspended
 	if isClientSuspended(w, r) {
 		return
 	}
 
-	// Get user ID
+	// Get client account ID
 	clientAccountID, ok := getClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Unfollow user
-	arg := &model.UnfollowParams{
+	if err := h.svc.Unfollow(r.Context(), &model.UnfollowParams{
 		FollowerAccountID:  clientAccountID,
-		FollowingAccountID: accountIDFromPath,
-	}
-	if err := h.svc.Unfollow(r.Context(), arg); err != nil {
+		FollowingAccountID: targetAccountID,
+	}); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -89,19 +87,18 @@ func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, _ strin
 // Get followers
 // (GET /users/{user_id}/followers)
 func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowerInfosParams) {
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get tager account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Get followers
-	arg := &model.GetFollowerInfosParams{
-		FollowingAccountID: accountIDFromPath,
+	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), &model.GetFollowerInfosParams{
+		FollowingAccountID: targetAccountID,
 		Limit:              params.Limit,
 		Offset:             params.Offset,
-	}
-	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), arg)
+	})
 	if err != nil {
 		utils.RespondError(w, err)
 		return
@@ -117,19 +114,18 @@ func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request,
 // Get followings
 // (GET /users/{user_id}/followings)
 func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowingInfosParams) {
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Get followings
-	arg := &model.GetFollowingInfosParams{
-		FollowerAccountID: accountIDFromPath,
+	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), &model.GetFollowingInfosParams{
+		FollowerAccountID: targetAccountID,
 		Limit:             params.Limit,
-		Offset:            params.Offset,
-	}
-	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), arg)
+		Offset: 		   params.Offset,
+	})
 	if err != nil {
 		utils.RespondError(w, err)
 		return
@@ -155,18 +151,17 @@ func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Send follow request
-	arg := &model.RequestFollowAndNotifyParams{
+	if err := h.svc.RequestFollowAndNotify(r.Context(), &model.RequestFollowAndNotifyParams{
 		RequesterAccountID: clientAccountID,
-		RequestedAccountID: accountIDFromPath,
-	}
-	if err := h.svc.RequestFollowAndNotify(r.Context(), arg); err != nil {
+		RequestedAccountID: targetAccountID,
+	}); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -188,8 +183,8 @@ func (h *FollowHandler) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *h
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -197,7 +192,7 @@ func (h *FollowHandler) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *h
 	// Accept follow request
 	arg := &model.AcceptFollowRequestAndNotifyParams{
 		RequestedAccountID: clientAccountID,
-		RequesterAccountID: accountIDFromPath,
+		RequesterAccountID: targetAccountID,
 	}
 	if err := h.svc.AcceptFollowRequestAndNotify(r.Context(), arg); err != nil {
 		utils.RespondError(w, err)
@@ -221,18 +216,17 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Reject follow request
-	arg := &model.RejectFollowRequestParams{
+	if err := h.svc.RejectFollowRequest(r.Context(), &model.RejectFollowRequestParams{
 		RequestedAccountID: clientAccountID,
-		RequesterAccountID: accountIDFromPath,
-	}
-	if err := h.svc.RejectFollowRequest(r.Context(), arg); err != nil {
+		RequesterAccountID: targetAccountID,
+	}); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -344,8 +338,8 @@ func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return clientID, true
 }
 
-func getAccountIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
-	accountID, err := key.GetAccountIDFromPath(r.Context())
+func getTargetAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	accountID, err := key.GetTargetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w,
 			&apperrors.AppError{

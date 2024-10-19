@@ -23,26 +23,25 @@ func NewMessageHandler(svc *service.Service) *MessageHandler {
 // Get Messages
 // (GET /messages/{user_id})
 func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ string, params GetMessagesParams) {
-	// Get client ID
-	clientID, ok := getClientAccountID(w, r)
+	// Get client account ID
+	clientAccountID, ok := getClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Get messages
-	arg := &model.GetMessagesParams{
-		ClientAccountID: clientID,
-		TargetAccountID: accountIDFromPath,
+	messages, err := h.svc.GetMessages(r.Context(), &model.GetMessagesParams{
+		ClientAccountID: clientAccountID,
+		TargetAccountID: targetAccountID,
 		Limit:           params.Limit,
 		Offset:          params.Offset,
-	}
-	messages, err := h.svc.GetMessages(r.Context(), arg)
+	})
 	if err != nil {
 		utils.RespondError(w, err)
 		return
@@ -57,14 +56,14 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ s
 // Send Message
 // (POST /messages/{user_id})
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ string) {
-	// Get client ID
-	clientID, ok := getClientAccountID(w, r)
+	// Get client account ID
+	clidentAccountID, ok := getClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -89,12 +88,11 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 	}
 
 	// Send message
-	arg := &model.SendMessageParams{
-		ClientAccountID: clientID,
-		TargetAccountID: accountIDFromPath,
+	err := h.svc.SendMessage(r.Context(), &model.SendMessageParams{
+		ClientAccountID: clidentAccountID,
+		TargetAccountID: targetAccountID,
 		Content:         params.Content,
-	}
-	err := h.svc.SendMessage(r.Context(), arg)
+	})
 	if err != nil {
 		utils.RespondError(w, err)
 		return
@@ -106,24 +104,23 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 // Mark message as read
 // (PATCH /messages/{user_id}/read)
 func (h *MessageHandler) MarkMessagesAsRead(w http.ResponseWriter, r *http.Request, _ string) {
-	// Get client ID
-	clientID, ok := getClientAccountID(w, r)
+	// Get client account ID
+	clidentAccountID, ok := getClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
-	// Get account id from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Mark message as read
-	arg := &model.MarkMessagesAsReadParams{
-		ClientAccountID: clientID,
-		TargetAccountID: accountIDFromPath,
-	}
-	if err := h.svc.MarkMessagesAsRead(r.Context(), arg); err != nil {
+	if err := h.svc.MarkMessagesAsRead(r.Context(), &model.MarkMessagesAsReadParams{
+		ClientAccountID: clidentAccountID,
+		TargetAccountID: targetAccountID,
+	}); err != nil {
 		utils.RespondError(w, err)
 		return
 	}
@@ -148,7 +145,7 @@ func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
-	clientID, err := key.GetClientAccountID(r.Context())
+	clidentAccountID, err := key.GetClientAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w,
 			&apperrors.AppError{
@@ -165,11 +162,11 @@ func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
 		)
 		return "", false
 	}
-	return clientID, true
+	return clidentAccountID, true
 }
 
-func getAccountIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
-	accountID, err := key.GetAccountIDFromPath(r.Context())
+func getTargetAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	accountID, err := key.GetTargetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w,
 			&apperrors.AppError{

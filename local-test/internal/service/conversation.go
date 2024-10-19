@@ -24,12 +24,11 @@ func (s *Service) GetConversations(ctx context.Context, params *model.GetConvers
 	}
 
 	// Get conversations
-	getConversationListParams := &model.GetConversationListParams{
+	conversations, err := s.repo.GetConversationList(ctx, &model.GetConversationListParams{
 		AccountID: params.ClientAccountID,
 		Limit:     params.Limit,
 		Offset:    params.Offset,
-	}
-	conversations, err := s.repo.GetConversationList(ctx, getConversationListParams)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -82,14 +81,14 @@ func (s *Service) GetUnreadConversationCount(ctx context.Context, AccountID stri
 func convertToConversationResponse(conversations []*model.Conversation, opponentInfos []*model.UserInfoInternal) []*model.ConversationResponse {
 	var conversationResponses []*model.ConversationResponse
 	for i := range len(conversations) {
-		temp := model.UserInfoWithoutBio{
+		info := model.UserInfoWithoutBio{
 			UserID:          opponentInfos[i].UserID,
 			UserName:        opponentInfos[i].UserName,
 			ProfileImageURL: opponentInfos[i].ProfileImageURL,
 		}
 		conversationResponses = append(conversationResponses, &model.ConversationResponse{
 			ID:              conversations[i].ID,
-			OpponentInfo:    temp,
+			OpponentInfo:    info,
 			LastMessageTime: conversations[i].LastMessageTime,
 			Content:         conversations[i].Content,
 			SenderID:        conversations[i].SenderAccountID,

@@ -8,7 +8,7 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (r *Repository) CreateMessage(ctx context.Context, arg *model.CreateMessageParams) error {
+func (r *Repository) CreateMessage(ctx context.Context, params *model.CreateMessageParams) error {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -24,12 +24,11 @@ func (r *Repository) CreateMessage(ctx context.Context, arg *model.CreateMessage
 	q := r.q.WithTx(tx)
 
 	// Create message
-	query := sqlcgen.CreateMessageParams{
-		ConversationID:  arg.ConversationID,
-		SenderAccountID: arg.SenderAccountID,
-		Content:         arg.Content,
-	}
-	messageID, err := q.CreateMessage(ctx, query)
+	messageID, err := q.CreateMessage(ctx, sqlcgen.CreateMessageParams{
+		ConversationID:  params.ConversationID,
+		SenderAccountID: params.SenderAccountID,
+		Content:         params.Content,
+	})
 	if err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(
@@ -41,11 +40,10 @@ func (r *Repository) CreateMessage(ctx context.Context, arg *model.CreateMessage
 	}
 
 	// Update last message id in conversation
-	updateQuery := sqlcgen.UpdateLastMessageParams{
-		ID: arg.ConversationID,
-		LastMessageID:  sql.NullInt64{Int64: messageID, Valid: true},
-	}
-	if err := q.UpdateLastMessage(ctx, updateQuery); err != nil {
+	if err := q.UpdateLastMessage(ctx, sqlcgen.UpdateLastMessageParams{
+		ID:            params.ConversationID,
+		LastMessageID: sql.NullInt64{Int64: messageID, Valid: true},
+	}); err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -69,14 +67,13 @@ func (r *Repository) CreateMessage(ctx context.Context, arg *model.CreateMessage
 	return nil
 }
 
-func (r *Repository) GetMessageList(ctx context.Context, arg *model.GetMessageListParams) ([]*model.MessageResponse, error) {
+func (r *Repository) GetMessageList(ctx context.Context, params *model.GetMessageListParams) ([]*model.MessageResponse, error) {
 	// Get messages
-	query := sqlcgen.GetMessageListParams{
-		ConversationID: arg.ConversationID,
-		Limit:          arg.Limit,
-		Offset:         arg.Offset,
-	}
-	messages, err := r.q.GetMessageList(ctx, query)
+	messages, err := r.q.GetMessageList(ctx, sqlcgen.GetMessageListParams{
+		ConversationID: params.ConversationID,
+		Limit:          params.Limit,
+		Offset:         params.Offset,
+	})
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -100,13 +97,12 @@ func (r *Repository) GetMessageList(ctx context.Context, arg *model.GetMessageLi
 	return items, nil
 }
 
-func (r *Repository) MarkMessageListAsRead(ctx context.Context, arg *model.MarkMessageListAsReadParams) error {
+func (r *Repository) MarkMessageListAsRead(ctx context.Context, params *model.MarkMessageListAsReadParams) error {
 	// Mark messages as read
-	query := sqlcgen.MarkMessageListAsReadParams{
-		ConversationID:  arg.ConversationID,
-		SenderAccountID: arg.SenderAccountID,
-	}
-	if err := r.q.MarkMessageListAsRead(ctx, query); err != nil {
+	if err := r.q.MarkMessageListAsRead(ctx, sqlcgen.MarkMessageListAsReadParams{
+		ConversationID:  params.ConversationID,
+		SenderAccountID: params.SenderAccountID,
+	}); err != nil {
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "mark messages as read",

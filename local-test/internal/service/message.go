@@ -8,9 +8,9 @@ import (
 	"net/http"
 )
 
-func (s *Service) SendMessage(ctx context.Context, arg *model.SendMessageParams) error {
+func (s *Service) SendMessage(ctx context.Context, params *model.SendMessageParams) error {
 	// Validate input
-	if err := arg.Validate(); err != nil {
+	if err := params.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:   http.StatusBadRequest,
 			Code:    "INVALID_INPUT",
@@ -25,22 +25,20 @@ func (s *Service) SendMessage(ctx context.Context, arg *model.SendMessageParams)
 	}
 
 	// Get conversation id
-	getConverSationParams := &model.GetConversationIDParams{
-		Account1ID:    arg.ClientAccountID,
-		Account2ID:    arg.TargetAccountID,
-	}
-	conversationID, err := s.repo.GetConversationID(ctx, getConverSationParams)
+	conversationID, err := s.repo.GetConversationID(ctx, &model.GetConversationIDParams{
+		Account1ID:    params.ClientAccountID,
+		Account2ID:    params.TargetAccountID,
+	})
 	if err != nil {
 		return conversationErrHandler(err)
 	}
 
 	// Send message
-	createMessageParams := &model.CreateMessageParams{
+	if err := s.repo.CreateMessage(ctx, &model.CreateMessageParams{
 		ConversationID:  conversationID,
-		Content:         arg.Content,
-		SenderAccountID: arg.ClientAccountID,
-	}
-	if err := s.repo.CreateMessage(ctx, createMessageParams); err != nil {
+		Content:         params.Content,
+		SenderAccountID: params.ClientAccountID,
+	}); err != nil {
 		return &apperrors.AppError{
 			Status:   http.StatusInternalServerError,
 			Code:    "DATABASE_ERROR",
@@ -57,9 +55,9 @@ func (s *Service) SendMessage(ctx context.Context, arg *model.SendMessageParams)
 	return nil
 }
 
-func (s *Service) GetMessages(ctx context.Context, arg *model.GetMessagesParams) ([]*model.MessageResponse, error) {
+func (s *Service) GetMessages(ctx context.Context, params *model.GetMessagesParams) ([]*model.MessageResponse, error) {
 	// Validate input
-	if err := arg.Validate(); err != nil {
+	if err := params.Validate(); err != nil {
 		return nil, &apperrors.AppError{
 			Status:   http.StatusBadRequest,
 			Code:    "INVALID_INPUT",
@@ -74,22 +72,20 @@ func (s *Service) GetMessages(ctx context.Context, arg *model.GetMessagesParams)
 	}
 
 	// Get conversation id
-	getConverSationParams := &model.GetConversationIDParams{
-		Account1ID:    arg.ClientAccountID,
-		Account2ID:    arg.TargetAccountID,
-	}
-	conversationID, err := s.repo.GetConversationID(ctx, getConverSationParams)
+	conversationID, err := s.repo.GetConversationID(ctx, &model.GetConversationIDParams{
+		Account1ID:    params.ClientAccountID,
+		Account2ID:    params.TargetAccountID,
+	})
 	if err != nil {
 		return nil, conversationErrHandler(err)
 	}
 
 	// Get messages
-	getMessagesParams := &model.GetMessageListParams{
+	messages, err := s.repo.GetMessageList(ctx, &model.GetMessageListParams{
 		ConversationID: conversationID,
-		Limit:          arg.Limit,
-		Offset:         arg.Offset,
-	}
-	messages, err := s.repo.GetMessageList(ctx, getMessagesParams)
+		Limit:          params.Limit,
+		Offset:         params.Offset,
+	})
 	if err != nil {
 		return nil, &apperrors.AppError{
 			Status:   http.StatusInternalServerError,
@@ -107,9 +103,9 @@ func (s *Service) GetMessages(ctx context.Context, arg *model.GetMessagesParams)
 	return messages, nil
 }
 
-func (s *Service) MarkMessagesAsRead(ctx context.Context, arg *model.MarkMessagesAsReadParams) error {
+func (s *Service) MarkMessagesAsRead(ctx context.Context, params *model.MarkMessagesAsReadParams) error {
 	// Validate input
-	if err := arg.Validate(); err != nil {
+	if err := params.Validate(); err != nil {
 		return &apperrors.AppError{
 			Status:   http.StatusBadRequest,
 			Code:    "INVALID_INPUT",
@@ -124,21 +120,19 @@ func (s *Service) MarkMessagesAsRead(ctx context.Context, arg *model.MarkMessage
 	}
 
 	// Get conversation id
-	getConverSationParams := &model.GetConversationIDParams{
-		Account1ID:    arg.ClientAccountID,
-		Account2ID:    arg.TargetAccountID,
-	}
-	conversationID, err := s.repo.GetConversationID(ctx, getConverSationParams)
+	conversationID, err := s.repo.GetConversationID(ctx, &model.GetConversationIDParams{
+		Account1ID:    params.ClientAccountID,
+		Account2ID:    params.TargetAccountID,
+	})
 	if err != nil {
 		return conversationErrHandler(err)
 	}
 
 	// Mark messages as read
-	markMessagesAsReadParams := &model.MarkMessageListAsReadParams{
+	if err := s.repo.MarkMessageListAsRead(ctx, &model.MarkMessageListAsReadParams{
 		ConversationID:  conversationID,
-		SenderAccountID: arg.TargetAccountID,
-	}
-	if err := s.repo.MarkMessageListAsRead(ctx, markMessagesAsReadParams); err != nil {
+		SenderAccountID: params.TargetAccountID,
+	}); err != nil {
 		return &apperrors.AppError{
 			Status:   http.StatusInternalServerError,
 			Code:    "DATABASE_ERROR",

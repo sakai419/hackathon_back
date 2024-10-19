@@ -7,14 +7,13 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.Notification, error) {
+func (r *Repository) GetNotifications(ctx context.Context, params *model.GetNotificationsParams) ([]*model.Notification, error) {
 	// Get notifications
-	query := sqlcgen.GetNotificationsParams{
-		RecipientAccountID: arg.RecipientAccountID,
-		Limit:              arg.Limit,
-		Offset:             arg.Offset,
-	}
-	notifications, err := r.q.GetNotifications(ctx, query)
+	notifications, err := r.q.GetNotifications(ctx, sqlcgen.GetNotificationsParams{
+		RecipientAccountID: params.RecipientAccountID,
+		Limit:              params.Limit,
+		Offset:             params.Offset,
+	})
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -30,14 +29,13 @@ func (r *Repository) GetNotifications(ctx context.Context, arg *model.GetNotific
 	return items, nil
 }
 
-func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.Notification, error) {
+func (r *Repository) GetUnreadNotifications(ctx context.Context, params *model.GetUnreadNotificationsParams) ([]*model.Notification, error) {
 	// Get unread notifications
-	query := sqlcgen.GetUnreadNotificationsParams{
-		RecipientAccountID: arg.RecipientAccountID,
-		Limit:              arg.Limit,
-		Offset:             arg.Offset,
-	}
-	notifications, err := r.q.GetUnreadNotifications(ctx, query)
+	notifications, err := r.q.GetUnreadNotifications(ctx, sqlcgen.GetUnreadNotificationsParams{
+		RecipientAccountID: params.RecipientAccountID,
+		Limit:              params.Limit,
+		Offset:             params.Offset,
+	})
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -53,8 +51,8 @@ func (r *Repository) GetUnreadNotifications(ctx context.Context, arg *model.GetU
 	return items, nil
 }
 
-func (r *Repository) GetUnreadNotificationCount(ctx context.Context, recipientAccountID string) (int64, error) {
-	count, err := r.q.GetUnreadNotificationCount(ctx, recipientAccountID)
+func (r *Repository) GetUnreadNotificationCount(ctx context.Context, accountID string) (int64, error) {
+	count, err := r.q.GetUnreadNotificationCount(ctx, accountID)
 	if err != nil {
 		return 0, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -67,13 +65,12 @@ func (r *Repository) GetUnreadNotificationCount(ctx context.Context, recipientAc
 	return count, nil
 }
 
-func (r *Repository) MarkNotificationAsRead(ctx context.Context, arg *model.MarkNotificationAsReadParams) error {
+func (r *Repository) MarkNotificationAsRead(ctx context.Context, params *model.MarkNotificationAsReadParams) error {
 	// Mark notification as read
-	query := sqlcgen.MarkNotificationAsReadParams{
-		ID:                 arg.ID,
-		RecipientAccountID: arg.RecipientAccountID,
-	}
-	err := r.q.MarkNotificationAsRead(ctx, query)
+	err := r.q.MarkNotificationAsRead(ctx, sqlcgen.MarkNotificationAsReadParams{
+		ID:                 params.ID,
+		RecipientAccountID: params.RecipientAccountID,
+	})
 	if err != nil {
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
@@ -86,9 +83,9 @@ func (r *Repository) MarkNotificationAsRead(ctx context.Context, arg *model.Mark
 	return nil
 }
 
-func (r *Repository) MarkAllNotificationsAsRead(ctx context.Context, recipientAccountID string) error {
+func (r *Repository) MarkAllNotificationsAsRead(ctx context.Context, accountID string) error {
 	// Mark all notifications as read
-	err := r.q.MarkAllNotificationsAsRead(ctx, recipientAccountID)
+	err := r.q.MarkAllNotificationsAsRead(ctx, accountID)
 	if err != nil {
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{

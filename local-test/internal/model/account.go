@@ -45,13 +45,6 @@ type UserInfo struct {
 	ProfileImageURL string
 }
 
-type UserInfoWithoutBioInternal struct {
-	ID              string
-	UserID          string
-	UserName        string
-	ProfileImageURL string
-}
-
 type UserInfoWithoutBio struct {
 	UserID          string
 	UserName        string

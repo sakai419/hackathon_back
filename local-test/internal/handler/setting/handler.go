@@ -46,11 +46,10 @@ func (h *SettingHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Update settings
-	params := &model.UpdateSettingsParams{
+	if err := h.svc.UpdateSettings(r.Context(), &model.UpdateSettingsParams{
 		AccountID:       clientAccountID,
 		IsPrivate:       req.IsPrivate,
-	}
-	if err := h.svc.UpdateSettings(r.Context(), params); err != nil {
+	}); err != nil {
 		utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
 				Operation: "update settings",

@@ -186,6 +186,8 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 				}
 			}
 		}
+
+		items = append(items, item)
 	}
 
 	return items

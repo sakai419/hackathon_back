@@ -35,8 +35,8 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
 		return
 	}
 
-	// Get account ID from path
-	accountIDFromPath, ok := getAccountIDFromPath(w, r)
+	// Get target account ID
+	targetAccountID, ok := getTargetAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -74,8 +74,12 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
     }
 
     // Create report
-    arg := req.toParams(clientAccountID, accountIDFromPath)
-    if err := h.svc.CreateReportByUserID(r.Context(), arg); err != nil {
+    if err := h.svc.CreateReport(r.Context(), &model.CreateReportParams{
+		ReporterAccountID: clientAccountID,
+		ReportedAccountID: targetAccountID,
+		Reason:  model.ReportReason(req.Reason),
+		Content: sql.NullString{String: *req.Content, Valid: req.Content != nil && *req.Content != ""},
+	}); err != nil {
         utils.RespondError(w, apperrors.WrapHandlerError(
 			&apperrors.ErrOperationFailed{
 				Operation: "create report",
@@ -158,8 +162,8 @@ func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return clientID, true
 }
 
-func getAccountIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
-	accountID, err := key.GetAccountIDFromPath(r.Context())
+func getTargetAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	accountID, err := key.GetTargetAccountID(r.Context())
 	if err != nil {
 		utils.RespondError(w,
 			&apperrors.AppError{
@@ -187,13 +191,4 @@ func (r *CreateReportJSONRequestBody) validate() error {
 		}
 	}
 	return nil
-}
-
-func (r *CreateReportJSONRequestBody) toParams(reporterAccountID, reportedAccountID string) *model.CreateReportParams {
-	return &model.CreateReportParams{
-		ReporterAccountID: reporterAccountID,
-		ReportedAccountID: reportedAccountID,
-		Reason:  model.ReportReason(r.Reason),
-		Content: sql.NullString{String: *r.Content, Valid: r.Content != nil && *r.Content != ""},
-	}
 }
