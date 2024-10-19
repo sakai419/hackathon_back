@@ -29,7 +29,7 @@ func (s *Service) GetConversations(ctx context.Context, params *model.GetConvers
 	}
 	opponentInfos, err := s.repo.GetUserInfos(ctx, ids)
 	if err != nil {
-		return nil, apperrors.NewInternalAppError("get opponent info", err)
+		return nil, apperrors.NewNotFoundAppError("opponent info", "get opponent infos", err)
 	}
 
 	// Convert to response

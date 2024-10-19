@@ -192,6 +192,15 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.U
 		)
 	}
 
+	// Check if all accounts are found
+	if len(res) != len(ids) {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "account id",
+			},
+		)
+	}
+
 	// Convert to model
 	var userAndProfileInfos []*model.UserInfoInternal
 	for _, r := range res {

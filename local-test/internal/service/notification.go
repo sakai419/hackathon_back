@@ -27,7 +27,7 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 	}
 	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
 	if err != nil {
-		return nil, apperrors.NewInternalAppError("get sender infos", err)
+		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
 
 	// Convert to response
@@ -58,7 +58,7 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnre
 	}
 	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
 	if err != nil {
-		return nil, apperrors.NewInternalAppError("get sender infos", err)
+		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
 
 	// Convert to response

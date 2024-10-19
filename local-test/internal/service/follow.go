@@ -53,7 +53,7 @@ func (s *Service) GetFollowerInfos(ctx context.Context, params *model.GetFollowe
 	// Get user and profile info
 	infos, err := s.repo.GetUserInfos(ctx, followerAccountIDs)
 	if err != nil {
-		return nil, apperrors.NewInternalAppError("get user infos", err)
+		return nil, apperrors.NewNotFoundAppError("follower info", "get follower infos", err)
 	}
 
 	// Sort user infos
@@ -81,7 +81,7 @@ func (s *Service) GetFollowingInfos(ctx context.Context, params *model.GetFollow
 	// Get user and profile info
 	infos, err := s.repo.GetUserInfos(ctx, followingAccountIDs)
 	if err != nil {
-		return nil, apperrors.NewInternalAppError("get user infos", err)
+		return nil, apperrors.NewNotFoundAppError("following user info", "get following user infos", err)
 	}
 
 	// Sort user infos
