@@ -4,29 +4,18 @@ import (
 	"context"
 	"local-test/internal/model"
 	"local-test/pkg/apperrors"
-	"net/http"
 )
 
 func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Validate input
 	if err := arg.Validate(); err != nil {
-		return nil, &apperrors.AppError{
-			Status: http.StatusBadRequest,
-			Code:   "BAD_REQUEST",
-			Message: "Invalid request",
-			Err: apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "validate request",
-					Err:       err,
-				},
-			),
-		}
+		return nil, apperrors.NewValidateAppError(err)
 	}
 
 	// Get notifications
 	notifications, err := s.repo.GetNotifications(ctx, arg)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.NewInternalAppError("get notifications", err)
 	}
 
 	// Get sender info
@@ -38,17 +27,7 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 	}
 	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
 	if err != nil {
-		return nil, &apperrors.AppError{
-			Status: http.StatusInternalServerError,
-			Code:   "DATABASE_ERROR",
-			Message: "Failed to get sender info",
-			Err: apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "get sender info",
-					Err:       err,
-				},
-			),
-		}
+		return nil, apperrors.NewInternalAppError("get sender infos", err)
 	}
 
 	// Convert to response
@@ -61,17 +40,7 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Validate input
 	if err := arg.Validate(); err != nil {
-		return nil, &apperrors.AppError{
-			Status: http.StatusBadRequest,
-			Code:   "BAD_REQUEST",
-			Message: "Invalid request",
-			Err: apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "validate request",
-					Err:       err,
-				},
-			),
-		}
+		return nil, apperrors.NewValidateAppError(err)
 	}
 
 	// Get unread notifications
@@ -89,17 +58,7 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnre
 	}
 	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
 	if err != nil {
-		return nil, &apperrors.AppError{
-			Status: http.StatusInternalServerError,
-			Code:   "DATABASE_ERROR",
-			Message: "Failed to get sender info",
-			Err: apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "get sender info",
-					Err:       err,
-				},
-			),
-		}
+		return nil, apperrors.NewInternalAppError("get sender infos", err)
 	}
 
 	// Convert to response
@@ -112,7 +71,7 @@ func (s *Service) GetUnreadNotificationCount(ctx context.Context, recipientAccou
 	// Get notification count
 	count, err := s.repo.GetUnreadNotificationCount(ctx, recipientAccountID)
 	if err != nil {
-		return 0, err
+		return 0, apperrors.NewInternalAppError("get unread notification count", err)
 	}
 
 	return count, nil
@@ -121,17 +80,7 @@ func (s *Service) GetUnreadNotificationCount(ctx context.Context, recipientAccou
 func (s *Service) MarkNotificationAsRead(ctx context.Context, arg *model.MarkNotificationAsReadParams) error {
 	// Mark notification as read
 	if err := s.repo.MarkNotificationAsRead(ctx, arg); err != nil {
-		return &apperrors.AppError{
-			Status: http.StatusInternalServerError,
-			Code:   "DATABASE_ERROR",
-			Message: "Failed to mark notification as read",
-			Err: apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "mark notification as read",
-					Err:       err,
-				},
-			),
-		}
+		return apperrors.NewInternalAppError("mark notification as read", err)
 	}
 
 	return nil
@@ -140,17 +89,7 @@ func (s *Service) MarkNotificationAsRead(ctx context.Context, arg *model.MarkNot
 func (s *Service) MarkAllNotificationsAsRead(ctx context.Context, recipientAccountID string) error {
 	// Mark all notifications as read
 	if err := s.repo.MarkAllNotificationsAsRead(ctx, recipientAccountID); err != nil {
-		return &apperrors.AppError{
-			Status: http.StatusInternalServerError,
-			Code:   "DATABASE_ERROR",
-			Message: "Failed to mark all notifications as read",
-			Err: apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "mark all notifications as read",
-					Err:       err,
-				},
-			),
-		}
+		return apperrors.NewInternalAppError("mark all notifications as read", err)
 	}
 
 	return nil

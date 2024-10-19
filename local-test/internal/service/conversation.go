@@ -4,23 +4,12 @@ import (
 	"context"
 	"local-test/internal/model"
 	"local-test/pkg/apperrors"
-	"net/http"
 )
 
 func (s *Service) GetConversations(ctx context.Context, params *model.GetConversationsParams) ([]*model.ConversationResponse, error) {
 	// Validate input
 	if err := params.Validate(); err != nil {
-		return nil, &apperrors.AppError{
-			Status: http.StatusBadRequest,
-			Code:   "INVALID_INPUT",
-			Message: "Invalid input",
-			Err:    apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "validate input",
-					Err:       err,
-				},
-			),
-		}
+		return nil, apperrors.NewValidateAppError(err)
 	}
 
 	// Get conversations
@@ -30,7 +19,7 @@ func (s *Service) GetConversations(ctx context.Context, params *model.GetConvers
 		Offset:    params.Offset,
 	})
 	if err != nil {
-		return nil, err
+		return nil, apperrors.NewInternalAppError("get conversations", err)
 	}
 
 	// Get opponent info
@@ -40,17 +29,7 @@ func (s *Service) GetConversations(ctx context.Context, params *model.GetConvers
 	}
 	opponentInfos, err := s.repo.GetUserInfos(ctx, ids)
 	if err != nil {
-		return nil, &apperrors.AppError{
-			Status: http.StatusInternalServerError,
-			Code:   "INTERNAL_SERVER_ERROR",
-			Message: "Failed to get opponent info",
-			Err:    apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "get opponent info",
-					Err:       err,
-				},
-			),
-		}
+		return nil, apperrors.NewInternalAppError("get opponent info", err)
 	}
 
 	// Convert to response
@@ -62,17 +41,7 @@ func (s *Service) GetConversations(ctx context.Context, params *model.GetConvers
 func (s *Service) GetUnreadConversationCount(ctx context.Context, AccountID string) (int64, error) {
 	count, err := s.repo.GetUnreadConversationCount(ctx, AccountID)
 	if err != nil {
-		return 0, &apperrors.AppError{
-			Status: http.StatusInternalServerError,
-			Code:   "INTERNAL_SERVER_ERROR",
-			Message: "Failed to get unread conversation count",
-			Err:    apperrors.WrapServiceError(
-				&apperrors.ErrOperationFailed{
-					Operation: "get unread conversation count",
-					Err:       err,
-				},
-			),
-		}
+		return 0, apperrors.NewInternalAppError("get unread conversation count", err)
 	}
 
 	return count, nil
