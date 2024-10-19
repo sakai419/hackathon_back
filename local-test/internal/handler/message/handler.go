@@ -2,7 +2,6 @@ package message
 
 import (
 	"errors"
-	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
@@ -24,13 +23,13 @@ func NewMessageHandler(svc *service.Service) *MessageHandler {
 // (GET /messages/{user_id})
 func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ string, params GetMessagesParams) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Get target account ID
-	targetAccountID, ok := getTargetAccountID(w, r)
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -54,13 +53,13 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ s
 // (POST /messages/{user_id})
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ string) {
 	// Get client account ID
-	clidentAccountID, ok := getClientAccountID(w, r)
+	clidentAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Get target account ID
-	targetAccountID, ok := getTargetAccountID(w, r)
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -102,13 +101,13 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 // (PATCH /messages/{user_id}/read)
 func (h *MessageHandler) MarkMessagesAsRead(w http.ResponseWriter, r *http.Request, _ string) {
 	// Get client account ID
-	clidentAccountID, ok := getClientAccountID(w, r)
+	clidentAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
 
 	// Get target account ID
-	targetAccountID, ok := getTargetAccountID(w, r)
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -139,48 +138,6 @@ func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
 	} else {
 		utils.RespondError(w, err)
 	}
-}
-
-func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
-	clidentAccountID, err := key.GetClientAccountID(r.Context())
-	if err != nil {
-		utils.RespondError(w,
-			&apperrors.AppError{
-				Status:  http.StatusInternalServerError,
-				Code:    "INTERNAL_SERVER_ERROR",
-				Message: "Account ID not found in context",
-				Err:     apperrors.WrapHandlerError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID",
-						Err: err,
-					},
-				),
-			},
-		)
-		return "", false
-	}
-	return clidentAccountID, true
-}
-
-func getTargetAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
-	accountID, err := key.GetTargetAccountID(r.Context())
-	if err != nil {
-		utils.RespondError(w,
-			&apperrors.AppError{
-				Status:  http.StatusBadRequest,
-				Code:    "BAD_REQUEST",
-				Message: "Account ID not found in path",
-				Err:     apperrors.WrapHandlerError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID",
-						Err: err,
-					},
-				),
-			},
-		)
-		return "", false
-	}
-	return accountID, true
 }
 
 func convertToMessageResponse(messages []*model.MessageResponse) []*MessageResponse {

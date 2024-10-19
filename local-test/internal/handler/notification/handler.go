@@ -2,7 +2,6 @@ package notification
 
 import (
 	"errors"
-	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
@@ -24,7 +23,7 @@ func NewNotificationHandler(svc *service.Service) ServerInterface {
 // (GET /notifications)
 func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request, params GetNotificationsParams) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -47,7 +46,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 // (GET /notifications/unread)
 func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *http.Request, params GetUnreadNotificationsParams) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -70,7 +69,7 @@ func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *h
 // (GET /notifications/unread/count)
 func (h *NotificationHandler) GetUnreadNotificationsCount(w http.ResponseWriter, r *http.Request) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -89,7 +88,7 @@ func (h *NotificationHandler) GetUnreadNotificationsCount(w http.ResponseWriter,
 // (PUT /notifications/{notification_id}/read)
 func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationID int64) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -110,7 +109,7 @@ func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *h
 // (PUT /notifications/read/all)
 func (h *NotificationHandler) MarkAllNotificationsAsRead(w http.ResponseWriter, r *http.Request) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -138,28 +137,6 @@ func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
 	} else {
 		utils.RespondError(w, err)
 	}
-}
-
-// Get client account ID from context
-func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
-	clientAccountID, err := key.GetClientAccountID(r.Context())
-	if err != nil {
-		utils.RespondError(w,
-			&apperrors.AppError{
-				Status:  http.StatusInternalServerError,
-				Code:    "INTERNAL_SERVER_ERROR",
-				Message: "Account ID not found in context",
-				Err:     apperrors.WrapHandlerError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID",
-						Err: err,
-					},
-				),
-			},
-		)
-		return "", false
-	}
-	return clientAccountID, true
 }
 
 func convertToNotificationResponse(notifications []*model.NotificationResponse) []Notification {

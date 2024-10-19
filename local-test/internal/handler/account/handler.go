@@ -1,7 +1,6 @@
 package account
 
 import (
-	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
@@ -23,7 +22,7 @@ func NewAccountHandler(svc *service.Service) ServerInterface {
 // (POST /accounts)
 func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
     // Get client account ID
-    clientAccountID, ok := getClientAccountID(w, r)
+    clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -67,7 +66,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 // (DELETE /accounts/me)
 func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 	// Get user ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -83,26 +82,4 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	}
 
 	utils.Respond(w, nil)
-}
-
-// Get client account ID from context
-func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
-	clientID, err := key.GetClientAccountID(r.Context())
-	if err != nil {
-		utils.RespondError(w,
-			&apperrors.AppError{
-				Status:  http.StatusInternalServerError,
-				Code:    "INTERNAL_SERVER_ERROR",
-				Message: "Account ID not found in context",
-				Err:     apperrors.WrapHandlerError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID",
-						Err: err,
-					},
-				),
-			},
-		)
-		return "", false
-	}
-	return clientID, true
 }

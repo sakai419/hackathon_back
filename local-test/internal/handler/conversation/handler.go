@@ -2,7 +2,6 @@ package conversation
 
 import (
 	"errors"
-	"local-test/internal/key"
 	"local-test/internal/model"
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
@@ -24,7 +23,7 @@ func NewConversationHandler(svc *service.Service) *ConversationHandler {
 // (GET /conversations)
 func (h *ConversationHandler) GetConversations(w http.ResponseWriter, r *http.Request, params GetConversationsParams) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -47,7 +46,7 @@ func (h *ConversationHandler) GetConversations(w http.ResponseWriter, r *http.Re
 // (GET /conversations/unread/count)
 func (h *ConversationHandler) GetUnreadConversationCount(w http.ResponseWriter, r *http.Request) {
 	// Get client account ID
-	clientAccountID, ok := getClientAccountID(w, r)
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
 		return
 	}
@@ -75,27 +74,6 @@ func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
 	} else {
 		utils.RespondError(w, err)
 	}
-}
-
-func getClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
-	clidentAccountID, err := key.GetClientAccountID(r.Context())
-	if err != nil {
-		utils.RespondError(w,
-			&apperrors.AppError{
-				Status:  http.StatusInternalServerError,
-				Code:    "INTERNAL_SERVER_ERROR",
-				Message: "Account ID not found in context",
-				Err:     apperrors.WrapHandlerError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account ID",
-						Err: err,
-					},
-				),
-			},
-		)
-		return "", false
-	}
-	return clidentAccountID, true
 }
 
 func convertToConversationResponse(conversations []*model.ConversationResponse) []*Conversation {
