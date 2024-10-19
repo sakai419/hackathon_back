@@ -47,10 +47,7 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ s
 		return
 	}
 
-	// Convert to response
-	resp := convertToMessageResponse(messages)
-
-	utils.Respond(w, resp)
+	utils.Respond(w, convertToMessageResponse(messages))
 }
 
 // Send Message

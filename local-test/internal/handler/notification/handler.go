@@ -40,7 +40,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	utils.Respond(w, notifications)
+	utils.Respond(w, convertToNotificationResponse(notifications))
 }
 
 // Get unread notifications
@@ -63,10 +63,7 @@ func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *h
 		return
 	}
 
-	// Convert to response
-	resp := convertToNotificationResponse(notifications)
-
-	utils.Respond(w, resp)
+	utils.Respond(w, convertToNotificationResponse(notifications))
 }
 
 // Get unread notifications count
@@ -85,7 +82,7 @@ func (h *NotificationHandler) GetUnreadNotificationsCount(w http.ResponseWriter,
 		return
 	}
 
-	utils.Respond(w, count)
+	utils.Respond(w, Count{Count: count})
 }
 
 // Mark notification as read

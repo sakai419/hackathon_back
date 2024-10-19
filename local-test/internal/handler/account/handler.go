@@ -60,8 +60,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := CreateAccountResponse{Id: clientAccountID}
-	utils.Respond(w, resp)
+	utils.Respond(w, CreateAccountResponse{Id: clientAccountID})
 }
 
 // Delete my account

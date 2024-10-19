@@ -12,6 +12,12 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Count defines model for Count.
+type Count struct {
+	// Count The count of notifications
+	Count int64 `json:"count"`
+}
+
 // Notification defines model for Notification.
 type Notification struct {
 	// Content The content of the notification

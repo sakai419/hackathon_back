@@ -73,13 +73,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: object
-                                required:
-                                    - count
-                                properties:
-                                    count:
-                                        type: integer
-                                        description: The count of unread notifications
+                                $ref: "#/components/schemas/Count"
                 "400":
                     description: Bad request
                 "500":
@@ -117,6 +111,15 @@ paths:
 
 components:
     schemas:
+        Count:
+            type: object
+            required:
+                - count
+            properties:
+                count:
+                    type: integer
+                    format: int64
+                    description: The count of notifications
         UserInfo:
             type: object
             required:
