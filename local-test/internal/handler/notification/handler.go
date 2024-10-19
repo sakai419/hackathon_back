@@ -123,19 +123,25 @@ func (h *NotificationHandler) MarkAllNotificationsAsRead(w http.ResponseWriter, 
 	utils.Respond(w, nil)
 }
 
-// ErrHandleFunc handles errors
-func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
+// ErrorHandlerFunc is the error handler for the notification handler
+func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError
+	var requiredParamError *RequiredParamError
 	if errors.As(err, &invalidParamFormatError) {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusBadRequest,
-			Code:    "BAD_REQUEST",
-			Message: "Invalid parameter format",
-			Err:     err,
-		})
+		utils.RespondError(w, apperrors.NewInvalidParamFormatError(
+			invalidParamFormatError.ParamName,
+			invalidParamFormatError.Err,
+		))
+		return
+	} else if errors.As(err, &requiredParamError) {
+		utils.RespondError(w, apperrors.NewRequiredParamError(
+			requiredParamError.ParamName,
+			requiredParamError,
+		))
 		return
 	} else {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewUnexpectedError(err))
+		return
 	}
 }
 

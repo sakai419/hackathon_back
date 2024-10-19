@@ -68,7 +68,7 @@ func setUpReportRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 			middleware.AuthAndGetInfoMiddleware(repo, client),
 			middleware.AccountInfoMiddleware(repo),
 		},
-		ErrorHandlerFunc: report.ErrHandleFunc,
+		ErrorHandlerFunc: report.ErrorHandlerFunc,
 	}
 
 	// Register the report handler
@@ -87,7 +87,7 @@ func setUpFollowRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 			middleware.AuthAndGetInfoMiddleware(repo, client),
 			middleware.AccountInfoMiddleware(repo),
 		},
-		ErrorHandlerFunc: follow.ErrHandleFunc,
+		ErrorHandlerFunc: follow.ErrorHandlerFunc,
 	}
 
 	// Register the follow handler
@@ -105,7 +105,7 @@ func setUpNotificationRoutes(r *mux.Router, repo *repository.Repository, svc *se
 		Middlewares: []notification.MiddlewareFunc{
 			middleware.AuthAndGetInfoMiddleware(repo, client),
 		},
-		ErrorHandlerFunc: notification.ErrHandleFunc,
+		ErrorHandlerFunc: notification.ErrorHandlerFunc,
 	}
 
 	// Register the notification handler
@@ -141,7 +141,7 @@ func setUpMessageRoutes(r *mux.Router, repo *repository.Repository, svc *service
 			middleware.AuthAndGetInfoMiddleware(repo, client),
 			middleware.AccountInfoMiddleware(repo),
 		},
-		ErrorHandlerFunc: message.ErrHandleFunc,
+		ErrorHandlerFunc: message.ErrorHandlerFunc,
 	}
 
 	// Register the message handler
@@ -160,7 +160,7 @@ func setUpConversationRoutes(r *mux.Router, repo *repository.Repository, svc *se
 			middleware.AuthAndGetInfoMiddleware(repo, client),
 			middleware.AccountInfoMiddleware(repo),
 		},
-		ErrorHandlerFunc: conversation.ErrHandleFunc,
+		ErrorHandlerFunc: conversation.ErrorHandlerFunc,
 	}
 
 	// Register the conversation handler

@@ -91,19 +91,18 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
 	utils.Respond(w, nil)
 }
 
-func ErrHandleFunc(w http.ResponseWriter, r *http.Request, err error) {
-    var invalidParamFormatError *InvalidParamFormatError
-    if errors.As(err, &invalidParamFormatError) {
-        utils.RespondError(w, &apperrors.AppError{
-            Status:  http.StatusBadRequest,
-            Code:    "BAD_REQUEST",
-            Message: "Invalid parameter format",
-            Err:     err,
-        })
-        return
-    } else {
-        utils.RespondError(w, err)
-    }
+// ErrorHandlerFunc is the error handler for the report handler
+func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
+	var invalidParamFormatError *InvalidParamFormatError
+	if errors.As(err, &invalidParamFormatError) {
+		utils.RespondError(w, apperrors.NewInvalidParamFormatError(
+			invalidParamFormatError.ParamName,
+			invalidParamFormatError.Err,
+		))
+		return
+	}
+
+	utils.RespondError(w, apperrors.NewUnexpectedError(err))
 }
 
 func (r *CreateReportJSONRequestBody) validate() error {
