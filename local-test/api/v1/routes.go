@@ -173,7 +173,14 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	// Create a new router for the /api/v1 path
 	apiV1 := r.PathPrefix("/api/v1").Subrouter()
 	apiV1.Use(middleware.LoggingMiddleware)
+    apiV1.Use(middleware.EnableCorsMiddleware)
 
+    // Handle OPTIONS requests
+    apiV1.HandleFunc("/{any:.*}", func(w http.ResponseWriter, r *http.Request) {
+        http.NotFoundHandler().ServeHTTP(w, r)
+    }).Methods(http.MethodOptions)
+
+    // Create a new repository and service
 	repo := repository.NewRepository(db)
 	svc := service.NewService(repo)
 
@@ -186,5 +193,6 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpMessageRoutes(apiV1, repo, svc, client)
 	setUpConversationRoutes(apiV1, repo, svc, client)
 
-	return apiV1
+
+	return r
 }
