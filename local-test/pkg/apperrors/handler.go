@@ -1,6 +1,7 @@
 package apperrors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -59,6 +60,57 @@ func NewAuthenticateTokenError(err error) *AppError {
 			},
 		),
 	}
+}
+
+func NewDecodeError(err error) *AppError {
+    var invalidInputError *ErrInvalidInput
+    var emptyRequestError *ErrEmptyRequest
+    if errors.As(err, &invalidInputError) {
+        return &AppError{
+            Status:  http.StatusBadRequest,
+            Code:    "BAD_REQUEST",
+            Message: "Invalid input",
+            Err:     WrapHandlerError(
+                &ErrOperationFailed{
+                    Operation: "decode request",
+                    Err: invalidInputError,
+                },
+            ),
+        }
+    } else if errors.As(err, &emptyRequestError) {
+        return &AppError{
+            Status:  http.StatusBadRequest,
+            Code:    "BAD_REQUEST",
+            Message: "Empty request body",
+            Err:     WrapHandlerError(
+                &ErrOperationFailed{
+                    Operation: "decode request",
+                    Err: emptyRequestError,
+                },
+            ),
+        }
+    } else {
+        return &AppError{
+            Status:  http.StatusInternalServerError,
+            Code:    "INTERNAL_SERVER_ERROR",
+            Message: "Failed to decode request",
+            Err:     WrapHandlerError(
+                &ErrOperationFailed{
+                    Operation: "decode request",
+                    Err: err,
+                },
+            ),
+        }
+    }
+}
+
+func NewHandlerError(operation string, err error) error {
+    return WrapHandlerError(
+        &ErrOperationFailed{
+            Operation: operation,
+            Err: err,
+        },
+    )
 }
 
 func NewUnexpectedError(err error) *AppError {

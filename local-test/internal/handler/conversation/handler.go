@@ -35,7 +35,7 @@ func (h *ConversationHandler) GetConversations(w http.ResponseWriter, r *http.Re
 		Offset:          params.Offset,
 	})
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get conversations", err))
 		return
 	}
 
@@ -54,7 +54,7 @@ func (h *ConversationHandler) GetUnreadConversationCount(w http.ResponseWriter, 
 	// Get unread conversation count
 	count, err := h.svc.GetUnreadConversationCount(r.Context(), clientAccountID)
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get unread conversation count", err))
 		return
 	}
 

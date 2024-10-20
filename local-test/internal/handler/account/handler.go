@@ -30,17 +30,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 	// Decode request
 	var req CreateAccountJSONRequestBody
 	if err := utils.Decode(r, &req); err != nil {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusBadRequest,
-			Code:    "BAD_REQUEST",
-			Message: "Failed to decode request",
-			Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "decode request",
-					Err: err,
-				},
-			),
-		})
+		utils.RespondError(w, apperrors.NewDecodeError(err))
 		return
 	}
 
@@ -50,12 +40,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		UserID: 		 req.UserId,
 		UserName: 		 req.UserName,
 	}); err != nil {
-		utils.RespondError(w, apperrors.WrapHandlerError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create account",
-				Err: err,
-			},
-		))
+		utils.RespondError(w, apperrors.NewHandlerError("create account", err))
 		return
 	}
 
@@ -72,12 +57,7 @@ func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.svc.DeleteMyAccount(r.Context(), clientAccountID); err != nil {
-		utils.RespondError(w, apperrors.WrapHandlerError(
-			&apperrors.ErrOperationFailed{
-				Operation: "delete account",
-				Err: err,
-			},
-		))
+		utils.RespondError(w, apperrors.NewHandlerError("delete account", err))
 		return
 	}
 

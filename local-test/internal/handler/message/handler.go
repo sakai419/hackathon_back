@@ -42,7 +42,7 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ s
 		Offset:          params.Offset,
 	})
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get messages", err))
 		return
 	}
 
@@ -67,19 +67,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 	// Decode request
 	var params SendMessageJSONRequestBody
 	if err := utils.Decode(r, &params); err != nil {
-		utils.RespondError(w,
-			&apperrors.AppError{
-				Status:  http.StatusBadRequest,
-				Code:    "BAD_REQUEST",
-				Message: "Failed to decode request",
-				Err:     apperrors.WrapHandlerError(
-					&apperrors.ErrOperationFailed{
-						Operation: "decode request",
-						Err: err,
-					},
-				),
-			},
-		)
+		utils.RespondError(w, apperrors.NewDecodeError(err))
 		return
 	}
 
@@ -90,7 +78,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 		Content:         params.Content,
 	})
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("send message", err))
 		return
 	}
 
@@ -117,7 +105,7 @@ func (h *MessageHandler) MarkMessagesAsRead(w http.ResponseWriter, r *http.Reque
 		ClientAccountID: clidentAccountID,
 		TargetAccountID: targetAccountID,
 	}); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("mark messages as read", err))
 		return
 	}
 

@@ -44,7 +44,7 @@ func (h *FollowHandler) FollowAndNotify(w http.ResponseWriter, r *http.Request, 
 		FollowerAccountID:  clientAccountID,
 		FollowingAccountID: targetAccountID,
 	}); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("follow user", err))
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, _ strin
 		FollowerAccountID:  clientAccountID,
 		FollowingAccountID: targetAccountID,
 	}); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("unfollow user", err))
 		return
 	}
 
@@ -99,7 +99,7 @@ func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request,
 		Offset:             params.Offset,
 	})
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get followers", err))
 		return
 	}
 
@@ -126,7 +126,7 @@ func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request
 		Offset: 		   params.Offset,
 	})
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get followings", err))
 		return
 	}
 
@@ -161,7 +161,7 @@ func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Re
 		RequesterAccountID: clientAccountID,
 		RequestedAccountID: targetAccountID,
 	}); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("send follow request", err))
 		return
 	}
 
@@ -194,7 +194,7 @@ func (h *FollowHandler) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *h
 		RequesterAccountID: targetAccountID,
 	}
 	if err := h.svc.AcceptFollowRequestAndNotify(r.Context(), arg); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("accept follow request", err))
 		return
 	}
 
@@ -226,7 +226,7 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 		RequestedAccountID: clientAccountID,
 		RequesterAccountID: targetAccountID,
 	}); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("reject follow request", err))
 		return
 	}
 

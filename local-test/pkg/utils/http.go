@@ -16,22 +16,12 @@ type errorResponse struct {
 func Decode(r *http.Request, v interface{}) error {
     // Check if the request body is empty
     if r.Body == nil {
-        return &apperrors.AppError{
-            Status:  http.StatusBadRequest,
-            Code:    "EMPTY_BODY",
-            Message: "Request body is empty",
-            Err:     errors.New("empty request body"),
-        }
+        return &apperrors.ErrEmptyRequest{Message: "request body is empty"}
     }
 
     // Decode the request body
     if err := json.NewDecoder(r.Body).Decode(v); err != nil {
-        return &apperrors.AppError{
-            Status:  http.StatusBadRequest,
-            Code:    "INVALID_REQUEST",
-            Message: "Failed to decode request",
-            Err:     err,
-        }
+        return &apperrors.ErrInvalidInput{Message: "failed to decode request body"}
     }
     return nil
 }

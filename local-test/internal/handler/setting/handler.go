@@ -30,17 +30,7 @@ func (h *SettingHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 	// Decode request
 	var req UpdateSettingsJSONRequestBody
 	if err := utils.Decode(r, &req); err != nil {
-		utils.RespondError(w, &apperrors.AppError{
-			Status:  http.StatusBadRequest,
-			Code:    "BAD_REQUEST",
-			Message: "Failed to decode request",
-			Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "decode request",
-					Err: err,
-				},
-			),
-		})
+		utils.RespondError(w, apperrors.NewDecodeError(err))
 		return
 	}
 
@@ -49,12 +39,7 @@ func (h *SettingHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 		AccountID:       clientAccountID,
 		IsPrivate:       req.IsPrivate,
 	}); err != nil {
-		utils.RespondError(w, apperrors.WrapHandlerError(
-			&apperrors.ErrOperationFailed{
-				Operation: "update settings",
-				Err: err,
-			},
-		))
+		utils.RespondError(w, apperrors.NewHandlerError("update settings", err))
 	}
 
 	utils.Respond(w, nil)

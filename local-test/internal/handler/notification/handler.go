@@ -35,7 +35,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 		Offset:             params.Offset,
 	})
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get notifications", err))
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *h
 		Offset:             params.Offset,
 	})
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get unread notifications", err))
 		return
 	}
 
@@ -77,7 +77,7 @@ func (h *NotificationHandler) GetUnreadNotificationsCount(w http.ResponseWriter,
 	// Get unread notification count
 	count, err := h.svc.GetUnreadNotificationCount(r.Context(), clientAccountID)
 	if err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("get unread notification count", err))
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *h
 		RecipientAccountID: clientAccountID,
 		ID:                 notificationID,
 	}); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("mark notification as read", err))
 		return
 	}
 
@@ -116,7 +116,7 @@ func (h *NotificationHandler) MarkAllNotificationsAsRead(w http.ResponseWriter, 
 
 	// Mark all notifications as read
 	if err := h.svc.MarkAllNotificationsAsRead(r.Context(), clientAccountID); err != nil {
-		utils.RespondError(w, err)
+		utils.RespondError(w, apperrors.NewHandlerError("mark all notifications as read", err))
 		return
 	}
 

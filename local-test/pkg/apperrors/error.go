@@ -59,6 +59,16 @@ func (e *ErrForbidden) Error() string {
 	return fmt.Sprintf("forbidden: %s", e.Message)
 }
 
+// ErrEmptyRequest is a custom error type that indicates an empty result
+type ErrEmptyRequest struct {
+	Message string
+}
+
+func (e *ErrEmptyRequest) Error() string {
+	return fmt.Sprintf("empty request: %s", e.Message)
+}
+
+
 type AppError struct {
     Status  int
     Code    string

@@ -43,17 +43,7 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
     // Decode request
     var req CreateReportJSONRequestBody
     if err := utils.Decode(r, &req); err != nil {
-        utils.RespondError(w, &apperrors.AppError{
-            Status:  http.StatusBadRequest,
-            Code:    "BAD_REQUEST",
-            Message: "Failed to decode request",
-            Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "decode request",
-					Err: err,
-				},
-			),
-        })
+        utils.RespondError(w, apperrors.NewDecodeError(err))
         return
     }
 
@@ -79,12 +69,7 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
 		Reason:  model.ReportReason(req.Reason),
 		Content: sql.NullString{String: *req.Content, Valid: req.Content != nil && *req.Content != ""},
 	}); err != nil {
-        utils.RespondError(w, apperrors.WrapHandlerError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create report",
-				Err: err,
-			},
-		))
+        utils.RespondError(w, apperrors.NewHandlerError("create report", err))
         return
     }
 
