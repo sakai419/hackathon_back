@@ -25,14 +25,7 @@ func GetTargetInfoMiddleware(repo *repository.Repository) func(http.Handler) htt
 			ctx := r.Context()
 			pathAccountID, err := repo.GetAccountIDByUserID(ctx, userID)
             if err != nil {
-				utils.RespondError(w,
-					apperrors.WrapHandlerError(
-						&apperrors.ErrOperationFailed{
-							Operation: "get account_id by user_id",
-							Err: apperrors.NewNotFoundAppError("account_id", "get account_id by user_id", err),
-						},
-					),
-				)
+				utils.RespondError(w, apperrors.NewNotFoundAppError("account_id", "get account_id by user_id", err))
                 return
             }
 
@@ -42,14 +35,7 @@ func GetTargetInfoMiddleware(repo *repository.Repository) func(http.Handler) htt
 			// Get account info
 			accountInfo, err := repo.GetAccountInfo(ctx, pathAccountID)
 			if err != nil {
-				utils.RespondError(w,
-					apperrors.WrapHandlerError(
-						&apperrors.ErrOperationFailed{
-							Operation: "get account info",
-							Err: apperrors.NewNotFoundAppError("account info", "get account info", err),
-						},
-					),
-				)
+				utils.RespondError(w, apperrors.NewNotFoundAppError("account info", "get account info", err))
 				return
 			}
 

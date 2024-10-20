@@ -60,12 +60,7 @@ func AuthClientAndGetInfoMiddleware(repo *repository.Repository, client *auth.Cl
 			// Get account info
 			accountInfo, err := repo.GetAccountInfo(ctx, uid)
 			if err != nil {
-				utils.RespondError(w, apperrors.WrapHandlerError(
-					&apperrors.ErrOperationFailed{
-						Operation: "get account info",
-						Err:      apperrors.NewNotFoundAppError("account info", "get account info", err),
-					},
-				))
+				utils.RespondError(w, apperrors.NewNotFoundAppError("account info", "get account info", err))
 				return
 			}
 
