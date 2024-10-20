@@ -34,6 +34,12 @@ func (h *SettingHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Validate request
+	if err := utils.ValidateRequiredFields(req); err != nil {
+		utils.RespondError(w, apperrors.NewRequiredParamError("request body", err))
+		return
+	}
+
 	// Update settings
 	if err := h.svc.UpdateSettings(r.Context(), &model.UpdateSettingsParams{
 		AccountID:       clientAccountID,

@@ -36,6 +36,16 @@ func (e *ErrInvalidInput) Error() string {
 	return fmt.Sprintf("invalid input: %s", e.Message)
 }
 
+// ErrInvalidRequest is a custom error type that indicates an invalid request
+type ErrInvalidRequest struct {
+	Entity string
+	Err error
+}
+
+func (e *ErrInvalidRequest) Error() string {
+	return fmt.Sprintf("invalid request: %s is required: %v", e.Entity, e.Err)
+}
+
 // ErrDuplicateEntry is a custom error type that indicates a duplicate entry
 type ErrDuplicateEntry struct {
 	Entity string

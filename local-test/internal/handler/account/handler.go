@@ -34,6 +34,12 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate request
+	if err := utils.ValidateRequiredFields(req); err != nil {
+		utils.RespondError(w, apperrors.NewRequiredParamError("request body", err))
+		return
+	}
+
 	// Create account
 	if err := h.svc.CreateAccount(r.Context(), &model.CreateAccountParams{
 		ID:              clientAccountID,

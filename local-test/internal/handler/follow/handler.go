@@ -189,11 +189,10 @@ func (h *FollowHandler) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *h
 	}
 
 	// Accept follow request
-	arg := &model.AcceptFollowRequestAndNotifyParams{
+	if err := h.svc.AcceptFollowRequestAndNotify(r.Context(), &model.AcceptFollowRequestAndNotifyParams{
 		RequestedAccountID: clientAccountID,
 		RequesterAccountID: targetAccountID,
-	}
-	if err := h.svc.AcceptFollowRequestAndNotify(r.Context(), arg); err != nil {
+	}); err != nil {
 		utils.RespondError(w, apperrors.NewHandlerError("accept follow request", err))
 		return
 	}

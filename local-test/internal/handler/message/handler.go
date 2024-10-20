@@ -65,9 +65,15 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 	}
 
 	// Decode request
-	var params SendMessageJSONRequestBody
-	if err := utils.Decode(r, &params); err != nil {
+	var req SendMessageJSONRequestBody
+	if err := utils.Decode(r, &req); err != nil {
 		utils.RespondError(w, apperrors.NewDecodeError(err))
+		return
+	}
+
+	// Validate request
+	if err := utils.ValidateRequiredFields(req); err != nil {
+		utils.RespondError(w, apperrors.NewRequiredParamError("request body", err))
 		return
 	}
 
@@ -75,7 +81,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 	err := h.svc.SendMessage(r.Context(), &model.SendMessageParams{
 		ClientAccountID: clidentAccountID,
 		TargetAccountID: targetAccountID,
-		Content:         params.Content,
+		Content:         req.Content,
 	})
 	if err != nil {
 		utils.RespondError(w, apperrors.NewHandlerError("send message", err))

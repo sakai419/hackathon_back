@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"errors"
+	"fmt"
 	"local-test/internal/key"
 	"local-test/pkg/apperrors"
 	"net/http"
+	"reflect"
 )
 
 func GetClientAccountID(w http.ResponseWriter, r *http.Request) (string, bool) {
@@ -148,4 +151,28 @@ func IsTargetPrivate(w http.ResponseWriter, r *http.Request) bool {
 	}
 
 	return false
+}
+
+func ValidateRequiredFields(req interface{}) error {
+    v := reflect.ValueOf(req)
+    if v.Kind() != reflect.Struct {
+        return &apperrors.ErrInvalidRequest{
+            Entity: "All fields",
+            Err:    errors.New("provided value is not a struct"),
+        }
+    }
+
+    for i := 0; i < v.NumField(); i++ {
+        field := v.Field(i)
+        fieldType := v.Type().Field(i)
+
+        // ポインタ型ではない変数かつゼロ値の場合にエラーを返す
+        if fieldType.Type.Kind() != reflect.Ptr && field.IsZero() {
+            return &apperrors.ErrInvalidRequest{
+                Entity: fieldType.Name,
+                Err:    fmt.Errorf("%s is a zero value", fieldType.Name),
+            }
+        }
+    }
+    return nil
 }

@@ -48,19 +48,10 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
     }
 
     // Validate request
-    if err := req.validate(); err != nil {
-        utils.RespondError(w, &apperrors.AppError{
-            Status:  http.StatusBadRequest,
-            Code:    "BAD_REQUEST",
-            Message: "Invalid request",
-            Err:     apperrors.WrapHandlerError(
-				&apperrors.ErrOperationFailed{
-					Operation: "validate request",
-					Err: err,
-				},
-			),
-        })
-    }
+    if err := utils.ValidateRequiredFields(req); err != nil {
+		utils.RespondError(w, apperrors.NewRequiredParamError("request body", err))
+		return
+	}
 
     // Create report
     if err := h.svc.CreateReport(r.Context(), &model.CreateReportParams{
@@ -88,14 +79,4 @@ func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	utils.RespondError(w, apperrors.NewUnexpectedError(err))
-}
-
-func (r *CreateReportJSONRequestBody) validate() error {
-	if r.Reason == "" {
-		return &InvalidParamFormatError{
-			ParamName: "reason",
-			Err:   errors.New("reason is required"),
-		}
-	}
-	return nil
 }
