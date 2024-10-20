@@ -13,7 +13,7 @@ import (
 	"firebase.google.com/go/v4/auth"
 )
 
-func AuthMiddleware(client *auth.Client) func(http.Handler) http.Handler {
+func AuthClientMiddleware(client *auth.Client) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -58,7 +58,7 @@ func AuthMiddleware(client *auth.Client) func(http.Handler) http.Handler {
 	}
 }
 
-func AuthAndGetInfoMiddleware(repo *repository.Repository, client *auth.Client) func(http.Handler) http.Handler {
+func AuthClientAndGetInfoMiddleware(repo *repository.Repository, client *auth.Client) func(http.Handler) http.Handler {
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             authHeader := r.Header.Get("Authorization")
@@ -97,45 +97,18 @@ func AuthAndGetInfoMiddleware(repo *repository.Repository, client *auth.Client) 
             // Add the user ID to the request context
             ctx := context.WithValue(r.Context(), key.ClientAccountID, uid)
 
-			// Check if the user is suspended
-			isClientSuspended, err := repo.IsSuspended(ctx, uid)
+			// Get account info
+			accountInfo, err := repo.GetAccountInfo(ctx, uid)
 			if err != nil {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusInternalServerError,
-						Code:   "INTERNAL_SERVER_ERROR",
-						Message: "Failed to get is_suspended",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "get is_suspended",
-							Err: err,
-						},
-					},
-				)
+				utils.RespondError(w, apperrors.NewNotFoundAppError("account info", "get account info", err))
 				return
 			}
 
 			// Add the is_suspended flag to the request context
-			ctx = context.WithValue(ctx, key.IsClientSuspended, isClientSuspended)
-
-			// Check if the user is admin
-			isAdmin, err := repo.IsAdmin(ctx, uid)
-			if err != nil {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusInternalServerError,
-						Code:   "INTERNAL_SERVER_ERROR",
-						Message: "Failed to get is_admin",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "get is_admin",
-							Err: err,
-						},
-					},
-				)
-				return
-			}
+			ctx = context.WithValue(ctx, key.IsClientSuspended, accountInfo.IsSuspended)
 
 			// Add the is_admin flag to the request context
-			ctx = context.WithValue(ctx, key.IsAdmin, isAdmin)
+			ctx = context.WithValue(ctx, key.IsClientAdmin, accountInfo.IsAdmin)
 
 			// Call the next handler
             next.ServeHTTP(w, r.WithContext(ctx))

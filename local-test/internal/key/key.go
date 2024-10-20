@@ -9,9 +9,9 @@ type ctxKey string
 
 const (
 	ClientAccountID ctxKey = "client_account_id"
-	PathUserID ctxKey = "user_id"
-	PathAccountID ctxKey = "account_id"
-	IsAdmin ctxKey = "is_admin"
+	TargetAccountID ctxKey = "account_id"
+	IsClientAdmin ctxKey = "is_client_admin"
+	IsTargetPrivate ctxKey = "is_target_private"
 	IsTargetSuspended ctxKey = "is_target_suspended"
 	IsClientSuspended ctxKey = "is_client_suspended"
 )
@@ -25,19 +25,27 @@ func GetClientAccountID(ctx context.Context) (string, error) {
 }
 
 func GetTargetAccountID(ctx context.Context) (string, error) {
-	id, ok := ctx.Value(PathAccountID).(string)
+	id, ok := ctx.Value(TargetAccountID).(string)
 	if !ok {
 		return "", errors.New("account_id not found in context")
 	}
 	return id, nil
 }
 
-func GetIsAdmin(ctx context.Context) (bool, error) {
-	isAdmin, ok := ctx.Value(IsAdmin).(bool)
+func GetIsClientAdmin(ctx context.Context) (bool, error) {
+	isAdmin, ok := ctx.Value(IsClientAdmin).(bool)
 	if !ok {
 		return false, errors.New("is_admin not found in context")
 	}
 	return isAdmin, nil
+}
+
+func GetIsTargetPrivate(ctx context.Context) (bool, error) {
+	isPrivate, ok := ctx.Value(IsTargetPrivate).(bool)
+	if !ok {
+		return false, errors.New("is_private not found in context")
+	}
+	return isPrivate, nil
 }
 
 func GetIsTargetSuspended(ctx context.Context) (bool, error) {

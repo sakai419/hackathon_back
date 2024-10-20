@@ -217,30 +217,32 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.U
 	return userAndProfileInfos, nil
 }
 
-func (r *Repository) IsAdmin(ctx context.Context, accountID string) (bool, error) {
-	isAdmin, err := r.q.IsAdmin(ctx, accountID)
+func (r *Repository) GetAccountInfo(ctx context.Context, accountID string) (*model.AccountInfo, error) {
+	// Get account info
+	res, err := r.q.GetAccountInfo(ctx, accountID)
 	if err != nil {
-		return false, apperrors.WrapRepositoryError(
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.WrapRepositoryError(
+				&apperrors.ErrRecordNotFound{
+					Condition: "account id",
+				},
+			)
+		}
+
+		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
-				Operation: "get admin status",
+				Operation: "get account info",
 				Err: err,
 			},
 		)
 	}
 
-	return isAdmin, nil
-}
-
-func (r *Repository) IsSuspended(ctx context.Context, accountID string) (bool, error) {
-	isSuspended, err := r.q.IsSuspended(ctx, accountID)
-	if err != nil {
-		return false, apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "get suspended status",
-				Err: err,
-			},
-		)
+	// Convert to model
+	accountInfo := &model.AccountInfo{
+		IsAdmin : res.IsAdmin,
+		IsSuspended : res.IsSuspended,
+		IsPrivate : res.IsPrivate,
 	}
 
-	return isSuspended, nil
+	return accountInfo, nil
 }

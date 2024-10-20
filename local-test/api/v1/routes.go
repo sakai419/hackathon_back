@@ -48,7 +48,7 @@ func setUpAccountRoutes(r *mux.Router, svc *service.Service, client *auth.Client
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []account.MiddlewareFunc{
-			middleware.AuthMiddleware(client),
+			middleware.AuthClientMiddleware(client),
 		},
 	}
 
@@ -65,8 +65,8 @@ func setUpReportRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []report.MiddlewareFunc{
-			middleware.AuthAndGetInfoMiddleware(repo, client),
-			middleware.AccountInfoMiddleware(repo),
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: report.ErrorHandlerFunc,
 	}
@@ -84,8 +84,8 @@ func setUpFollowRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []follow.MiddlewareFunc{
-			middleware.AuthAndGetInfoMiddleware(repo, client),
-			middleware.AccountInfoMiddleware(repo),
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: follow.ErrorHandlerFunc,
 	}
@@ -103,7 +103,7 @@ func setUpNotificationRoutes(r *mux.Router, repo *repository.Repository, svc *se
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []notification.MiddlewareFunc{
-			middleware.AuthAndGetInfoMiddleware(repo, client),
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
 		},
 		ErrorHandlerFunc: notification.ErrorHandlerFunc,
 	}
@@ -121,7 +121,7 @@ func setUpSettingRoutes(r *mux.Router, repo *repository.Repository, svc *service
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []setting.MiddlewareFunc{
-			middleware.AuthAndGetInfoMiddleware(repo, client),
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
 		},
 	}
 
@@ -138,8 +138,8 @@ func setUpMessageRoutes(r *mux.Router, repo *repository.Repository, svc *service
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []message.MiddlewareFunc{
-			middleware.AuthAndGetInfoMiddleware(repo, client),
-			middleware.AccountInfoMiddleware(repo),
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: message.ErrorHandlerFunc,
 	}
@@ -157,8 +157,8 @@ func setUpConversationRoutes(r *mux.Router, repo *repository.Repository, svc *se
 		BaseURL: "",
 		BaseRouter: r,
 		Middlewares: []conversation.MiddlewareFunc{
-			middleware.AuthAndGetInfoMiddleware(repo, client),
-			middleware.AccountInfoMiddleware(repo),
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: conversation.ErrorHandlerFunc,
 	}

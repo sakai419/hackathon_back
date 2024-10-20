@@ -49,6 +49,26 @@ func (q *Queries) GetAccountIDByUserID(ctx context.Context, userID string) (stri
 	return id, err
 }
 
+const getAccountInfo = `-- name: GetAccountInfo :one
+SELECT a.is_suspended, a.is_admin, s.is_private
+FROM accounts a
+JOIN settings s ON a.id = s.account_id
+WHERE a.id = $1
+`
+
+type GetAccountInfoRow struct {
+	IsSuspended bool
+	IsAdmin     bool
+	IsPrivate   bool
+}
+
+func (q *Queries) GetAccountInfo(ctx context.Context, id string) (GetAccountInfoRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccountInfo, id)
+	var i GetAccountInfoRow
+	err := row.Scan(&i.IsSuspended, &i.IsAdmin, &i.IsPrivate)
+	return i, err
+}
+
 const getUserInfos = `-- name: GetUserInfos :many
 SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a

@@ -50,3 +50,9 @@ type UserInfoWithoutBio struct {
 	UserName        string
 	ProfileImageURL string
 }
+
+type AccountInfo struct {
+	IsAdmin	    bool
+	IsSuspended bool
+	IsPrivate   bool
+}

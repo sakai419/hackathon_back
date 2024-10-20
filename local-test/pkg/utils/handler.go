@@ -115,3 +115,37 @@ func IsTargetSuspended(w http.ResponseWriter, r *http.Request) bool {
 
 	return false
 }
+
+func IsTargetPrivate(w http.ResponseWriter, r *http.Request) bool {
+	isTargetPrivate, err := key.GetIsTargetPrivate(r.Context())
+	if err != nil {
+		RespondError(w, &apperrors.AppError{
+			Status:  http.StatusInternalServerError,
+			Code:    "INTERNAL_SERVER_ERROR",
+			Message: "Failed to get is_private",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get is_private",
+					Err: err,
+				},
+			),
+		})
+		return true
+	}
+
+	if isTargetPrivate {
+		RespondError(w, &apperrors.AppError{
+			Status:  http.StatusForbidden,
+			Code:    "FORBIDDEN",
+			Message: "User is private",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrForbidden{
+					Message: "User is private",
+				},
+			),
+		})
+		return true
+	}
+
+	return false
+}

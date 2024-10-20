@@ -56,3 +56,9 @@ WHERE id = $1;
 -- name: IsSuspended :one
 SELECT is_suspended FROM accounts
 WHERE id = $1;
+
+-- name: GetAccountInfo :one
+SELECT a.is_suspended, a.is_admin, s.is_private
+FROM accounts a
+JOIN settings s ON a.id = s.account_id
+WHERE a.id = $1;

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func AccountInfoMiddleware(repo *repository.Repository) func(http.Handler) http.Handler {
+func GetTargetInfoMiddleware(repo *repository.Repository) func(http.Handler) http.Handler {
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID := mux.Vars(r)["user_id"]
@@ -63,27 +63,20 @@ func AccountInfoMiddleware(repo *repository.Repository) func(http.Handler) http.
             }
 
             // set account_id in context
-            ctx = context.WithValue(ctx, key.PathAccountID, pathAccountID)
+            ctx = context.WithValue(ctx, key.TargetAccountID, pathAccountID)
 
-			// Check if account is suspended
-			isTargetSuspended, err := repo.IsSuspended(ctx, pathAccountID)
+			// Get account info
+			accountInfo, err := repo.GetAccountInfo(ctx, pathAccountID)
 			if err != nil {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusInternalServerError,
-						Code:   "INTERNAL_SERVER_ERROR",
-						Message: "Failed to check if account is suspended",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "check if account is suspended",
-							Err: err,
-						},
-					},
-				)
+				utils.RespondError(w, apperrors.NewNotFoundAppError("account info", "get account info", err))
 				return
 			}
 
 			// set is_suspended in context
-			ctx = context.WithValue(ctx, key.IsTargetSuspended, isTargetSuspended)
+			ctx = context.WithValue(ctx, key.IsTargetSuspended, accountInfo.IsSuspended)
+
+			// set is_private in context
+			ctx = context.WithValue(ctx, key.IsTargetPrivate, accountInfo.IsPrivate)
 
 			// Call the next handler, which can be another middleware in the chain, or the final handler.
             next.ServeHTTP(w, r.WithContext(ctx))
