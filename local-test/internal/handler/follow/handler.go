@@ -23,7 +23,7 @@ func NewFollowHandler(svc *service.Service) ServerInterface {
 // (POST /users/{user_id}/follow)
 func (h *FollowHandler) FollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
-	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) {
+	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) || utils.IsTargetPrivate(w, r) {
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request
 // (POST /users/{user_id}/follow-request)
 func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
-	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) {
+	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) || !utils.IsTargetPrivate(w, r) {
 		return
 	}
 
