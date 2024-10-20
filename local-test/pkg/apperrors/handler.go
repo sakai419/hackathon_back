@@ -33,6 +33,34 @@ func NewRequiredParamError(param string, err error) *AppError {
 	}
 }
 
+func NewGetAuthHeaderError() *AppError {
+	return &AppError{
+		Status: http.StatusUnauthorized,
+		Code:   "UNAUTHORIZED",
+		Message: "Authorization header is required",
+		Err:    WrapHandlerError(
+			&ErrOperationFailed{
+				Operation: "get authorization header",
+				Err:      fmt.Errorf("authorization header is required"),
+			},
+		),
+	}
+}
+
+func NewAuthenticateTokenError(err error) *AppError {
+	return &AppError{
+		Status: http.StatusUnauthorized,
+		Code:   "UNAUTHORIZED",
+		Message: "Failed to authenticate token",
+		Err:    WrapHandlerError(
+			&ErrOperationFailed{
+				Operation: "authenticate token",
+				Err:      err,
+			},
+		),
+	}
+}
+
 func NewUnexpectedError(err error) *AppError {
 	return &AppError{
 		Status:  http.StatusInternalServerError,

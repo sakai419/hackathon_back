@@ -18,34 +18,14 @@ func AuthClientMiddleware(client *auth.Client) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusUnauthorized,
-						Code:   "UNAUTHORIZED",
-						Message: "Authorization header is required",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "get authorization header",
-							Err: fmt.Errorf("authorization header is required"),
-						},
-					},
-				)
+				utils.RespondError(w, apperrors.NewGetAuthHeaderError())
 				return
 			}
 
 			token := strings.TrimPrefix(authHeader, "Bearer ")
 			uid, err := authenticate(token, client)
 			if err != nil {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusUnauthorized,
-						Code:   "UNAUTHORIZED",
-						Message: "Failed to authenticate token",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "authenticate token",
-							Err: err,
-						},
-					},
-				)
+				utils.RespondError(w, apperrors.NewAuthenticateTokenError(err))
 				return
 			}
 
@@ -63,34 +43,14 @@ func AuthClientAndGetInfoMiddleware(repo *repository.Repository, client *auth.Cl
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             authHeader := r.Header.Get("Authorization")
             if authHeader == "" {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusUnauthorized,
-						Code:   "UNAUTHORIZED",
-						Message: "Authorization header is required",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "get authorization header",
-							Err: fmt.Errorf("authorization header is required"),
-						},
-					},
-				)
+				utils.RespondError(w, apperrors.NewGetAuthHeaderError())
                 return
             }
 
             token := strings.TrimPrefix(authHeader, "Bearer ")
             uid, err := authenticate(token, client)
             if err != nil {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusUnauthorized,
-						Code:   "UNAUTHORIZED",
-						Message: "Failed to authenticate token",
-						Err:    &apperrors.ErrOperationFailed{
-							Operation: "authenticate token",
-							Err: err,
-						},
-					},
-				)
+				utils.RespondError(w, apperrors.NewAuthenticateTokenError(err))
                 return
             }
 
@@ -100,7 +60,12 @@ func AuthClientAndGetInfoMiddleware(repo *repository.Repository, client *auth.Cl
 			// Get account info
 			accountInfo, err := repo.GetAccountInfo(ctx, uid)
 			if err != nil {
-				utils.RespondError(w, apperrors.NewNotFoundAppError("account info", "get account info", err))
+				utils.RespondError(w, apperrors.WrapHandlerError(
+					&apperrors.ErrOperationFailed{
+						Operation: "get account info",
+						Err:      apperrors.NewNotFoundAppError("account info", "get account info", err),
+					},
+				))
 				return
 			}
 

@@ -17,16 +17,7 @@ func GetTargetInfoMiddleware(repo *repository.Repository) func(http.Handler) htt
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID := mux.Vars(r)["user_id"]
 			if userID == "" {
-				utils.RespondError(w,
-					&apperrors.AppError{
-						Status: http.StatusBadRequest,
-						Code:   "BAD_REQUEST",
-						Message: "User ID is required",
-						Err:    &apperrors.ErrInvalidInput{
-							Message: "User ID is required",
-						},
-					},
-				)
+				utils.RespondError(w, apperrors.NewRequiredParamError("user_id", errors.New("user_id is required")))
 				return
 			}
 
@@ -34,31 +25,14 @@ func GetTargetInfoMiddleware(repo *repository.Repository) func(http.Handler) htt
 			ctx := r.Context()
 			pathAccountID, err := repo.GetAccountIDByUserID(ctx, userID)
             if err != nil {
-				if errors.Is(err, &apperrors.ErrRecordNotFound{}) {
-					utils.RespondError(w,
-						&apperrors.AppError{
-							Status: http.StatusNotFound,
-							Code:   "ACCOUNT_NOT_FOUND",
-							Message: "Account not found",
-							Err:    &apperrors.ErrOperationFailed{
-								Operation: "get account_id by user_id",
-								Err: err,
-							},
+				utils.RespondError(w,
+					apperrors.WrapHandlerError(
+						&apperrors.ErrOperationFailed{
+							Operation: "get account_id by user_id",
+							Err: apperrors.NewNotFoundAppError("account_id", "get account_id by user_id", err),
 						},
-					)
-				} else {
-					utils.RespondError(w,
-						&apperrors.AppError{
-							Status: http.StatusInternalServerError,
-							Code:   "INTERNAL_SERVER_ERROR",
-							Message: "Failed to get account_id by user_id",
-							Err:    &apperrors.ErrOperationFailed{
-								Operation: "get account_id by user_id",
-								Err: err,
-							},
-						},
-					)
-				}
+					),
+				)
                 return
             }
 
@@ -68,7 +42,14 @@ func GetTargetInfoMiddleware(repo *repository.Repository) func(http.Handler) htt
 			// Get account info
 			accountInfo, err := repo.GetAccountInfo(ctx, pathAccountID)
 			if err != nil {
-				utils.RespondError(w, apperrors.NewNotFoundAppError("account info", "get account info", err))
+				utils.RespondError(w,
+					apperrors.WrapHandlerError(
+						&apperrors.ErrOperationFailed{
+							Operation: "get account info",
+							Err: apperrors.NewNotFoundAppError("account info", "get account info", err),
+						},
+					),
+				)
 				return
 			}
 
