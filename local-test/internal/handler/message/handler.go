@@ -52,6 +52,11 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ s
 // Send Message
 // (POST /messages/{user_id})
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ string) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) {
+		return
+	}
+
 	// Get client account ID
 	clidentAccountID, ok := utils.GetClientAccountID(w, r)
 	if !ok {
