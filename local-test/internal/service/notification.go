@@ -19,12 +19,7 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 	}
 
 	// Get sender info
-	var senderAccountIDs []string
-	for _, notification := range notifications {
-		if notification.SenderAccountID != nil {
-			senderAccountIDs = append(senderAccountIDs, *notification.SenderAccountID)
-		}
-	}
+	senderAccountIDs := convertToSenderAccountIDs(notifications)
 	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
@@ -48,13 +43,9 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnre
 		return nil, err
 	}
 
+
 	// Get sender info
-	var senderAccountIDs []string
-	for _, notification := range notifications {
-		if notification.SenderAccountID != nil {
-			senderAccountIDs = append(senderAccountIDs, *notification.SenderAccountID)
-		}
-	}
+    senderAccountIDs := convertToSenderAccountIDs(notifications)
 	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
@@ -92,6 +83,21 @@ func (s *Service) MarkAllNotificationsAsRead(ctx context.Context, recipientAccou
 	}
 
 	return nil
+}
+
+func convertToSenderAccountIDs(notifications []*model.Notification) []string {
+	accountIDMap := make(map[string]bool)
+	senderAccountIDs := make([]string, 0)
+	for _, notification := range notifications {
+		if notification.SenderAccountID != nil {
+			if !accountIDMap[*notification.SenderAccountID] {
+				accountIDMap[*notification.SenderAccountID] = true
+				senderAccountIDs = append(senderAccountIDs, *notification.SenderAccountID)
+			}
+		}
+	}
+
+	return senderAccountIDs
 }
 
 func convertToNotificationResponse(notifications []*model.Notification, senderInfos []*model.UserInfoInternal) []*model.NotificationResponse {
