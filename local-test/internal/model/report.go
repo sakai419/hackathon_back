@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"local-test/pkg/apperrors"
 )
 
@@ -17,9 +16,9 @@ const (
 // CreateReport
 type CreateReportParams struct {
 	ReporterAccountID string
-	ReportedAccountID    string
+	ReportedAccountID string
 	Reason            ReportReason
-	Content           sql.NullString
+	Content           *string
 }
 
 func (p *CreateReportParams) Validate() error {
@@ -33,9 +32,9 @@ func (p *CreateReportParams) Validate() error {
 	case ReportReasonSpam, ReportReasonHarrassment, ReportReasonInappropriateContent:
 		return nil
 	case ReportReasonOther:
-		if !p.Content.Valid || p.Content.String == "" {
+		if p.Content == nil {
 			return &apperrors.ErrInvalidInput{
-				Message: "content is required for other report reason",
+				Message: "content is required for 'other' report reason",
 			}
 		}
 	default:

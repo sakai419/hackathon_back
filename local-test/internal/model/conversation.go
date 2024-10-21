@@ -52,6 +52,6 @@ type ConversationResponse struct {
 	OpponentInfo    UserInfoWithoutBio
 	LastMessageTime time.Time
 	Content         string
-	SenderUserID        string
+	SenderUserID    string
 	IsRead	        bool
 }

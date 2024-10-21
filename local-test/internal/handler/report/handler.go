@@ -1,7 +1,6 @@
 package report
 
 import (
-	"database/sql"
 	"errors"
 	"local-test/internal/model"
 	"local-test/internal/service"
@@ -58,7 +57,7 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
 		ReporterAccountID: clientAccountID,
 		ReportedAccountID: targetAccountID,
 		Reason:  model.ReportReason(req.Reason),
-		Content: sql.NullString{String: *req.Content, Valid: req.Content != nil && *req.Content != ""},
+		Content: req.Content,
 	}); err != nil {
         utils.RespondError(w, apperrors.NewHandlerError("create report", err))
         return
