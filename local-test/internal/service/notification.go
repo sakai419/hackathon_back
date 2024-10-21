@@ -33,7 +33,6 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 	// Convert to response
 	notificationsResponse := convertToNotificationResponse(notifications, senderInfos)
 
-
 	return notificationsResponse, nil
 }
 
@@ -103,7 +102,7 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 	}
 
 	// Convert to response
-	items := make([]*model.NotificationResponse, len(notifications))
+	items := []*model.NotificationResponse{}
 	for _, notification := range notifications {
 		item := &model.NotificationResponse{
 			ID:        notification.ID,
