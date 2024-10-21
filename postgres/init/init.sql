@@ -373,13 +373,12 @@ CREATE TYPE report_reason AS ENUM (
 );
 
 CREATE TABLE reports (
-    id BIGINT NOT NULL,
+    id BIGSERIAL PRIMARY KEY,
     reporter_account_id CHAR(28) NOT NULL,
     reported_account_id CHAR(28) NOT NULL,
     reason report_reason NOT NULL,
     content TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
     CONSTRAINT fk_reports_reporter_account_id FOREIGN KEY (reporter_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE,
     CONSTRAINT fk_reports_reported_account_id FOREIGN KEY (reported_account_id)
