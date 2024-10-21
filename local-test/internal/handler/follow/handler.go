@@ -136,6 +136,63 @@ func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request
 	utils.Respond(w, resp)
 }
 
+// Get followers count
+// (GET /users/{user_id}/followers/count)
+func (h *FollowHandler) GetFollowerCount(w http.ResponseWriter, r *http.Request, _ string) {
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get followers count
+	count, err := h.svc.GetFollowersCount(r.Context(), targetAccountID)
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get followers count", err))
+		return
+	}
+
+	utils.Respond(w, Count{Count: count})
+}
+
+// Get followings count
+// (GET /users/{user_id}/followings/count)
+func (h *FollowHandler) GetFollowingCount(w http.ResponseWriter, r *http.Request, _ string) {
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get followings count
+	count, err := h.svc.GetFollowingsCount(r.Context(), targetAccountID)
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get followings count", err))
+		return
+	}
+
+	utils.Respond(w, Count{Count: count})
+}
+
+// Get follow requests count
+// (GET /users/me/follow-requests/count)
+func (h *FollowHandler) GetFollowRequestCount(w http.ResponseWriter, r *http.Request) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get follow requests count
+	count, err := h.svc.GetFollowRequestsCount(r.Context(), clientAccountID)
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get follow requests count", err))
+		return
+	}
+
+	utils.Respond(w, Count{Count: count})
+}
+
 // Send follow request
 // (POST /users/{user_id}/follow-request)
 func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {

@@ -52,6 +52,7 @@ func (r *Repository) GetUnreadNotifications(ctx context.Context, params *model.G
 }
 
 func (r *Repository) GetUnreadNotificationCount(ctx context.Context, accountID string) (int64, error) {
+	// Get unread notification count
 	count, err := r.q.GetUnreadNotificationCount(ctx, accountID)
 	if err != nil {
 		return 0, apperrors.WrapRepositoryError(

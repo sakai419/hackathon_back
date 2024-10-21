@@ -161,6 +161,66 @@ paths:
                 "500":
                     description: Internal server error
 
+    /users/{user_id}/follower/count:
+        get:
+            summary: Get the number of followers of a user
+            operationId: GetFollowerCount
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follower count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Count"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/following/count:
+        get:
+            summary: Get the number of users followed by a user
+            operationId: GetFollowingCount
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Following count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Count"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/me/follow-request/count:
+        get:
+            summary: Get the number of follow requests sent to the user
+            operationId: GetFollowRequestCount
+            responses:
+                "200":
+                    description: Follow request count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Count"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         UserInfo:
@@ -188,3 +248,12 @@ components:
             type: array
             items:
                 $ref: "#/components/schemas/UserInfo"
+        Count:
+            type: object
+            properties:
+                count:
+                    type: integer
+                    format: int64
+                    description: The count of notifications.
+            required:
+                - count

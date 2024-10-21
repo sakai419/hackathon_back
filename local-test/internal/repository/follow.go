@@ -113,43 +113,6 @@ func (r *Repository) Unfollow(ctx context.Context, params *model.UnfollowParams)
 	return nil
 }
 
-func (r *Repository) GetFollowerAccountIDs(ctx context.Context, params *model.GetFollowerAccountIDsParams) ([]string, error) {
-	// Get follower account ids
-	followerAccountIDs, err := r.q.GetFollowerAccountIDs(ctx, sqlcgen.GetFollowerAccountIDsParams{
-		FollowingAccountID: params.FollowingAccountID,
-		Limit: params.Limit,
-		Offset: params.Offset,
-	})
-	if err != nil {
-		return nil, apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "get follower account ids",
-				Err: err,
-			},
-		)
-	}
-
-	return followerAccountIDs, nil
-}
-
-func (r *Repository) GetFollowingAccountIDs(ctx context.Context, params *model.GetFollowingAccountIDsParams) ([]string, error) {
-	// Get following account ids
-	followingAccountIDs, err := r.q.GetFollowingAccountIDs(ctx, sqlcgen.GetFollowingAccountIDsParams{
-		FollowerAccountID: params.FollowerAccountID,
-		Limit: params.Limit,
-		Offset: params.Offset,
-	})
-	if err != nil {
-		return nil, apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "get following account ids",
-				Err: err,
-			},
-		)
-	}
-
-	return followingAccountIDs, nil
-}
 
 func (r *Repository) RequestFollowAndNotify(ctx context.Context, params *model.RequestFollowAndNotifyParams) error {
 	// Begin transaction
@@ -170,24 +133,24 @@ func (r *Repository) RequestFollowAndNotify(ctx context.Context, params *model.R
 	if err := q.CreateFollowRequest(ctx, sqlcgen.CreateFollowRequestParams{
 		FollowerAccountID: params.RequesterAccountID,
 		FollowingAccountID: params.RequestedAccountID,
-	}); err != nil {
-		tx.Rollback()
-		if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
+		}); err != nil {
+			tx.Rollback()
+			if err.(*pq.Error).Code == ErrCodeDuplicateEntry {
+				return apperrors.WrapRepositoryError(
+					&apperrors.ErrDuplicateEntry{
+						Entity: "requester/requested account id",
+						Err: err,
+					},
+				)
+			}
+
 			return apperrors.WrapRepositoryError(
-				&apperrors.ErrDuplicateEntry{
-					Entity: "requester/requested account id",
+				&apperrors.ErrOperationFailed{
+					Operation: "create follow request",
 					Err: err,
 				},
 			)
 		}
-
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create follow request",
-				Err: err,
-			},
-		)
-	}
 
 	// Notify requested user
 	if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
@@ -272,61 +235,144 @@ func (r *Repository) AcceptFollowRequestAndNotify(ctx context.Context, params *m
 		SenderAccountID: sql.NullString{String: params.RequestedAccountID, Valid: true},
 		RecipientAccountID: params.RequesterAccountID,
 		Type: sqlcgen.NotificationTypeRequestAccepted,
-	}); err != nil {
-		tx.Rollback()
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create notification",
-				Err: err,
-			},
-		)
+		}); err != nil {
+			tx.Rollback()
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "create notification",
+					Err: err,
+				},
+			)
+		}
+
+		// Commit transaction
+		if err := tx.Commit(); err != nil {
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "commit transaction",
+					Err: err,
+				},
+			)
+		}
+
+		return nil
 	}
 
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "commit transaction",
-				Err: err,
-			},
-		)
+	func (r *Repository) RejectFollowRequest(ctx context.Context, params *model.RejectFollowRequestParams) error {
+		// Delete follow request
+		res, err := r.q.DeleteFollowRequest(ctx, sqlcgen.DeleteFollowRequestParams{
+			FollowerAccountID: params.RequesterAccountID,
+			FollowingAccountID: params.RequestedAccountID,
+		})
+		if err != nil {
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "delete follow request",
+					Err: err,
+				},
+			)
+		}
+
+		// Check if follow request is deleted
+		num, err := res.RowsAffected()
+		if err != nil {
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "check if follow request is deleted",
+					Err: err,
+				},
+			)
+		}
+		if num == 0 {
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrRecordNotFound{
+					Condition: "follow request",
+				},
+			)
+		}
+
+		return nil
 	}
 
-	return nil
-}
-
-func (r *Repository) RejectFollowRequest(ctx context.Context, params *model.RejectFollowRequestParams) error {
-	// Delete follow request
-	res, err := r.q.DeleteFollowRequest(ctx, sqlcgen.DeleteFollowRequestParams{
-		FollowerAccountID: params.RequesterAccountID,
-		FollowingAccountID: params.RequestedAccountID,
+func (r *Repository) GetFollowerAccountIDs(ctx context.Context, params *model.GetFollowerAccountIDsParams) ([]string, error) {
+	// Get follower account ids
+	followerAccountIDs, err := r.q.GetFollowerAccountIDs(ctx, sqlcgen.GetFollowerAccountIDsParams{
+		FollowingAccountID: params.FollowingAccountID,
+		Limit: params.Limit,
+		Offset: params.Offset,
 	})
 	if err != nil {
-		return apperrors.WrapRepositoryError(
+		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
-				Operation: "delete follow request",
+				Operation: "get follower account ids",
 				Err: err,
 			},
 		)
 	}
 
-	// Check if follow request is deleted
-	num, err := res.RowsAffected()
+	return followerAccountIDs, nil
+}
+
+func (r *Repository) GetFollowingAccountIDs(ctx context.Context, params *model.GetFollowingAccountIDsParams) ([]string, error) {
+	// Get following account ids
+	followingAccountIDs, err := r.q.GetFollowingAccountIDs(ctx, sqlcgen.GetFollowingAccountIDsParams{
+		FollowerAccountID: params.FollowerAccountID,
+		Limit: params.Limit,
+		Offset: params.Offset,
+	})
 	if err != nil {
-		return apperrors.WrapRepositoryError(
+		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
-				Operation: "check if follow request is deleted",
+				Operation: "get following account ids",
 				Err: err,
 			},
 		)
 	}
-	if num == 0 {
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrRecordNotFound{
-				Condition: "follow request",
+
+	return followingAccountIDs, nil
+}
+
+func (r *Repository) GetFollowerCount(ctx context.Context, accountID string) (int64, error) {
+	// Get followers count
+	count, err := r.q.GetFollowerCount(ctx, accountID)
+	if err != nil {
+		return 0, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get followers count",
+				Err: err,
 			},
 		)
 	}
 
-	return nil
+	return count, nil
+}
+
+func (r *Repository) GetFollowingCount(ctx context.Context, accountID string) (int64, error) {
+	// Get followings count
+	count, err := r.q.GetFollowingCount(ctx, accountID)
+	if err != nil {
+		return 0, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get followings count",
+				Err: err,
+			},
+		)
+	}
+
+	return count, nil
+}
+
+func (r *Repository) GetFollowRequestCount(ctx context.Context, accountID string) (int64, error) {
+	// Get follow requests count
+	count, err := r.q.GetFollowRequestCount(ctx, accountID)
+	if err != nil {
+		return 0, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get follow requests count",
+				Err: err,
+			},
+		)
+	}
+
+	return count, nil
 }

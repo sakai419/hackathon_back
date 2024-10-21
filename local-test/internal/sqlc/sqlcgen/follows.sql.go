@@ -84,6 +84,19 @@ func (q *Queries) DeleteFollowRequest(ctx context.Context, arg DeleteFollowReque
 	return q.db.ExecContext(ctx, deleteFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
+const getFollowRequestCount = `-- name: GetFollowRequestCount :one
+SELECT COUNT(*)
+FROM follows
+WHERE following_account_id = $1 AND status = 'pending'
+`
+
+func (q *Queries) GetFollowRequestCount(ctx context.Context, followingAccountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getFollowRequestCount, followingAccountID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getFollowStatus = `-- name: GetFollowStatus :one
 SELECT status
 FROM follows
@@ -139,6 +152,19 @@ func (q *Queries) GetFollowerAccountIDs(ctx context.Context, arg GetFollowerAcco
 	return items, nil
 }
 
+const getFollowerCount = `-- name: GetFollowerCount :one
+SELECT COUNT(*)
+FROM follows
+WHERE following_account_id = $1 AND status = 'accepted'
+`
+
+func (q *Queries) GetFollowerCount(ctx context.Context, followingAccountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getFollowerCount, followingAccountID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getFollowingAccountIDs = `-- name: GetFollowingAccountIDs :many
 SELECT following_account_id
 FROM follows
@@ -174,6 +200,19 @@ func (q *Queries) GetFollowingAccountIDs(ctx context.Context, arg GetFollowingAc
 		return nil, err
 	}
 	return items, nil
+}
+
+const getFollowingCount = `-- name: GetFollowingCount :one
+SELECT COUNT(*)
+FROM follows
+WHERE follower_account_id = $1 AND status = 'accepted'
+`
+
+func (q *Queries) GetFollowingCount(ctx context.Context, followerAccountID string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getFollowingCount, followerAccountID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const listPendingRequests = `-- name: ListPendingRequests :many

@@ -42,3 +42,18 @@ FROM follows
 WHERE follower_account_id = $1 AND status = 'accepted'
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
+
+-- name: GetFollowerCount :one
+SELECT COUNT(*)
+FROM follows
+WHERE following_account_id = $1 AND status = 'accepted';
+
+-- name: GetFollowingCount :one
+SELECT COUNT(*)
+FROM follows
+WHERE follower_account_id = $1 AND status = 'accepted';
+
+-- name: GetFollowRequestCount :one
+SELECT COUNT(*)
+FROM follows
+WHERE following_account_id = $1 AND status = 'pending';

@@ -34,6 +34,49 @@ func (s *Service) Unfollow(ctx context.Context, params *model.UnfollowParams) er
 	return nil
 }
 
+
+func (s *Service) RequestFollowAndNotify(ctx context.Context, params *model.RequestFollowAndNotifyParams) error {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return apperrors.NewValidateAppError(err)
+	}
+
+	// Request follow
+	if err := s.repo.RequestFollowAndNotify(ctx, params); err != nil {
+		return apperrors.NewDuplicateEntryAppError("Follow request", "request follow", err)
+	}
+
+	return nil
+}
+
+func (s *Service) AcceptFollowRequestAndNotify(ctx context.Context, params *model.AcceptFollowRequestAndNotifyParams) error {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return apperrors.NewValidateAppError(err)
+	}
+
+    // Accept follow request
+    if err := s.repo.AcceptFollowRequestAndNotify(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("Follow request", "accept follow request", err)
+    }
+
+    return nil
+}
+
+func (s *Service) RejectFollowRequest(ctx context.Context, params *model.RejectFollowRequestParams) error {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return apperrors.NewValidateAppError(err)
+	}
+
+	// Reject follow request
+	if err := s.repo.RejectFollowRequest(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("Follow request", "reject follow request", err)
+	}
+
+	return nil
+}
+
 func (s *Service) GetFollowerInfos(ctx context.Context, params *model.GetFollowerInfosParams) ([]*model.UserInfo, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
@@ -90,44 +133,32 @@ func (s *Service) GetFollowingInfos(ctx context.Context, params *model.GetFollow
 	return followingInfos, nil
 }
 
-func (s *Service) RequestFollowAndNotify(ctx context.Context, params *model.RequestFollowAndNotifyParams) error {
-	// Validate params
-	if err := params.Validate(); err != nil {
-		return apperrors.NewValidateAppError(err)
+func (s *Service) GetFollowersCount(ctx context.Context, accountID string) (int64, error) {
+	// Get followers count
+	count, err := s.repo.GetFollowerCount(ctx, accountID)
+	if err != nil {
+		return 0, apperrors.NewInternalAppError("get followers count", err)
 	}
 
-	// Request follow
-	if err := s.repo.RequestFollowAndNotify(ctx, params); err != nil {
-		return apperrors.NewDuplicateEntryAppError("Follow request", "request follow", err)
-	}
-
-	return nil
+	return count, nil
 }
 
-func (s *Service) AcceptFollowRequestAndNotify(ctx context.Context, params *model.AcceptFollowRequestAndNotifyParams) error {
-	// Validate params
-	if err := params.Validate(); err != nil {
-		return apperrors.NewValidateAppError(err)
+func (s *Service) GetFollowingsCount(ctx context.Context, accountID string) (int64, error) {
+	// Get following count
+	count, err := s.repo.GetFollowingCount(ctx, accountID)
+	if err != nil {
+		return 0, apperrors.NewInternalAppError("get following count", err)
 	}
 
-    // Accept follow request
-    if err := s.repo.AcceptFollowRequestAndNotify(ctx, params); err != nil {
-		return apperrors.NewNotFoundAppError("Follow request", "accept follow request", err)
-    }
-
-    return nil
+	return count, nil
 }
 
-func (s *Service) RejectFollowRequest(ctx context.Context, params *model.RejectFollowRequestParams) error {
-	// Validate params
-	if err := params.Validate(); err != nil {
-		return apperrors.NewValidateAppError(err)
+func (s *Service) GetFollowRequestsCount(ctx context.Context, accountID string) (int64, error) {
+	// Get follow requests count
+	count, err := s.repo.GetFollowRequestCount(ctx, accountID)
+	if err != nil {
+		return 0, apperrors.NewInternalAppError("get follow requests count", err)
 	}
 
-	// Reject follow request
-	if err := s.repo.RejectFollowRequest(ctx, params); err != nil {
-		return apperrors.NewNotFoundAppError("Follow request", "reject follow request", err)
-	}
-
-	return nil
+	return count, nil
 }
