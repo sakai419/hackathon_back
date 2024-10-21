@@ -85,7 +85,7 @@ func (h *NotificationHandler) GetUnreadNotificationsCount(w http.ResponseWriter,
 }
 
 // Mark notification as read
-// (PUT /notifications/{notification_id}/read)
+// (PATCH /notifications/{notification_id}/read)
 func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationID int64) {
 	// Get client account ID
 	clientAccountID, ok := utils.GetClientAccountID(w, r)
@@ -106,7 +106,7 @@ func (h *NotificationHandler) MarkNotificationAsRead(w http.ResponseWriter, r *h
 }
 
 // Mark all notifications as read
-// (PUT /notifications/read/all)
+// (PATCH /notifications/read/all)
 func (h *NotificationHandler) MarkAllNotificationsAsRead(w http.ResponseWriter, r *http.Request) {
 	// Get client account ID
 	clientAccountID, ok := utils.GetClientAccountID(w, r)

@@ -197,7 +197,7 @@ func (q *Queries) MarkAllNotificationsAsRead(ctx context.Context, recipientAccou
 	return err
 }
 
-const markNotificationAsRead = `-- name: MarkNotificationAsRead :exec
+const markNotificationAsRead = `-- name: MarkNotificationAsRead :execresult
 UPDATE notifications
 SET is_read = TRUE
 WHERE id = $1 AND recipient_account_id = $2
@@ -208,7 +208,6 @@ type MarkNotificationAsReadParams struct {
 	RecipientAccountID string
 }
 
-func (q *Queries) MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) error {
-	_, err := q.db.ExecContext(ctx, markNotificationAsRead, arg.ID, arg.RecipientAccountID)
-	return err
+func (q *Queries) MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, markNotificationAsRead, arg.ID, arg.RecipientAccountID)
 }

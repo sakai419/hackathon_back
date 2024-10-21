@@ -67,7 +67,7 @@ func (r *Repository) GetUnreadNotificationCount(ctx context.Context, accountID s
 
 func (r *Repository) MarkNotificationAsRead(ctx context.Context, params *model.MarkNotificationAsReadParams) error {
 	// Mark notification as read
-	err := r.q.MarkNotificationAsRead(ctx, sqlcgen.MarkNotificationAsReadParams{
+	res, err := r.q.MarkNotificationAsRead(ctx, sqlcgen.MarkNotificationAsReadParams{
 		ID:                 params.ID,
 		RecipientAccountID: params.RecipientAccountID,
 	})
@@ -76,6 +76,24 @@ func (r *Repository) MarkNotificationAsRead(ctx context.Context, params *model.M
 			&apperrors.ErrOperationFailed{
 				Operation: "mark notification as read",
 				Err:       err,
+			},
+		)
+	}
+
+	// Check if notification is not found
+	num, err := res.RowsAffected()
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "mark notification as read",
+				Err:       err,
+			},
+		)
+	}
+	if num == 0 {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "notification",
 			},
 		)
 	}
@@ -101,12 +119,34 @@ func (r *Repository) MarkAllNotificationsAsRead(ctx context.Context, accountID s
 func convertToNotificationResponse(notifications []sqlcgen.Notification) []*model.Notification {
 	var items []*model.Notification
 	for _, n := range notifications {
+
+		var senderAccountID *string
+		if n.SenderAccountID.Valid {
+			senderAccountID = &n.SenderAccountID.String
+		} else {
+			senderAccountID = nil
+		}
+
+		var tweetID *int64
+		if n.TweetID.Valid {
+			tweetID = &n.TweetID.Int64
+		} else {
+			tweetID = nil
+		}
+
+		var content *string
+		if n.Content.Valid {
+			content = &n.Content.String
+		} else {
+			content = nil
+		}
+
 		items = append(items, &model.Notification{
 			ID:                 n.ID,
-			SenderAccountID:    &n.SenderAccountID.String,
+			SenderAccountID:    senderAccountID,
 			Type:               string(n.Type),
-			Content: 		    &n.Content.String,
-			TweetID:            &n.TweetID.Int64,
+			Content: 		    content,
+			TweetID:            tweetID,
 			IsRead:             n.IsRead,
 			CreatedAt:          n.CreatedAt,
 		})

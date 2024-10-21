@@ -14,7 +14,7 @@ WHERE recipient_account_id = $1 AND is_read = FALSE
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
--- name: MarkNotificationAsRead :exec
+-- name: MarkNotificationAsRead :execresult
 UPDATE notifications
 SET is_read = TRUE
 WHERE id = $1 AND recipient_account_id = $2;
