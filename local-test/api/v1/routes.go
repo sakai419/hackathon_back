@@ -212,7 +212,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpSettingRoutes(apiV1, repo, svc, client)
 	setUpMessageRoutes(apiV1, repo, svc, client)
 	setUpConversationRoutes(apiV1, repo, svc, client)
-
+	setUpBlockRoutes(apiV1, repo, svc, client)
 
 	return r
 }
