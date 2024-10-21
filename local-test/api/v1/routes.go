@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"local-test/internal/handler/account"
+	"local-test/internal/handler/block"
 	"local-test/internal/handler/conversation"
 	"local-test/internal/handler/follow"
 	"local-test/internal/handler/message"
@@ -165,6 +166,25 @@ func setUpConversationRoutes(r *mux.Router, repo *repository.Repository, svc *se
 
 	// Register the conversation handler
 	conversation.HandlerWithOptions(h, opts)
+}
+
+func setUpBlockRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the block handler
+	h := block.NewBlockHandler(svc)
+
+	// Create options for the block handler
+	opts := block.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []block.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
+		},
+		ErrorHandlerFunc: block.ErrorHandlerFunc,
+	}
+
+	// Register the block handler
+	block.HandlerWithOptions(h, opts)
 }
 
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {

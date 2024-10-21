@@ -1,0 +1,122 @@
+openapi: 3.0.0
+info:
+    title: Block Management API
+    version: 1.0.0
+    description: API for managing user blocks
+
+paths:
+    /users/{user_id}/block:
+        post:
+            summary: Block a user
+            operationId: BlockUser
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User blocked successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Unblock a user
+            operationId: UnblockUser
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User unblocked successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /blocks:
+        get:
+            summary: Get blocks of a user
+            operationId: GetBlockedInfos
+            parameters:
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Blocks retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /blocks/count:
+        get:
+            summary: Get block count of a user
+            operationId: GetBlockCount
+            responses:
+                "200":
+                    description: Block count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Count"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        UserInfos:
+            type: array
+            items:
+                $ref: "#/components/schemas/UserInfo"
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                    description: The ID of the user.
+                user_name:
+                    type: string
+                    description: The name of the user.
+                bio:
+                    type: string
+                    description: The bio of the user.
+                profile_image_url:
+                    type: string
+                    format: uri
+                    description: URL of the user's profile image.
+            required:
+                - user_id
+                - user_name
+                - bio
+                - profile_image_url
+        Count:
+            type: object
+            properties:
+                count:
+                    type: integer
+                    format: int64
+                    description: The count of the items.
+            required:
+                - count

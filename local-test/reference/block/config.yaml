@@ -1,0 +1,5 @@
+package: block
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/block/schema.gen.go
