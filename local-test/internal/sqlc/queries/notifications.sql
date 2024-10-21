@@ -32,6 +32,10 @@ WHERE id = $1 AND recipient_account_id = $2;
 DELETE FROM notifications
 WHERE recipient_account_id = $1;
 
+-- name: DeleteAllNotificationsFromSender :exec
+DELETE FROM notifications
+WHERE sender_account_id = $1 AND recipient_account_id = $2;
+
 -- name: GetNotificationCount :one
 SELECT COUNT(*) FROM notifications
 WHERE recipient_account_id = $1;

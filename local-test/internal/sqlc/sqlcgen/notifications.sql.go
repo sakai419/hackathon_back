@@ -43,6 +43,21 @@ func (q *Queries) DeleteAllNotificationsForRecipient(ctx context.Context, recipi
 	return err
 }
 
+const deleteAllNotificationsFromSender = `-- name: DeleteAllNotificationsFromSender :exec
+DELETE FROM notifications
+WHERE sender_account_id = $1 AND recipient_account_id = $2
+`
+
+type DeleteAllNotificationsFromSenderParams struct {
+	SenderAccountID    sql.NullString
+	RecipientAccountID string
+}
+
+func (q *Queries) DeleteAllNotificationsFromSender(ctx context.Context, arg DeleteAllNotificationsFromSenderParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAllNotificationsFromSender, arg.SenderAccountID, arg.RecipientAccountID)
+	return err
+}
+
 const deleteNotification = `-- name: DeleteNotification :execresult
 DELETE FROM notifications
 WHERE id = $1 AND recipient_account_id = $2

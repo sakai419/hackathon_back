@@ -7,6 +7,7 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 const checkBlockExists = `-- name: CheckBlockExists :one
@@ -43,17 +44,7 @@ func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error 
 	return err
 }
 
-const deleteAllBlocksForUser = `-- name: DeleteAllBlocksForUser :exec
-DELETE FROM blocks
-WHERE blocker_account_id = $1 OR blocked_account_id = $1
-`
-
-func (q *Queries) DeleteAllBlocksForUser(ctx context.Context, blockerAccountID string) error {
-	_, err := q.db.ExecContext(ctx, deleteAllBlocksForUser, blockerAccountID)
-	return err
-}
-
-const deleteBlock = `-- name: DeleteBlock :exec
+const deleteBlock = `-- name: DeleteBlock :execresult
 DELETE FROM blocks
 WHERE blocker_account_id = $1 AND blocked_account_id = $2
 `
@@ -63,9 +54,8 @@ type DeleteBlockParams struct {
 	BlockedAccountID string
 }
 
-func (q *Queries) DeleteBlock(ctx context.Context, arg DeleteBlockParams) error {
-	_, err := q.db.ExecContext(ctx, deleteBlock, arg.BlockerAccountID, arg.BlockedAccountID)
-	return err
+func (q *Queries) DeleteBlock(ctx context.Context, arg DeleteBlockParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteBlock, arg.BlockerAccountID, arg.BlockedAccountID)
 }
 
 const getBlockCount = `-- name: GetBlockCount :one
@@ -80,19 +70,7 @@ func (q *Queries) GetBlockCount(ctx context.Context, blockerAccountID string) (i
 	return count, err
 }
 
-const getBlockedByCount = `-- name: GetBlockedByCount :one
-SELECT COUNT(*) FROM blocks
-WHERE blocked_account_id = $1
-`
-
-func (q *Queries) GetBlockedByCount(ctx context.Context, blockedAccountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getBlockedByCount, blockedAccountID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const getBlockedUsers = `-- name: GetBlockedUsers :many
+const getBlockedAccountIDs = `-- name: GetBlockedAccountIDs :many
 SELECT blocked_account_id
 FROM blocks
 WHERE blocker_account_id = $1
@@ -100,14 +78,14 @@ ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetBlockedUsersParams struct {
+type GetBlockedAccountIDsParams struct {
 	BlockerAccountID string
 	Limit            int32
 	Offset           int32
 }
 
-func (q *Queries) GetBlockedUsers(ctx context.Context, arg GetBlockedUsersParams) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getBlockedUsers, arg.BlockerAccountID, arg.Limit, arg.Offset)
+func (q *Queries) GetBlockedAccountIDs(ctx context.Context, arg GetBlockedAccountIDsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getBlockedAccountIDs, arg.BlockerAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -119,43 +97,6 @@ func (q *Queries) GetBlockedUsers(ctx context.Context, arg GetBlockedUsersParams
 			return nil, err
 		}
 		items = append(items, blocked_account_id)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getBlockersOfUser = `-- name: GetBlockersOfUser :many
-SELECT blocker_account_id
-FROM blocks
-WHERE blocked_account_id = $1
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetBlockersOfUserParams struct {
-	BlockedAccountID string
-	Limit            int32
-	Offset           int32
-}
-
-func (q *Queries) GetBlockersOfUser(ctx context.Context, arg GetBlockersOfUserParams) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getBlockersOfUser, arg.BlockedAccountID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var blocker_account_id string
-		if err := rows.Scan(&blocker_account_id); err != nil {
-			return nil, err
-		}
-		items = append(items, blocker_account_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

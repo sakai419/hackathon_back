@@ -65,6 +65,7 @@ func (r *Repository) FollowAndNotify(ctx context.Context, params *model.FollowAn
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
+		tx.Rollback()
 		return apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",

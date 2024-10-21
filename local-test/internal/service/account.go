@@ -27,3 +27,23 @@ func (s *Service) DeleteMyAccount(ctx context.Context, accountID string) error {
 
 	return nil
 }
+
+func sortUserInfos(userInfos []*model.UserInfoInternal, ids []string) []*model.UserInfo {
+	userInfoMap := make(map[string]*model.UserInfoInternal)
+	for _, userInfo := range userInfos {
+		userInfoMap[userInfo.ID] = userInfo
+	}
+
+	sortedUserInfos := make([]*model.UserInfo, len(ids))
+	for i, id := range ids {
+		temp := userInfoMap[id]
+		sortedUserInfos[i] = &model.UserInfo{
+			UserID:          temp.UserID,
+			UserName:        temp.UserName,
+			Bio:             temp.Bio,
+			ProfileImageURL: temp.ProfileImageURL,
+		}
+	}
+
+	return sortedUserInfos
+}
