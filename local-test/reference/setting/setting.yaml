@@ -27,11 +27,7 @@ components:
     schemas:
         UpdateSettingsRequest:
             type: object
-            required:
-                - account_id
             properties:
-                account_id:
-                    type: string
                 is_private:
                     type: boolean
                     nullable: true

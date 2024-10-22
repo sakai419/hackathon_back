@@ -197,7 +197,7 @@ func (h *FollowHandler) GetFollowRequestCount(w http.ResponseWriter, r *http.Req
 // (POST /users/{user_id}/follow-request)
 func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
-	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) || !utils.IsTargetPrivate(w, r) {
+	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) || utils.IsNotTargetPrivate(w, r) {
 		return
 	}
 

@@ -12,8 +12,7 @@ import (
 
 // UpdateSettingsRequest defines model for UpdateSettingsRequest.
 type UpdateSettingsRequest struct {
-	AccountId string `json:"account_id"`
-	IsPrivate *bool  `json:"is_private"`
+	IsPrivate *bool `json:"is_private"`
 }
 
 // UpdateSettingsJSONRequestBody defines body for UpdateSettings for application/json ContentType.

@@ -126,7 +126,7 @@ paths:
                     description: Internal server error
 
     /users/me/follow-request/{user_id}/accept:
-        put:
+        patch:
             summary: Accept a follow request
             operationId: AcceptFollowRequestAndNotify
             parameters:

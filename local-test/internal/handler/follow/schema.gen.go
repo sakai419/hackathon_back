@@ -53,7 +53,7 @@ type ServerInterface interface {
 	// (GET /users/me/follow-request/count)
 	GetFollowRequestCount(w http.ResponseWriter, r *http.Request)
 	// Accept a follow request
-	// (PUT /users/me/follow-request/{user_id}/accept)
+	// (PATCH /users/me/follow-request/{user_id}/accept)
 	AcceptFollowRequestAndNotify(w http.ResponseWriter, r *http.Request, userId string)
 	// Reject a follow request
 	// (DELETE /users/me/follow-request/{user_id}/reject)
@@ -510,7 +510,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/users/me/follow-request/count", wrapper.GetFollowRequestCount).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/users/me/follow-request/{user_id}/accept", wrapper.AcceptFollowRequestAndNotify).Methods("PUT")
+	r.HandleFunc(options.BaseURL+"/users/me/follow-request/{user_id}/accept", wrapper.AcceptFollowRequestAndNotify).Methods("PATCH")
 
 	r.HandleFunc(options.BaseURL+"/users/me/follow-request/{user_id}/reject", wrapper.RejectFollowRequest).Methods("DELETE")
 
