@@ -43,18 +43,18 @@ type GetBlockedInfosParams struct {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Unblock a user
+	// (DELETE /blcoks/{user_id})
+	UnblockUser(w http.ResponseWriter, r *http.Request, userId string)
+	// Block a user
+	// (POST /blcoks/{user_id})
+	BlockUser(w http.ResponseWriter, r *http.Request, userId string)
 	// Get blocks of a user
 	// (GET /blocks)
 	GetBlockedInfos(w http.ResponseWriter, r *http.Request, params GetBlockedInfosParams)
 	// Get block count of a user
 	// (GET /blocks/count)
 	GetBlockCount(w http.ResponseWriter, r *http.Request)
-	// Unblock a user
-	// (DELETE /users/{user_id}/block)
-	UnblockUser(w http.ResponseWriter, r *http.Request, userId string)
-	// Block a user
-	// (POST /users/{user_id}/block)
-	BlockUser(w http.ResponseWriter, r *http.Request, userId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -65,6 +65,56 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// UnblockUser operation middleware
+func (siw *ServerInterfaceWrapper) UnblockUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnblockUser(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// BlockUser operation middleware
+func (siw *ServerInterfaceWrapper) BlockUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BlockUser(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetBlockedInfos operation middleware
 func (siw *ServerInterfaceWrapper) GetBlockedInfos(w http.ResponseWriter, r *http.Request) {
@@ -120,56 +170,6 @@ func (siw *ServerInterfaceWrapper) GetBlockCount(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetBlockCount(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UnblockUser operation middleware
-func (siw *ServerInterfaceWrapper) UnblockUser(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UnblockUser(w, r, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// BlockUser operation middleware
-func (siw *ServerInterfaceWrapper) BlockUser(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.BlockUser(w, r, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -292,13 +292,13 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.HandleFunc(options.BaseURL+"/blcoks/{user_id}", wrapper.UnblockUser).Methods("DELETE")
+
+	r.HandleFunc(options.BaseURL+"/blcoks/{user_id}", wrapper.BlockUser).Methods("POST")
+
 	r.HandleFunc(options.BaseURL+"/blocks", wrapper.GetBlockedInfos).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/blocks/count", wrapper.GetBlockCount).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/block", wrapper.UnblockUser).Methods("DELETE")
-
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/block", wrapper.BlockUser).Methods("POST")
 
 	return r
 }

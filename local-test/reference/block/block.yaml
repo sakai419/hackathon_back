@@ -5,7 +5,7 @@ info:
     description: API for managing user blocks
 
 paths:
-    /users/{user_id}/block:
+    /blcoks/{user_id}:
         post:
             summary: Block a user
             operationId: BlockUser

@@ -19,6 +19,9 @@ func NewBlockHandler(svc *service.Service) ServerInterface {
 	}
 }
 
+
+// Block a user
+// (POST /blocks/{user_id})
 func (h *BlockHandler) BlockUser(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) {
@@ -50,7 +53,7 @@ func (h *BlockHandler) BlockUser(w http.ResponseWriter, r *http.Request, _ strin
 }
 
 // Unblock a user
-// (DELETE /users/{user_id}/block)
+// (DELETE /blocks/{user_id})
 func (h *BlockHandler) UnblockUser(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) {
