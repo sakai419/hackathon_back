@@ -20,7 +20,7 @@ func NewFollowHandler(svc *service.Service) ServerInterface {
 }
 
 // Follow a user
-// (POST /users/{user_id}/follow)
+// (POST /follows/{user_id})
 func (h *FollowHandler) FollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) || utils.IsTargetPrivate(w, r) {
@@ -52,7 +52,7 @@ func (h *FollowHandler) FollowAndNotify(w http.ResponseWriter, r *http.Request, 
 }
 
 // Unfollow a user
-// (DELETE /users/{user_id}/follow)
+// (DELETE /follows/{user_id})
 func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the clident is suspended
 	if utils.IsClientSuspended(w, r) {
@@ -83,118 +83,8 @@ func (h *FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, _ strin
 	utils.Respond(w, nil)
 }
 
-// Get followers
-// (GET /users/{user_id}/followers)
-func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowerInfosParams) {
-	// Get tager account ID
-	targetAccountID, ok := utils.GetTargetAccountID(w, r)
-	if !ok {
-		return
-	}
-
-	// Get followers
-	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), &model.GetFollowerInfosParams{
-		FollowingAccountID: targetAccountID,
-		Limit:              params.Limit,
-		Offset:             params.Offset,
-	})
-	if err != nil {
-		utils.RespondError(w, apperrors.NewHandlerError("get followers", err))
-		return
-	}
-
-
-	// Convert to response
-	resp := convertToUserInfos(followerInfos)
-
-	utils.Respond(w, resp)
-}
-
-// Get followings
-// (GET /users/{user_id}/followings)
-func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowingInfosParams) {
-	// Get target account ID
-	targetAccountID, ok := utils.GetTargetAccountID(w, r)
-	if !ok {
-		return
-	}
-
-	// Get followings
-	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), &model.GetFollowingInfosParams{
-		FollowerAccountID: targetAccountID,
-		Limit:             params.Limit,
-		Offset: 		   params.Offset,
-	})
-	if err != nil {
-		utils.RespondError(w, apperrors.NewHandlerError("get followings", err))
-		return
-	}
-
-	// Convert to response
-	resp := convertToUserInfos(followingInfos)
-
-	utils.Respond(w, resp)
-}
-
-// Get followers count
-// (GET /users/{user_id}/followers/count)
-func (h *FollowHandler) GetFollowerCount(w http.ResponseWriter, r *http.Request, _ string) {
-	// Get target account ID
-	targetAccountID, ok := utils.GetTargetAccountID(w, r)
-	if !ok {
-		return
-	}
-
-	// Get followers count
-	count, err := h.svc.GetFollowersCount(r.Context(), targetAccountID)
-	if err != nil {
-		utils.RespondError(w, apperrors.NewHandlerError("get followers count", err))
-		return
-	}
-
-	utils.Respond(w, Count{Count: count})
-}
-
-// Get followings count
-// (GET /users/{user_id}/followings/count)
-func (h *FollowHandler) GetFollowingCount(w http.ResponseWriter, r *http.Request, _ string) {
-	// Get target account ID
-	targetAccountID, ok := utils.GetTargetAccountID(w, r)
-	if !ok {
-		return
-	}
-
-	// Get followings count
-	count, err := h.svc.GetFollowingsCount(r.Context(), targetAccountID)
-	if err != nil {
-		utils.RespondError(w, apperrors.NewHandlerError("get followings count", err))
-		return
-	}
-
-	utils.Respond(w, Count{Count: count})
-}
-
-// Get follow requests count
-// (GET /users/me/follow-requests/count)
-func (h *FollowHandler) GetFollowRequestCount(w http.ResponseWriter, r *http.Request) {
-	// Get client account ID
-	clientAccountID, ok := utils.GetClientAccountID(w, r)
-	if !ok {
-		return
-	}
-
-	// Get follow requests count
-	count, err := h.svc.GetFollowRequestsCount(r.Context(), clientAccountID)
-	if err != nil {
-		utils.RespondError(w, apperrors.NewHandlerError("get follow requests count", err))
-		return
-	}
-
-	utils.Respond(w, Count{Count: count})
-}
-
 // Send follow request
-// (POST /users/{user_id}/follow-request)
+// (POST /follows/requests/{user_id})
 func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) || utils.IsNotTargetPrivate(w, r) {
@@ -226,7 +116,7 @@ func (h *FollowHandler) RequestFollowAndNotify(w http.ResponseWriter, r *http.Re
 }
 
 // Accept follow request
-// (PUT /users/me/follow-request/{user_id}/accept)
+// (PUT /follows/requests/received/{user_id}/accept)
 func (h *FollowHandler) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) {
@@ -258,7 +148,7 @@ func (h *FollowHandler) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *h
 }
 
 // Reject follow request
-// (DELETE /users/me/follow-request/{user_id}/reject)
+// (DELETE /follows/requests/received/{user_id})
 func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) {
@@ -288,6 +178,101 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 
 	utils.Respond(w, nil)
 }
+
+// Get followers
+// (GET /follows/followers/{user_id})
+func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowerInfosParams) {
+	// Get tager account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get followers
+	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), &model.GetFollowerInfosParams{
+		FollowingAccountID: targetAccountID,
+		Limit:              params.Limit,
+		Offset:             params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get followers", err))
+		return
+	}
+
+
+	// Convert to response
+	resp := convertToUserInfos(followerInfos)
+
+	utils.Respond(w, resp)
+}
+
+// Get followings
+// (GET /follows/following/{user_id})
+func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowingInfosParams) {
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get followings
+	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), &model.GetFollowingInfosParams{
+		FollowerAccountID: targetAccountID,
+		Limit:             params.Limit,
+		Offset: 		   params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get followings", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToUserInfos(followingInfos)
+
+	utils.Respond(w, resp)
+}
+
+// Get follow counts
+// (GET /follows/count/{user_id})
+func (h *FollowHandler) GetFollowCounts(w http.ResponseWriter, r *http.Request, _ string) {
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get follow counts
+	counts, err := h.svc.GetFollowCounts(r.Context(), targetAccountID)
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get follow counts", err))
+		return
+	}
+
+	utils.Respond(w, &FollowCounts{
+		FollowersCount: counts.FollowersCount,
+		FollowingCount: counts.FollowingCount,
+	})
+}
+
+// Get follow requests count
+// (GET /follows/requests/received/count)
+func (h *FollowHandler) GetFollowRequestCount(w http.ResponseWriter, r *http.Request) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get follow requests count
+	count, err := h.svc.GetFollowRequestsCount(r.Context(), clientAccountID)
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get follow requests count", err))
+		return
+	}
+
+	utils.Respond(w, Count{Count: count})
+}
+
 
 // ErrorHandlerFunc is the error handler for the follow handler
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {

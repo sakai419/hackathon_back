@@ -84,6 +84,25 @@ func (q *Queries) DeleteFollowRequest(ctx context.Context, arg DeleteFollowReque
 	return q.db.ExecContext(ctx, deleteFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
+const getFollowCounts = `-- name: GetFollowCounts :one
+SELECT
+    COUNT(CASE WHEN following_account_id = $1 AND status = 'accepted' THEN 1 END) AS follower_count,
+    COUNT(CASE WHEN follower_account_id = $1 AND status = 'accepted' THEN 1 END) AS following_count
+FROM follows
+`
+
+type GetFollowCountsRow struct {
+	FollowerCount  int64
+	FollowingCount int64
+}
+
+func (q *Queries) GetFollowCounts(ctx context.Context, followingAccountID string) (GetFollowCountsRow, error) {
+	row := q.db.QueryRowContext(ctx, getFollowCounts, followingAccountID)
+	var i GetFollowCountsRow
+	err := row.Scan(&i.FollowerCount, &i.FollowingCount)
+	return i, err
+}
+
 const getFollowRequestCount = `-- name: GetFollowRequestCount :one
 SELECT COUNT(*)
 FROM follows
@@ -152,19 +171,6 @@ func (q *Queries) GetFollowerAccountIDs(ctx context.Context, arg GetFollowerAcco
 	return items, nil
 }
 
-const getFollowerCount = `-- name: GetFollowerCount :one
-SELECT COUNT(*)
-FROM follows
-WHERE following_account_id = $1 AND status = 'accepted'
-`
-
-func (q *Queries) GetFollowerCount(ctx context.Context, followingAccountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getFollowerCount, followingAccountID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const getFollowingAccountIDs = `-- name: GetFollowingAccountIDs :many
 SELECT following_account_id
 FROM follows
@@ -200,19 +206,6 @@ func (q *Queries) GetFollowingAccountIDs(ctx context.Context, arg GetFollowingAc
 		return nil, err
 	}
 	return items, nil
-}
-
-const getFollowingCount = `-- name: GetFollowingCount :one
-SELECT COUNT(*)
-FROM follows
-WHERE follower_account_id = $1 AND status = 'accepted'
-`
-
-func (q *Queries) GetFollowingCount(ctx context.Context, followerAccountID string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getFollowingCount, followerAccountID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
 }
 
 const listPendingRequests = `-- name: ListPendingRequests :many

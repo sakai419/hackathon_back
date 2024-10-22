@@ -125,3 +125,12 @@ func (p *RejectFollowRequestParams) Validate() error {
 	}
 	return nil
 }
+
+type GetFollowCountsParams struct {
+	AccountID string
+}
+
+type FollowCounts struct {
+	FollowersCount int64
+	FollowingCount int64
+}

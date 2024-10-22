@@ -154,24 +154,14 @@ func (s *Service) GetFollowingInfos(ctx context.Context, params *model.GetFollow
 	return followingInfos, nil
 }
 
-func (s *Service) GetFollowersCount(ctx context.Context, accountID string) (int64, error) {
-	// Get followers count
-	count, err := s.repo.GetFollowerCount(ctx, accountID)
+func (s *Service) GetFollowCounts(ctx context.Context, accountID string) (*model.FollowCounts, error) {
+	// Get follow counts
+	followCounts, err := s.repo.GetFollowCounts(ctx, accountID)
 	if err != nil {
-		return 0, apperrors.NewInternalAppError("get followers count", err)
+		return nil, apperrors.NewInternalAppError("get follow counts", err)
 	}
 
-	return count, nil
-}
-
-func (s *Service) GetFollowingsCount(ctx context.Context, accountID string) (int64, error) {
-	// Get following count
-	count, err := s.repo.GetFollowingCount(ctx, accountID)
-	if err != nil {
-		return 0, apperrors.NewInternalAppError("get following count", err)
-	}
-
-	return count, nil
+	return followCounts, nil
 }
 
 func (s *Service) GetFollowRequestsCount(ctx context.Context, accountID string) (int64, error) {

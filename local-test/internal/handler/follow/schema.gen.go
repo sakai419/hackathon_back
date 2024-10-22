@@ -17,6 +17,15 @@ type Count struct {
 	Count int64 `json:"count"`
 }
 
+// FollowCounts defines model for FollowCounts.
+type FollowCounts struct {
+	// FollowersCount The count of followers.
+	FollowersCount int64 `json:"followers_count"`
+
+	// FollowingCount The count of following.
+	FollowingCount int64 `json:"following_count"`
+}
+
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
 	// Bio The bio of the user.
@@ -49,36 +58,33 @@ type GetFollowingInfosParams struct {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get the number of follow requests sent to the user
-	// (GET /users/me/follow-request/count)
-	GetFollowRequestCount(w http.ResponseWriter, r *http.Request)
-	// Accept a follow request
-	// (PATCH /users/me/follow-request/{user_id}/accept)
-	AcceptFollowRequestAndNotify(w http.ResponseWriter, r *http.Request, userId string)
-	// Reject a follow request
-	// (DELETE /users/me/follow-request/{user_id}/reject)
-	RejectFollowRequest(w http.ResponseWriter, r *http.Request, userId string)
-	// Unfollow a user
-	// (DELETE /users/{user_id}/follow)
-	Unfollow(w http.ResponseWriter, r *http.Request, userId string)
-	// Follow a user
-	// (POST /users/{user_id}/follow)
-	FollowAndNotify(w http.ResponseWriter, r *http.Request, userId string)
-	// Send a follow request to a user
-	// (POST /users/{user_id}/follow-request)
-	RequestFollowAndNotify(w http.ResponseWriter, r *http.Request, userId string)
-	// Get the number of followers of a user
-	// (GET /users/{user_id}/follower/count)
-	GetFollowerCount(w http.ResponseWriter, r *http.Request, userId string)
+	// Get the number of followers and following of a user
+	// (GET /follows/count/{user_id})
+	GetFollowCounts(w http.ResponseWriter, r *http.Request, userId string)
 	// Get followers of a user
-	// (GET /users/{user_id}/followers)
+	// (GET /follows/followers/{user_id})
 	GetFollowerInfos(w http.ResponseWriter, r *http.Request, userId string, params GetFollowerInfosParams)
 	// Get users followed by a user
-	// (GET /users/{user_id}/following)
+	// (GET /follows/following/{user_id})
 	GetFollowingInfos(w http.ResponseWriter, r *http.Request, userId string, params GetFollowingInfosParams)
-	// Get the number of users followed by a user
-	// (GET /users/{user_id}/following/count)
-	GetFollowingCount(w http.ResponseWriter, r *http.Request, userId string)
+	// Get the number of follow requests sent to the user
+	// (GET /follows/requests/received/count)
+	GetFollowRequestCount(w http.ResponseWriter, r *http.Request)
+	// Reject a follow request
+	// (DELETE /follows/requests/received/{user_id})
+	RejectFollowRequest(w http.ResponseWriter, r *http.Request, userId string)
+	// Accept a follow request
+	// (PATCH /follows/requests/received/{user_id}/accept)
+	AcceptFollowRequestAndNotify(w http.ResponseWriter, r *http.Request, userId string)
+	// Send a follow request to a user
+	// (POST /follows/requests/{user_id})
+	RequestFollowAndNotify(w http.ResponseWriter, r *http.Request, userId string)
+	// Unfollow a user
+	// (DELETE /follows/{user_id})
+	Unfollow(w http.ResponseWriter, r *http.Request, userId string)
+	// Follow a user
+	// (POST /follows/{user_id})
+	FollowAndNotify(w http.ResponseWriter, r *http.Request, userId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -90,22 +96,8 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetFollowRequestCount operation middleware
-func (siw *ServerInterfaceWrapper) GetFollowRequestCount(w http.ResponseWriter, r *http.Request) {
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetFollowRequestCount(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// AcceptFollowRequestAndNotify operation middleware
-func (siw *ServerInterfaceWrapper) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *http.Request) {
+// GetFollowCounts operation middleware
+func (siw *ServerInterfaceWrapper) GetFollowCounts(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -119,132 +111,7 @@ func (siw *ServerInterfaceWrapper) AcceptFollowRequestAndNotify(w http.ResponseW
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AcceptFollowRequestAndNotify(w, r, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// RejectFollowRequest operation middleware
-func (siw *ServerInterfaceWrapper) RejectFollowRequest(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RejectFollowRequest(w, r, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// Unfollow operation middleware
-func (siw *ServerInterfaceWrapper) Unfollow(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Unfollow(w, r, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// FollowAndNotify operation middleware
-func (siw *ServerInterfaceWrapper) FollowAndNotify(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.FollowAndNotify(w, r, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// RequestFollowAndNotify operation middleware
-func (siw *ServerInterfaceWrapper) RequestFollowAndNotify(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RequestFollowAndNotify(w, r, userId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// GetFollowerCount operation middleware
-func (siw *ServerInterfaceWrapper) GetFollowerCount(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "user_id" -------------
-	var userId string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetFollowerCount(w, r, userId)
+		siw.Handler.GetFollowCounts(w, r, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -370,8 +237,22 @@ func (siw *ServerInterfaceWrapper) GetFollowingInfos(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
-// GetFollowingCount operation middleware
-func (siw *ServerInterfaceWrapper) GetFollowingCount(w http.ResponseWriter, r *http.Request) {
+// GetFollowRequestCount operation middleware
+func (siw *ServerInterfaceWrapper) GetFollowRequestCount(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFollowRequestCount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RejectFollowRequest operation middleware
+func (siw *ServerInterfaceWrapper) RejectFollowRequest(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -385,7 +266,107 @@ func (siw *ServerInterfaceWrapper) GetFollowingCount(w http.ResponseWriter, r *h
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetFollowingCount(w, r, userId)
+		siw.Handler.RejectFollowRequest(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AcceptFollowRequestAndNotify operation middleware
+func (siw *ServerInterfaceWrapper) AcceptFollowRequestAndNotify(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AcceptFollowRequestAndNotify(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequestFollowAndNotify operation middleware
+func (siw *ServerInterfaceWrapper) RequestFollowAndNotify(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestFollowAndNotify(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Unfollow operation middleware
+func (siw *ServerInterfaceWrapper) Unfollow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Unfollow(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FollowAndNotify operation middleware
+func (siw *ServerInterfaceWrapper) FollowAndNotify(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FollowAndNotify(w, r, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -508,25 +489,23 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/users/me/follow-request/count", wrapper.GetFollowRequestCount).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/follows/count/{user_id}", wrapper.GetFollowCounts).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/users/me/follow-request/{user_id}/accept", wrapper.AcceptFollowRequestAndNotify).Methods("PATCH")
+	r.HandleFunc(options.BaseURL+"/follows/followers/{user_id}", wrapper.GetFollowerInfos).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/users/me/follow-request/{user_id}/reject", wrapper.RejectFollowRequest).Methods("DELETE")
+	r.HandleFunc(options.BaseURL+"/follows/following/{user_id}", wrapper.GetFollowingInfos).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/follow", wrapper.Unfollow).Methods("DELETE")
+	r.HandleFunc(options.BaseURL+"/follows/requests/received/count", wrapper.GetFollowRequestCount).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/follow", wrapper.FollowAndNotify).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/follows/requests/received/{user_id}", wrapper.RejectFollowRequest).Methods("DELETE")
 
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/follow-request", wrapper.RequestFollowAndNotify).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/follows/requests/received/{user_id}/accept", wrapper.AcceptFollowRequestAndNotify).Methods("PATCH")
 
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/follower/count", wrapper.GetFollowerCount).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/follows/requests/{user_id}", wrapper.RequestFollowAndNotify).Methods("POST")
 
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/followers", wrapper.GetFollowerInfos).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/follows/{user_id}", wrapper.Unfollow).Methods("DELETE")
 
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/following", wrapper.GetFollowingInfos).Methods("GET")
-
-	r.HandleFunc(options.BaseURL+"/users/{user_id}/following/count", wrapper.GetFollowingCount).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/follows/{user_id}", wrapper.FollowAndNotify).Methods("POST")
 
 	return r
 }

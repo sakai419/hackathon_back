@@ -332,34 +332,22 @@ func (r *Repository) GetFollowingAccountIDs(ctx context.Context, params *model.G
 	return followingAccountIDs, nil
 }
 
-func (r *Repository) GetFollowerCount(ctx context.Context, accountID string) (int64, error) {
-	// Get followers count
-	count, err := r.q.GetFollowerCount(ctx, accountID)
+func (r *Repository) GetFollowCounts(ctx context.Context, accountID string) (*model.FollowCounts, error) {
+	// Get follow counts
+	followCounts, err := r.q.GetFollowCounts(ctx, accountID)
 	if err != nil {
-		return 0, apperrors.WrapRepositoryError(
+		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
-				Operation: "get followers count",
+				Operation: "get follow counts",
 				Err: err,
 			},
 		)
 	}
 
-	return count, nil
-}
-
-func (r *Repository) GetFollowingCount(ctx context.Context, accountID string) (int64, error) {
-	// Get followings count
-	count, err := r.q.GetFollowingCount(ctx, accountID)
-	if err != nil {
-		return 0, apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "get followings count",
-				Err: err,
-			},
-		)
-	}
-
-	return count, nil
+	return &model.FollowCounts{
+		FollowersCount: followCounts.FollowerCount,
+		FollowingCount: followCounts.FollowingCount,
+	}, nil
 }
 
 func (r *Repository) GetFollowRequestCount(ctx context.Context, accountID string) (int64, error) {

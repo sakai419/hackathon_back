@@ -5,7 +5,7 @@ info:
     description: API for managing user follows
 
 paths:
-    /users/{user_id}/follow:
+    /follows/{user_id}:
         post:
             summary: Follow a user
             operationId: FollowAndNotify
@@ -39,7 +39,61 @@ paths:
                 "500":
                     description: Internal server error
 
-    /users/{user_id}/followers:
+    /follows/requests/{user_id}:
+        post:
+            summary: Send a follow request to a user
+            operationId: RequestFollowAndNotify
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request sent successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/requests/received/{user_id}/accept:
+        patch:
+            summary: Accept a follow request
+            operationId: AcceptFollowRequestAndNotify
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request accepted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/requests/received/{user_id}:
+        delete:
+            summary: Reject a follow request
+            operationId: RejectFollowRequest
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request rejected successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/followers/{user_id}:
         get:
             summary: Get followers of a user
             operationId: GetFollowerInfos
@@ -73,7 +127,7 @@ paths:
                 "500":
                     description: Internal server error
 
-    /users/{user_id}/following:
+    /follows/following/{user_id}:
         get:
             summary: Get users followed by a user
             operationId: GetFollowingInfos
@@ -107,64 +161,10 @@ paths:
                 "500":
                     description: Internal server error
 
-    /users/{user_id}/follow-request:
-        post:
-            summary: Send a follow request to a user
-            operationId: RequestFollowAndNotify
-            parameters:
-                - name: user_id
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                "200":
-                    description: Follow request sent successfully
-                "400":
-                    description: Bad request
-                "500":
-                    description: Internal server error
-
-    /users/me/follow-request/{user_id}/accept:
-        patch:
-            summary: Accept a follow request
-            operationId: AcceptFollowRequestAndNotify
-            parameters:
-                - name: user_id
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                "200":
-                    description: Follow request accepted successfully
-                "400":
-                    description: Bad request
-                "500":
-                    description: Internal server error
-
-    /users/me/follow-request/{user_id}/reject:
-        delete:
-            summary: Reject a follow request
-            operationId: RejectFollowRequest
-            parameters:
-                - name: user_id
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                "200":
-                    description: Follow request rejected successfully
-                "400":
-                    description: Bad request
-                "500":
-                    description: Internal server error
-
-    /users/{user_id}/follower/count:
+    /follows/count/{user_id}:
         get:
-            summary: Get the number of followers of a user
-            operationId: GetFollowerCount
+            summary: Get the number of followers and following of a user
+            operationId: GetFollowCounts
             parameters:
                 - name: user_id
                   in: path
@@ -177,35 +177,13 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/Count"
+                                $ref: "#/components/schemas/FollowCounts"
                 "400":
                     description: Bad request
                 "500":
                     description: Internal server error
 
-    /users/{user_id}/following/count:
-        get:
-            summary: Get the number of users followed by a user
-            operationId: GetFollowingCount
-            parameters:
-                - name: user_id
-                  in: path
-                  required: true
-                  schema:
-                      type: string
-            responses:
-                "200":
-                    description: Following count retrieved successfully
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/Count"
-                "400":
-                    description: Bad request
-                "500":
-                    description: Internal server error
-
-    /users/me/follow-request/count:
+    /follows/requests/received/count:
         get:
             summary: Get the number of follow requests sent to the user
             operationId: GetFollowRequestCount
@@ -257,3 +235,17 @@ components:
                     description: The count of notifications.
             required:
                 - count
+        FollowCounts:
+            type: object
+            properties:
+                followers_count:
+                    type: integer
+                    format: int64
+                    description: The count of followers.
+                following_count:
+                    type: integer
+                    format: int64
+                    description: The count of following.
+            required:
+                - followers_count
+                - following_count
