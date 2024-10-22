@@ -9,6 +9,7 @@ import (
 	"local-test/internal/handler/follow"
 	"local-test/internal/handler/message"
 	"local-test/internal/handler/notification"
+	"local-test/internal/handler/profile"
 	"local-test/internal/handler/report"
 	"local-test/internal/handler/setting"
 	"local-test/internal/middleware"
@@ -187,6 +188,23 @@ func setUpBlockRoutes(r *mux.Router, repo *repository.Repository, svc *service.S
 	block.HandlerWithOptions(h, opts)
 }
 
+func setUpProfileRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the profile handler
+	h := profile.NewProfileHandler(svc)
+
+	// Create options for the profile handler
+	opts := profile.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []profile.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+		},
+	}
+
+	// Register the profile handler
+	profile.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -213,6 +231,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpMessageRoutes(apiV1, repo, svc, client)
 	setUpConversationRoutes(apiV1, repo, svc, client)
 	setUpBlockRoutes(apiV1, repo, svc, client)
+	setUpProfileRoutes(apiV1, repo, svc, client)
 
 	return r
 }

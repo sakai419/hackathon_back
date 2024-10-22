@@ -13,7 +13,7 @@ type ConversationHandler struct {
 	svc *service.Service
 }
 
-func NewConversationHandler(svc *service.Service) *ConversationHandler {
+func NewConversationHandler(svc *service.Service) ServerInterface {
 	return &ConversationHandler{
 		svc: svc,
 	}

@@ -6,20 +6,12 @@ VALUES ($1);
 SELECT * FROM profiles
 WHERE account_id = $1;
 
--- name: UpdateProfilesBio :exec
+-- name: UpdateProfiles :execresult
 UPDATE profiles
-SET bio = $1
-WHERE account_id = $2;
-
--- name: UpdateProfilesImageUrl :exec
-UPDATE profiles
-SET profile_image_url = $1
-WHERE account_id = $2;
-
--- name: UpdateBannerImageUrl :exec
-UPDATE profiles
-SET banner_image_url = $1
-WHERE account_id = $2;
+SET bio = COALESCE($1, bio),
+    profile_image_url = COALESCE($2, profile_image_url),
+    banner_image_url = COALESCE($3, banner_image_url)
+WHERE account_id = $4;
 
 -- name: DeleteProfiles :exec
 DELETE FROM profiles

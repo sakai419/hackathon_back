@@ -13,7 +13,7 @@ type MessageHandler struct {
 	svc *service.Service
 }
 
-func NewMessageHandler(svc *service.Service) *MessageHandler {
+func NewMessageHandler(svc *service.Service) ServerInterface {
 	return &MessageHandler{
 		svc: svc,
 	}

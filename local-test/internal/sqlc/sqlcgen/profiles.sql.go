@@ -60,50 +60,26 @@ func (q *Queries) GetProfilesByAccountID(ctx context.Context, accountID string) 
 	return i, err
 }
 
-const updateBannerImageUrl = `-- name: UpdateBannerImageUrl :exec
+const updateProfiles = `-- name: UpdateProfiles :execresult
 UPDATE profiles
-SET banner_image_url = $1
-WHERE account_id = $2
+SET bio = COALESCE($1, bio),
+    profile_image_url = COALESCE($2, profile_image_url),
+    banner_image_url = COALESCE($3, banner_image_url)
+WHERE account_id = $4
 `
 
-type UpdateBannerImageUrlParams struct {
-	BannerImageUrl sql.NullString
-	AccountID      string
-}
-
-func (q *Queries) UpdateBannerImageUrl(ctx context.Context, arg UpdateBannerImageUrlParams) error {
-	_, err := q.db.ExecContext(ctx, updateBannerImageUrl, arg.BannerImageUrl, arg.AccountID)
-	return err
-}
-
-const updateProfilesBio = `-- name: UpdateProfilesBio :exec
-UPDATE profiles
-SET bio = $1
-WHERE account_id = $2
-`
-
-type UpdateProfilesBioParams struct {
-	Bio       sql.NullString
-	AccountID string
-}
-
-func (q *Queries) UpdateProfilesBio(ctx context.Context, arg UpdateProfilesBioParams) error {
-	_, err := q.db.ExecContext(ctx, updateProfilesBio, arg.Bio, arg.AccountID)
-	return err
-}
-
-const updateProfilesImageUrl = `-- name: UpdateProfilesImageUrl :exec
-UPDATE profiles
-SET profile_image_url = $1
-WHERE account_id = $2
-`
-
-type UpdateProfilesImageUrlParams struct {
+type UpdateProfilesParams struct {
+	Bio             sql.NullString
 	ProfileImageUrl sql.NullString
+	BannerImageUrl  sql.NullString
 	AccountID       string
 }
 
-func (q *Queries) UpdateProfilesImageUrl(ctx context.Context, arg UpdateProfilesImageUrlParams) error {
-	_, err := q.db.ExecContext(ctx, updateProfilesImageUrl, arg.ProfileImageUrl, arg.AccountID)
-	return err
+func (q *Queries) UpdateProfiles(ctx context.Context, arg UpdateProfilesParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateProfiles,
+		arg.Bio,
+		arg.ProfileImageUrl,
+		arg.BannerImageUrl,
+		arg.AccountID,
+	)
 }

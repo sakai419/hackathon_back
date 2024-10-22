@@ -1,0 +1,41 @@
+openapi: 3.0.0
+info:
+    title: Profile Management API
+    version: 1.0.0
+    description: API for managing profiles
+
+paths:
+    /profiles:
+        patch:
+            summary: Update profiles
+            operationId: UpdateProfiles
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/UpdateProfilesRequest"
+            responses:
+                "200":
+                    description: Profiles updated successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        UpdateProfilesRequest:
+            type: object
+            properties:
+                bio:
+                    type: string
+                    nullable: true
+                profile_image_url:
+                    type: string
+                    format: uri
+                    nullable: true
+                banner_image_url:
+                    type: string
+                    format: uri
+                    nullable: true

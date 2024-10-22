@@ -12,7 +12,7 @@ type SettingHandler struct {
 	svc *service.Service
 }
 
-func NewSettingHandler(svc *service.Service) *SettingHandler {
+func NewSettingHandler(svc *service.Service) ServerInterface {
 	return &SettingHandler{
 		svc: svc,
 	}
@@ -31,12 +31,6 @@ func (h *SettingHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) 
 	var req UpdateSettingsJSONRequestBody
 	if err := utils.Decode(r, &req); err != nil {
 		utils.RespondError(w, apperrors.NewDecodeError(err))
-		return
-	}
-
-	// Validate request
-	if err := utils.ValidateRequiredFields(req); err != nil {
-		utils.RespondError(w, apperrors.NewRequiredParamError("request body", err))
 		return
 	}
 
