@@ -34,6 +34,20 @@ func NewInternalAppError(operation string, err error) *AppError {
 	}
 }
 
+func NewForbiddenAppError(operation string, err error) *AppError {
+	return &AppError{
+		Status:  http.StatusForbidden,
+		Code:    "FORBIDDEN",
+		Message: fmt.Sprintf("%s is forbidden", operation),
+		Err:     WrapServiceError(
+			&ErrOperationFailed{
+				Operation: operation,
+				Err: err,
+			},
+		),
+	}
+}
+
 func NewDuplicateEntryAppError(entity, operation string, err error) *AppError {
 	var duplicateErr *ErrDuplicateEntry
 	if errors.As(err, &duplicateErr) {

@@ -175,3 +175,21 @@ func (r *Repository) GetBlockCount(ctx context.Context, accountID string) (int64
 
 	return count, nil
 }
+
+func (r *Repository) IsBlocked(ctx context.Context, params *model.IsBlockedParams) (bool, error) {
+	// Get block
+	is_blocked, err := r.q.CheckBlockExists(ctx, sqlcgen.CheckBlockExistsParams{
+		BlockerAccountID: params.BlockerAccountID,
+		BlockedAccountID: params.BlockedAccountID,
+	})
+	if err != nil {
+		return false, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check is_blocked",
+				Err: err,
+			},
+		)
+	}
+
+	return is_blocked, nil
+}

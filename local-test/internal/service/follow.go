@@ -12,6 +12,17 @@ func (s *Service) FollowAndNotify(ctx context.Context, params *model.FollowAndNo
 		return apperrors.NewValidateAppError(err)
 	}
 
+	// Check if blocked
+	if is_blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: params.FollowingAccountID,
+		BlockedAccountID: params.FollowerAccountID,
+	}); err != nil {
+		return apperrors.NewInternalAppError("check if blocked", err)
+	} else if is_blocked {
+		return apperrors.NewForbiddenAppError("Follow", err)
+	}
+
+
 	// Create follow
 	if err := s.repo.FollowAndNotify(ctx, params); err != nil {
 		return apperrors.NewDuplicateEntryAppError("Follow", "follow", err)
@@ -39,6 +50,16 @@ func (s *Service) RequestFollowAndNotify(ctx context.Context, params *model.Requ
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return apperrors.NewValidateAppError(err)
+	}
+
+	// Check if blocked
+	if is_blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: params.RequestedAccountID,
+		BlockedAccountID: params.RequesterAccountID,
+	}); err != nil {
+		return apperrors.NewInternalAppError("check if blocked", err)
+	} else if is_blocked {
+		return apperrors.NewForbiddenAppError("Follow request", err)
 	}
 
 	// Request follow
