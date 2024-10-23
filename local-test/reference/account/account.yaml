@@ -27,7 +27,6 @@ paths:
                 "500":
                     description: Internal server error
 
-    /accounts/me:
         delete:
             summary: Delete my account
             operationId: DeleteMyAccount

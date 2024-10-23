@@ -54,7 +54,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete my account
-// (DELETE /accounts/me)
+// (DELETE /accounts/)
 func (h *AccountHandler) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 	// Get user ID
 	clientAccountID, ok := utils.GetClientAccountID(w, r)

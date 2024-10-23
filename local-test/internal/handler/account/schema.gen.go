@@ -27,12 +27,12 @@ type CreateAccountJSONRequestBody = CreateAccountRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Delete my account
+	// (DELETE /accounts)
+	DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 	// Create a new account
 	// (POST /accounts)
 	CreateAccount(w http.ResponseWriter, r *http.Request)
-	// Delete my account
-	// (DELETE /accounts/me)
-	DeleteMyAccount(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -44,11 +44,11 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// CreateAccount operation middleware
-func (siw *ServerInterfaceWrapper) CreateAccount(w http.ResponseWriter, r *http.Request) {
+// DeleteMyAccount operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CreateAccount(w, r)
+		siw.Handler.DeleteMyAccount(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -58,11 +58,11 @@ func (siw *ServerInterfaceWrapper) CreateAccount(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
-// DeleteMyAccount operation middleware
-func (siw *ServerInterfaceWrapper) DeleteMyAccount(w http.ResponseWriter, r *http.Request) {
+// CreateAccount operation middleware
+func (siw *ServerInterfaceWrapper) CreateAccount(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteMyAccount(w, r)
+		siw.Handler.CreateAccount(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -185,9 +185,9 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/accounts", wrapper.CreateAccount).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/accounts", wrapper.DeleteMyAccount).Methods("DELETE")
 
-	r.HandleFunc(options.BaseURL+"/accounts/me", wrapper.DeleteMyAccount).Methods("DELETE")
+	r.HandleFunc(options.BaseURL+"/accounts", wrapper.CreateAccount).Methods("POST")
 
 	return r
 }
