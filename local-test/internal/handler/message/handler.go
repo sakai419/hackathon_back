@@ -20,7 +20,7 @@ func NewMessageHandler(svc *service.Service) ServerInterface {
 }
 
 // Get Messages
-// (GET /messages/{user_id})
+// (GET /conversations/{user_id}/messages)
 func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ string, params GetMessagesParams) {
 	// Get client account ID
 	clientAccountID, ok := utils.GetClientAccountID(w, r)
@@ -50,7 +50,7 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request, _ s
 }
 
 // Send Message
-// (POST /messages/{user_id})
+// (POST /conversations/{user_id}/messages)
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ string) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) || utils.IsTargetSuspended(w, r) {
@@ -97,7 +97,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 }
 
 // Mark message as read
-// (PATCH /messages/{user_id}/read)
+// (PATCH /conversations/{user_id}/messages)
 func (h *MessageHandler) MarkMessagesAsRead(w http.ResponseWriter, r *http.Request, _ string) {
 	// Get client account ID
 	clidentAccountID, ok := utils.GetClientAccountID(w, r)

@@ -40,13 +40,13 @@ type SendMessageJSONRequestBody = MessageRequest
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get messages of a user
-	// (GET /messages/{user_id})
+	// (GET /conversations/{user_id}/messages)
 	GetMessages(w http.ResponseWriter, r *http.Request, userId string, params GetMessagesParams)
 	// Send a message to a user
-	// (POST /messages/{user_id})
+	// (POST /conversations/{user_id}/messages)
 	SendMessage(w http.ResponseWriter, r *http.Request, userId string)
 	// Mark messages as read
-	// (PATCH /messages/{user_id}/read)
+	// (PATCH /conversations/{user_id}/messages/read)
 	MarkMessagesAsRead(w http.ResponseWriter, r *http.Request, userId string)
 }
 
@@ -280,11 +280,11 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/messages/{user_id}", wrapper.GetMessages).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/conversations/{user_id}/messages", wrapper.GetMessages).Methods("GET")
 
-	r.HandleFunc(options.BaseURL+"/messages/{user_id}", wrapper.SendMessage).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/conversations/{user_id}/messages", wrapper.SendMessage).Methods("POST")
 
-	r.HandleFunc(options.BaseURL+"/messages/{user_id}/read", wrapper.MarkMessagesAsRead).Methods("PATCH")
+	r.HandleFunc(options.BaseURL+"/conversations/{user_id}/messages/read", wrapper.MarkMessagesAsRead).Methods("PATCH")
 
 	return r
 }

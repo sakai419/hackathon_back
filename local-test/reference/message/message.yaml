@@ -5,7 +5,7 @@ info:
     description: API for managing user messages
 
 paths:
-    /messages/{user_id}:
+    /conversations/{user_id}/messages:
         get:
             summary: Get messages of a user
             operationId: GetMessages
@@ -60,7 +60,7 @@ paths:
                     description: Bad request
                 "500":
                     description: Internal server error
-    /messages/{user_id}/read:
+    /conversations/{user_id}/messages/read:
         patch:
             summary: Mark messages as read
             operationId: MarkMessagesAsRead
