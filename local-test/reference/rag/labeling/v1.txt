@@ -1,0 +1,110 @@
+### Please label the tweets that are being sent.
+
+### The tweets may include the following (but they may not necessarily include all of these elements):
+    - Text
+    - Source code
+    - Images
+
+### From the list of 100 labels, please select 3 labels that best describe each tweet.
+
+### Labels:
+    - 1. News
+    - 2. Politics
+    - 3. Economics
+    - 4. Health
+    - 5. Sports
+    - 6. Entertainment
+    - 7. Art
+    - 8. Cooking
+    - 9. Travel
+    - 10. Fashion
+    - 11. Beauty
+    - 12. Pets
+    - 13. Parenting
+    - 14. Education
+    - 15. Environment
+    - 16. Climate
+    - 17. Space
+    - 18. Mental Health
+    - 19. Fitness
+    - 20. Reading
+    - 21. History
+    - 22. Philosophy
+    - 23. Religion
+    - 24. Culture
+    - 25. Volunteering
+    - 26. Social Issues
+    - 27. Law
+    - 28. Taxes
+    - 29. Investment
+    - 30. Real Estate
+    - 31. DIY (Do It Yourself)
+    - 32. Gardening
+    - 33. Interior Design
+    - 34. Automotive
+    - 35. Gaming
+    - 36. Anime & Manga
+    - 37. Creative Works
+    - 38. Photography & Video
+    - 39. Media
+    - 40. Marketing
+    - 41. Branding
+    - 42. Entrepreneurship
+    - 43. Remote Work
+    - 44. Data Science
+    - 45. IoT (Internet of Things)
+    - 46. Robotics Engineering
+    - 47. Biotechnology
+    - 48. Nanotechnology
+    - 49. Energy Technology
+    - 50. Archaeology
+    - 51. Psychology
+    - 52. Sociology
+    - 53. Anthropology
+    - 54. Geography
+    - 55. Geology
+    - 56. Meteorology
+    - 57. Disaster & Emergency Management
+    - 58. Urban Planning
+    - 59. Architecture
+    - 60. Agriculture
+    - 61. Nutrition Science
+    - 62. Sleep Science
+    - 63. Productivity
+    - 64. Leadership
+    - 65. International Relations
+    - 66. Future Predictions
+    - 67. Events
+    - 68. Community
+    - 69. Trends
+    - 70. Lifestyle
+    - 71. Software Development
+    - 72. Programming Languages
+    - 73. Web Development
+    - 74. Mobile App Development
+    - 75. Debugging Techniques
+    - 76. Algorithms and Mathematics
+    - 77. Database Design
+    - 78. Cloud Computing
+    - 79. Server Management
+    - 80. Network Security
+    - 81. Cryptography
+    - 82. Artificial Intelligence (AI)
+    - 83. Machine Learning
+    - 84. Deep Learning
+    - 85. Computer Vision
+    - 86. Natural Language Processing (NLP)
+    - 87. Blockchain Technology
+    - 88. Quantum Computing
+    - 89. Edge Computing
+    - 90. Microservices Architecture
+    - 91. DevOps
+    - 92. Container Technology
+    - 93. CI/CD (Continuous Integration/Continuous Deployment)
+    - 94. Test Automation
+    - 95. UX/UI Design
+    - 96. Agile Development Methodologies
+    - 97. Open Source
+    - 98. Version Control
+    - 99. API Design
+    - 100. Performance Optimization
