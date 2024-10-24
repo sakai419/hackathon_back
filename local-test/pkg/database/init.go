@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"local-test/internal/config"
-	"local-test/pkg/utils"
+	"local-test/pkg/apperrors"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -23,8 +23,13 @@ func generateConnStr(c *config.DBConfig) string {
 
 func ConnectToDB(c *config.DBConfig) (*sql.DB, error) {
 	// Validate database configuration
-	if err := utils.ValidateDBConfig(c); err != nil {
-		return nil, fmt.Errorf("database: invalid config: %w", err)
+	if err := validateDBConfig(c); err != nil {
+		return nil, apperrors.WrapInitError(
+			&apperrors.ErrOperationFailed{
+				Operation: "validate db config",
+				Err:       err,
+			},
+		)
 	}
 
 	// Generate connection string
@@ -33,7 +38,12 @@ func ConnectToDB(c *config.DBConfig) (*sql.DB, error) {
 	// Open database connection
     db, err := sql.Open(c.Driver, connStr)
 	if err != nil {
-		return nil, fmt.Errorf("database: failed to open db: %w", err)
+		return nil, apperrors.WrapInitError(
+			&apperrors.ErrOperationFailed{
+				Operation: "open db connection",
+				Err:       err,
+			},
+		)
 	}
 
 	// Set database connection pool settings
@@ -45,13 +55,23 @@ func ConnectToDB(c *config.DBConfig) (*sql.DB, error) {
 
 	// Check if the database is alive
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("database: failed to ping db: %w", err)
+		return nil, apperrors.WrapInitError(
+			&apperrors.ErrOperationFailed{
+				Operation: "ping db",
+				Err:       err,
+			},
+		)
 	}
 
 
 	// Check user permissions
-	if err := utils.ValidateDB(db, c); err != nil {
-		return nil, fmt.Errorf("database: invalid user permissions: %w", err)
+	if err := validateDB(db, c); err != nil {
+		return nil, apperrors.WrapInitError(
+			&apperrors.ErrOperationFailed{
+				Operation: "validate db",
+				Err:       err,
+			},
+		)
 	}
 
 	return db, nil

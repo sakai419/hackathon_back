@@ -9,22 +9,10 @@ import (
 )
 
 type Config struct {
-	FirebaseConfig *FirebaseConfig
 	DBConfig *DBConfig
+	FirebaseConfig *FirebaseConfig
 	ServerConfig *ServerConfig
-}
-
-type FirebaseConfig struct {
-	Type string
-	ProjectID string
-	PrivateKeyID string
-	PrivateKey string
-	ClientEmail string
-	ClientID string
-	AuthURI string
-	TokenURI string
-	AuthProviderX509CertURL string
-	ClientX509CertURL string
+	VertexConfig *VertexConfig
 }
 
 type DBConfig struct {
@@ -46,23 +34,28 @@ type DBConfig struct {
 	RequiredTables []string
 }
 
-type ServerConfig struct {
-	Port int
+type FirebaseConfig struct {
+	Type string
+	ProjectID string
+	PrivateKeyID string
+	PrivateKey string
+	ClientEmail string
+	ClientID string
+	AuthURI string
+	TokenURI string
+	AuthProviderX509CertURL string
+	ClientX509CertURL string
 }
 
-func generateFirebaseConfig(v *viper.Viper) (*FirebaseConfig, error) {
-	return &FirebaseConfig{
-		Type: v.GetString("firebase.type"),
-		ProjectID: v.GetString("firebase.project_id"),
-		PrivateKeyID: v.GetString("firebase.private_key_id"),
-		PrivateKey: v.GetString("firebase.private_key"),
-		ClientEmail: v.GetString("firebase.client_email"),
-		ClientID: v.GetString("firebase.client_id"),
-		AuthURI: v.GetString("firebase.auth_uri"),
-		TokenURI: v.GetString("firebase.token_uri"),
-		AuthProviderX509CertURL: v.GetString("firebase.auth_provider_x509_cert_url"),
-		ClientX509CertURL: v.GetString("firebase.client_x509_cert_url"),
-	}, nil
+type VertexConfig struct {
+	ProjectID string
+	Location string
+	EngineID string
+	Scope    string
+}
+
+type ServerConfig struct {
+	Port int
 }
 
 func generateDBConfig(v *viper.Viper) (*DBConfig, error) {
@@ -86,9 +79,33 @@ func generateDBConfig(v *viper.Viper) (*DBConfig, error) {
 	}, nil
 }
 
+func generateFirebaseConfig(v *viper.Viper) (*FirebaseConfig, error) {
+	return &FirebaseConfig{
+		Type: v.GetString("firebase.type"),
+		ProjectID: v.GetString("firebase.project_id"),
+		PrivateKeyID: v.GetString("firebase.private_key_id"),
+		PrivateKey: v.GetString("firebase.private_key"),
+		ClientEmail: v.GetString("firebase.client_email"),
+		ClientID: v.GetString("firebase.client_id"),
+		AuthURI: v.GetString("firebase.auth_uri"),
+		TokenURI: v.GetString("firebase.token_uri"),
+		AuthProviderX509CertURL: v.GetString("firebase.auth_provider_x509_cert_url"),
+		ClientX509CertURL: v.GetString("firebase.client_x509_cert_url"),
+	}, nil
+}
+
 func generateServerConfig(v *viper.Viper) (*ServerConfig, error) {
 	return &ServerConfig{
 		Port: v.GetInt("server.port"),
+	}, nil
+}
+
+func generateVertexConfig(v *viper.Viper) (*VertexConfig, error) {
+	return &VertexConfig{
+		ProjectID: v.GetString("vertex.project_id"),
+		Location: v.GetString("vertex.location"),
+		EngineID: v.GetString("vertex.engine_id"),
+		Scope:    v.GetString("vertex.scope"),
 	}, nil
 }
 
@@ -121,23 +138,23 @@ func LoadConfig() (*Config, error) {
 		)
 	}
 
-	// Generate Firebase config
-	FirebaseConfig, err := generateFirebaseConfig(v)
-	if err != nil {
-		return nil, apperrors.WrapConfigError(
-			&apperrors.ErrOperationFailed{
-				Operation: "generate firebase config",
-				Err: err,
-			},
-		)
-	}
-
 	// Generate DB config
 	DBConfig, err := generateDBConfig(v)
 	if err != nil {
 		return nil, apperrors.WrapConfigError(
 			&apperrors.ErrOperationFailed{
 				Operation: "generate db config",
+				Err: err,
+			},
+		)
+	}
+
+	// Generate Firebase config
+	FirebaseConfig, err := generateFirebaseConfig(v)
+	if err != nil {
+		return nil, apperrors.WrapConfigError(
+			&apperrors.ErrOperationFailed{
+				Operation: "generate firebase config",
 				Err: err,
 			},
 		)
@@ -154,9 +171,21 @@ func LoadConfig() (*Config, error) {
 		)
 	}
 
+	// Generate Vertex config
+	VertexConfig, err := generateVertexConfig(v)
+	if err != nil {
+		return nil, apperrors.WrapConfigError(
+			&apperrors.ErrOperationFailed{
+				Operation: "generate vertex config",
+				Err: err,
+			},
+		)
+	}
+
 	return &Config{
 		FirebaseConfig: FirebaseConfig,
 		DBConfig:       DBConfig,
 		ServerConfig:   ServerConfig,
+		VertexConfig:   VertexConfig,
 	}, nil
 }

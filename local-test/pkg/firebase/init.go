@@ -3,8 +3,8 @@ package firebase
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"local-test/internal/config"
+	"local-test/pkg/apperrors"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
@@ -12,6 +12,16 @@ import (
 )
 
 func InitFirebaseClient(c *config.FirebaseConfig) (*auth.Client, error) {
+    // Validate Firebase configuration
+    if err := validateFirebaseConfig(c); err != nil {
+        return nil, apperrors.WrapInitError(
+            &apperrors.ErrOperationFailed{
+                Operation: "validate firebase config",
+                Err:       err,
+            },
+        )
+    }
+
 	// Create a map of Firebase credentials
 	firebaseCredentials := map[string]string{
 		"type":                        c.Type,
@@ -29,20 +39,35 @@ func InitFirebaseClient(c *config.FirebaseConfig) (*auth.Client, error) {
 	// Marshal the map into JSON
     credentialsJSON, err := json.Marshal(firebaseCredentials)
     if err != nil {
-        return nil, fmt.Errorf("error marshaling firebase credentials: %v", err)
+        return nil, apperrors.WrapInitError(
+            &apperrors.ErrOperationFailed{
+                Operation: "marshal firebase credentials",
+                Err:       err,
+            },
+        )
     }
 
 	// Initialize Firebase app
 	opt := option.WithCredentialsJSON(credentialsJSON)
 	firebaseApp, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
-		return nil, fmt.Errorf("error initializing firebase app: %v", err)
+		return nil, apperrors.WrapInitError(
+            &apperrors.ErrOperationFailed{
+                Operation: "initialize Firebase app",
+                Err:       err,
+            },
+        )
 	}
 
 	// Initialize Firebase Auth client
 	authClient, err := firebaseApp.Auth(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("error getting Auth client: %v", err)
+		return nil, apperrors.WrapInitError(
+            &apperrors.ErrOperationFailed{
+                Operation: "initialize Firebase Auth client",
+                Err:       err,
+            },
+        )
 	}
 
 	return authClient, nil

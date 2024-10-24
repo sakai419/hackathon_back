@@ -22,7 +22,7 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	client, err := firebase.InitFirebaseClient(cfg.FirebaseConfig)
+	firebaseClient, err := firebase.InitFirebaseClient(cfg.FirebaseConfig)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -31,7 +31,7 @@ func main() {
 	utils.CloseDBWithSysCall(db)
 
 	// Setup server
-	server := v1.NewServer(db, client)
+	server := v1.NewServer(db, firebaseClient)
 
 	// Start server
 	if err := server.Start(cfg.ServerConfig.Port); err != nil {

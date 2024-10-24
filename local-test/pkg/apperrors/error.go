@@ -109,3 +109,7 @@ func WrapValidationError(err error) error {
 func WrapConfigError(err error) error {
 	return fmt.Errorf("config: %w", err)
 }
+
+func WrapInitError(err error) error {
+	return fmt.Errorf("init: %w", err)
+}
