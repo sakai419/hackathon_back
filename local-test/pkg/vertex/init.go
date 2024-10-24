@@ -1,6 +1,7 @@
 package vertex
 
 import (
+	"errors"
 	"local-test/internal/config"
 	"local-test/pkg/apperrors"
 	"sync"
@@ -26,4 +27,13 @@ func InitVertexConfig(c *config.VertexConfig) error {
 		vertexConfig = c
 	})
 	return nil
+}
+
+func GetVertexConfig() (*config.VertexConfig, error) {
+	if vertexConfig == nil {
+		return nil, apperrors.WrapInitError(
+			errors.New("vertex config is not initialized"),
+		)
+	}
+	return vertexConfig, nil
 }
