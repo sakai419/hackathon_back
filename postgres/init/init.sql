@@ -54,12 +54,15 @@ CREATE TABLE tweets (
     is_retweet BOOLEAN NOT NULL DEFAULT FALSE,
     is_reply BOOLEAN NOT NULL DEFAULT FALSE,
     is_quote BOOLEAN NOT NULL DEFAULT FALSE,
+    original_tweet_id BIGINT,
     engagement_score INTEGER NOT NULL DEFAULT 0,
     media JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tweets_account_id FOREIGN KEY (account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_tweets_original_tweet_id FOREIGN KEY (original_tweet_id)
+        REFERENCES tweets(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_tweets_account_id ON tweets(account_id);
@@ -344,14 +347,11 @@ EXECUTE FUNCTION update_timestamp();
 
 CREATE TABLE replies (
     reply_id BIGINT NOT NULL,
-    original_tweet_id BIGINT NOT NULL,
     parent_reply_id BIGINT,
     replying_account_id CHAR(28) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (reply_id),
     CONSTRAINT fk_replies_reply_id FOREIGN KEY (reply_id)
-        REFERENCES tweets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_replies_original_tweet_id FOREIGN KEY (original_tweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
     CONSTRAINT fk_replies_parent_reply_id FOREIGN KEY (parent_reply_id)
         REFERENCES replies(reply_id) ON DELETE SET NULL,
