@@ -28,6 +28,12 @@ components:
         UpdateProfilesRequest:
             type: object
             properties:
+                user_id:
+                    type: string
+                    nullable: true
+                user_name:
+                    type: string
+                    nullable: true
                 bio:
                     type: string
                     nullable: true
