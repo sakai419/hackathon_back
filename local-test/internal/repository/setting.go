@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/apperrors"
@@ -46,7 +47,10 @@ func convertToUpdateSettingsParams(params *model.UpdateSettingsParams) sqlcgen.U
 	}
 
 	if params.IsPrivate != nil {
-		ret.IsPrivate = *params.IsPrivate
+		ret.IsPrivate = sql.NullBool{
+			Bool:  *params.IsPrivate,
+			Valid: true,
+		}
 	}
 
 	return ret

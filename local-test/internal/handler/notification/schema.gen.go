@@ -14,30 +14,18 @@ import (
 
 // Count defines model for Count.
 type Count struct {
-	// Count The count of notifications
 	Count int64 `json:"count"`
 }
 
 // Notification defines model for Notification.
 type Notification struct {
-	// Content The content of the notification
-	Content *string `json:"content,omitempty"`
-
-	// CreatedAt The time when the notification is created
-	CreatedAt time.Time `json:"created_at"`
-
-	// Id The ID of the notification
-	Id int64 `json:"id"`
-
-	// IsRead Whether the notification is read
+	Content    *string   `json:"content,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	Id         int64     `json:"id"`
 	IsRead     bool      `json:"is_read"`
 	SenderInfo *UserInfo `json:"sender_info,omitempty"`
-
-	// TweetId The ID of the tweet
-	TweetId *int64 `json:"tweet_id,omitempty"`
-
-	// Type The type of the notification
-	Type string `json:"type"`
+	TweetId    *int64    `json:"tweet_id,omitempty"`
+	Type       string    `json:"type"`
 }
 
 // Notifications defines model for Notifications.
@@ -45,17 +33,10 @@ type Notifications = []Notification
 
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
-	// Bio The bio of the user
-	Bio string `json:"bio"`
-
-	// ProfileImageUrl The URL of the profile image of the user
+	Bio             string `json:"bio"`
 	ProfileImageUrl string `json:"profile_image_url"`
-
-	// UserId The ID of the user
-	UserId string `json:"user_id"`
-
-	// UserName The username of the user
-	UserName string `json:"user_name"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
 }
 
 // GetNotificationsParams defines parameters for GetNotifications.

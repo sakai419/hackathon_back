@@ -360,7 +360,7 @@ type RetweetsAndQuote struct {
 
 type Setting struct {
 	AccountID string
-	IsPrivate bool
+	IsPrivate sql.NullBool
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

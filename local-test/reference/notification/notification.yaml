@@ -119,7 +119,6 @@ components:
                 count:
                     type: integer
                     format: int64
-                    description: The count of notifications
         UserInfo:
             type: object
             required:
@@ -130,17 +129,13 @@ components:
             properties:
                 user_id:
                     type: string
-                    description: The ID of the user
                 user_name:
                     type: string
-                    description: The username of the user
                 bio:
                     type: string
-                    description: The bio of the user
                 profile_image_url:
                     type: string
                     format: uri
-                    description: The URL of the profile image of the user
         Notifications:
             type: array
             items:
@@ -156,24 +151,18 @@ components:
                 id:
                     type: integer
                     format: int64
-                    description: The ID of the notification
                 sender_info:
                     $ref: "#/components/schemas/UserInfo"
                     description: The information of the sender
                 type:
                     type: string
-                    description: The type of the notification
                 content:
                     type: string
-                    description: The content of the notification
                 tweet_id:
                     type: integer
                     format: int64
-                    description: The ID of the tweet
                 is_read:
                     type: boolean
-                    description: Whether the notification is read
                 created_at:
                     type: string
                     format: date-time
-                    description: The time when the notification is created

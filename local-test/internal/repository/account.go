@@ -241,7 +241,7 @@ func (r *Repository) GetAccountInfo(ctx context.Context, accountID string) (*mod
 	accountInfo := &model.AccountInfo{
 		IsAdmin : res.IsAdmin,
 		IsSuspended : res.IsSuspended,
-		IsPrivate : res.IsPrivate,
+		IsPrivate : res.IsPrivate.Bool,
 	}
 
 	return accountInfo, nil

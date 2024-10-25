@@ -27,7 +27,7 @@ WHERE account_id = $2
 `
 
 type UpdateSettingsParams struct {
-	IsPrivate bool
+	IsPrivate sql.NullBool
 	AccountID string
 }
 

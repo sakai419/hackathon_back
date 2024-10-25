@@ -59,7 +59,7 @@ WHERE a.id = $1
 type GetAccountInfoRow struct {
 	IsSuspended bool
 	IsAdmin     bool
-	IsPrivate   bool
+	IsPrivate   sql.NullBool
 }
 
 func (q *Queries) GetAccountInfo(ctx context.Context, id string) (GetAccountInfoRow, error) {
