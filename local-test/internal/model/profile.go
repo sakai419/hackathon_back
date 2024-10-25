@@ -4,6 +4,8 @@ import "errors"
 
 type UpdateProfilesParams struct {
 	AccountID       string
+	UserID          *string
+	UserName        *string
 	Bio             *string
 	ProfileImageURL *string
 	BannerImageURL  *string

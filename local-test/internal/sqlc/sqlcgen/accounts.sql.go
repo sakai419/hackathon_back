@@ -246,34 +246,20 @@ func (q *Queries) UnsuspendAccount(ctx context.Context, id string) (sql.Result, 
 	return q.db.ExecContext(ctx, unsuspendAccount, id)
 }
 
-const updateAccountUserID = `-- name: UpdateAccountUserID :exec
+const updateAccountInfos = `-- name: UpdateAccountInfos :execresult
 UPDATE accounts
-SET user_id = $1
-WHERE id = $2
+SET user_id = COALESCE(NULLIF($1, ''), user_id),
+    user_name = COALESCE(NULLIF($2, ''), user_name)
+WHERE id = $3
 `
 
-type UpdateAccountUserIDParams struct {
-	UserID string
-	ID     string
-}
-
-func (q *Queries) UpdateAccountUserID(ctx context.Context, arg UpdateAccountUserIDParams) error {
-	_, err := q.db.ExecContext(ctx, updateAccountUserID, arg.UserID, arg.ID)
-	return err
-}
-
-const updateAccountUserName = `-- name: UpdateAccountUserName :exec
-UPDATE accounts
-SET user_name = $1
-WHERE id = $2
-`
-
-type UpdateAccountUserNameParams struct {
-	UserName string
+type UpdateAccountInfosParams struct {
+	UserID   interface{}
+	UserName interface{}
 	ID       string
 }
 
-func (q *Queries) UpdateAccountUserName(ctx context.Context, arg UpdateAccountUserNameParams) error {
-	_, err := q.db.ExecContext(ctx, updateAccountUserName, arg.UserName, arg.ID)
-	return err
+// params: user_id, user_name, id
+func (q *Queries) UpdateAccountInfos(ctx context.Context, arg UpdateAccountInfosParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, updateAccountInfos, arg.UserID, arg.UserName, arg.ID)
 }

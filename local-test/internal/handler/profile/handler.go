@@ -37,6 +37,8 @@ func (h *ProfileHandler) UpdateProfiles(w http.ResponseWriter, r *http.Request) 
 	// Update profile
 	if err := h.svc.UpdateProfiles(r.Context(), &model.UpdateProfilesParams{
 		AccountID:       clientAccountID,
+		UserID:          req.UserId,
+		UserName:        req.UserName,
 		Bio:             req.Bio,
 		ProfileImageURL: req.ProfileImageUrl,
 		BannerImageURL:  req.BannerImageUrl,

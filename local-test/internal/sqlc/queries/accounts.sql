@@ -13,15 +13,12 @@ JOIN profiles p ON a.id = p.account_id
 WHERE a.id = ANY(@IDs::VARCHAR[]) and a.is_suspended = FALSE
 ORDER BY a.created_at DESC;
 
--- name: UpdateAccountUserName :exec
+-- name: UpdateAccountInfos :execresult
+-- params: user_id, user_name, id
 UPDATE accounts
-SET user_name = $1
-WHERE id = $2;
-
--- name: UpdateAccountUserID :exec
-UPDATE accounts
-SET user_id = $1
-WHERE id = $2;
+SET user_id = COALESCE(NULLIF(@user_id, ''), user_id),
+    user_name = COALESCE(NULLIF(@user_name, ''), user_name)
+WHERE id = @id;
 
 -- name: SuspendAccount :execresult
 UPDATE accounts

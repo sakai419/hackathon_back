@@ -15,6 +15,8 @@ type UpdateProfilesRequest struct {
 	BannerImageUrl  *string `json:"banner_image_url"`
 	Bio             *string `json:"bio"`
 	ProfileImageUrl *string `json:"profile_image_url"`
+	UserId          *string `json:"user_id"`
+	UserName        *string `json:"user_name"`
 }
 
 // UpdateProfilesJSONRequestBody defines body for UpdateProfiles for application/json ContentType.
