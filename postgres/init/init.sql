@@ -410,7 +410,7 @@ CREATE INDEX idx_retweets_retweet_id ON retweets_and_quotes (retweet_id);
 -- Table: settings
 CREATE TABLE settings (
     account_id CHAR(28) PRIMARY KEY,
-    is_private BOOLEAN NOT NULL DEFAULT FALSE,
+    is_private BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_settings_account_id FOREIGN KEY (account_id)
