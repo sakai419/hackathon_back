@@ -1,0 +1,46 @@
+openapi: 3.0.0
+info:
+    title: Tweet Management API
+    version: 1.0.0
+    description: API for managing tweets
+
+paths:
+    /tweets:
+        post:
+            summary: Create a tweet
+            operationId: PostTweet
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/PostTweetRequest"
+            responses:
+                "201":
+                    description: Tweet created successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        PostTweetRequest:
+            type: object
+            properties:
+                content:
+                    type: string
+                code:
+                    type: string
+                media:
+                    $ref: "#/components/schemas/Media"
+        Media:
+            type: object
+            properties:
+                type:
+                    type: string
+                url:
+                    type: string
+            required:
+                - type
+                - url

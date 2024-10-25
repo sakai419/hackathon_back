@@ -335,8 +335,7 @@ type Profile struct {
 }
 
 type Reply struct {
-	TweetID           int64
-	OriginalTweetID   int64
+	ReplyID           int64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 	CreatedAt         time.Time
@@ -377,6 +376,7 @@ type Tweet struct {
 	IsRetweet       bool
 	IsReply         bool
 	IsQuote         bool
+	OriginalTweetID sql.NullInt64
 	EngagementScore int32
 	Media           pqtype.NullRawMessage
 	CreatedAt       time.Time

@@ -1,7 +1,8 @@
--- name: CreateTweet :exec
+-- name: CreateTweet :one
 INSERT INTO tweets (
     account_id, content, code, media
-) VALUES ($1, $2, $3, $4);
+) VALUES ($1, $2, $3, $4)
+RETURNING id;
 
 -- name: CreateTweetAsRetweet :exec
 INSERT INTO tweets (

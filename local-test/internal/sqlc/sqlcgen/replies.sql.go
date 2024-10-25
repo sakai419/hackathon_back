@@ -14,53 +14,59 @@ import (
 )
 
 const createReply = `-- name: CreateReply :exec
-INSERT INTO replies (original_tweet_id, parent_reply_id, replying_account_id)
+INSERT INTO replies (reply_id, parent_reply_id, replying_account_id)
 VALUES ($1, $2, $3)
 `
 
 type CreateReplyParams struct {
-	OriginalTweetID   int64
+	ReplyID           int64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 }
 
 func (q *Queries) CreateReply(ctx context.Context, arg CreateReplyParams) error {
-	_, err := q.db.ExecContext(ctx, createReply, arg.OriginalTweetID, arg.ParentReplyID, arg.ReplyingAccountID)
+	_, err := q.db.ExecContext(ctx, createReply, arg.ReplyID, arg.ParentReplyID, arg.ReplyingAccountID)
 	return err
 }
 
-const deleteReply = `-- name: DeleteReply :exec
-DELETE FROM replies WHERE tweet_id = $1
+const getReplyThread = `-- name: GetReplyThread :many
+
+
+
+WITH RECURSIVE reply_thread AS (
+    SELECT reply_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.reply_id = $1
+    UNION ALL
+    SELECT r.reply_id, r.parent_reply_id, r.replying_account_id, r.created_at FROM replies r
+    JOIN reply_thread rt ON r.parent_reply_id = rt.reply_id
+)
+SELECT rt.reply_id, rt.parent_reply_id, rt.replying_account_id, rt.created_at, t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.original_tweet_id, t.engagement_score, t.media, t.created_at, t.updated_at
+FROM reply_thread rt
+JOIN tweets t ON rt.tweet_id = t.id
+ORDER BY rt.created_at ASC
 `
 
-func (q *Queries) DeleteReply(ctx context.Context, tweetID int64) error {
-	_, err := q.db.ExecContext(ctx, deleteReply, tweetID)
-	return err
+type GetReplyThreadRow struct {
+	ReplyID           int64
+	ParentReplyID     sql.NullInt64
+	ReplyingAccountID string
+	CreatedAt         time.Time
+	ID                int64
+	AccountID         string
+	IsPinned          bool
+	Content           sql.NullString
+	Code              sql.NullString
+	LikesCount        int32
+	RepliesCount      int32
+	RetweetsCount     int32
+	IsRetweet         bool
+	IsReply           bool
+	IsQuote           bool
+	OriginalTweetID   sql.NullInt64
+	EngagementScore   int32
+	Media             pqtype.NullRawMessage
+	CreatedAt_2       time.Time
+	UpdatedAt         time.Time
 }
-
-const getReplyByID = `-- name: GetReplyByID :one
-SELECT tweet_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies WHERE tweet_id = $1
-`
-
-func (q *Queries) GetReplyByID(ctx context.Context, tweetID int64) (Reply, error) {
-	row := q.db.QueryRowContext(ctx, getReplyByID, tweetID)
-	var i Reply
-	err := row.Scan(
-		&i.TweetID,
-		&i.OriginalTweetID,
-		&i.ParentReplyID,
-		&i.ReplyingAccountID,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const getReplyCount = `-- name: GetReplyCount :one
-
-
-
-SELECT COUNT(*) FROM replies WHERE original_tweet_id = $1
-`
 
 // -- name: GetRepliesByOriginalTweetID :many
 // SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
@@ -86,51 +92,8 @@ SELECT COUNT(*) FROM replies WHERE original_tweet_id = $1
 // WHERE r.replying_account_id = $1
 // ORDER BY r.created_at DESC
 // LIMIT $2 OFFSET $3;
-func (q *Queries) GetReplyCount(ctx context.Context, originalTweetID int64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getReplyCount, originalTweetID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const getReplyThread = `-- name: GetReplyThread :many
-WITH RECURSIVE reply_thread AS (
-    SELECT tweet_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.tweet_id = $1
-    UNION ALL
-    SELECT r.tweet_id, r.original_tweet_id, r.parent_reply_id, r.replying_account_id, r.created_at FROM replies r
-    JOIN reply_thread rt ON r.parent_reply_id = rt.tweet_id
-)
-SELECT rt.tweet_id, rt.original_tweet_id, rt.parent_reply_id, rt.replying_account_id, rt.created_at, t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
-FROM reply_thread rt
-JOIN tweets t ON rt.tweet_id = t.id
-ORDER BY rt.created_at ASC
-`
-
-type GetReplyThreadRow struct {
-	TweetID           int64
-	OriginalTweetID   int64
-	ParentReplyID     sql.NullInt64
-	ReplyingAccountID string
-	CreatedAt         time.Time
-	ID                int64
-	AccountID         string
-	IsPinned          bool
-	Content           sql.NullString
-	Code              sql.NullString
-	LikesCount        int32
-	RepliesCount      int32
-	RetweetsCount     int32
-	IsRetweet         bool
-	IsReply           bool
-	IsQuote           bool
-	EngagementScore   int32
-	Media             pqtype.NullRawMessage
-	CreatedAt_2       time.Time
-	UpdatedAt         time.Time
-}
-
-func (q *Queries) GetReplyThread(ctx context.Context, tweetID int64) ([]GetReplyThreadRow, error) {
-	rows, err := q.db.QueryContext(ctx, getReplyThread, tweetID)
+func (q *Queries) GetReplyThread(ctx context.Context, replyID int64) ([]GetReplyThreadRow, error) {
+	rows, err := q.db.QueryContext(ctx, getReplyThread, replyID)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +102,7 @@ func (q *Queries) GetReplyThread(ctx context.Context, tweetID int64) ([]GetReply
 	for rows.Next() {
 		var i GetReplyThreadRow
 		if err := rows.Scan(
-			&i.TweetID,
-			&i.OriginalTweetID,
+			&i.ReplyID,
 			&i.ParentReplyID,
 			&i.ReplyingAccountID,
 			&i.CreatedAt,
@@ -155,6 +117,7 @@ func (q *Queries) GetReplyThread(ctx context.Context, tweetID int64) ([]GetReply
 			&i.IsRetweet,
 			&i.IsReply,
 			&i.IsQuote,
+			&i.OriginalTweetID,
 			&i.EngagementScore,
 			&i.Media,
 			&i.CreatedAt_2,

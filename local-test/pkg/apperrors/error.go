@@ -78,6 +78,10 @@ func (e *ErrEmptyRequest) Error() string {
 	return fmt.Sprintf("empty request: %s", e.Message)
 }
 
+// ErrJSONMarshal is a custom error type that indicates a JSON marshal error
+type ErrJSONMarshal struct {
+}
+
 
 type AppError struct {
     Status  int

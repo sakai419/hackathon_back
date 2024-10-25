@@ -1,6 +1,8 @@
 package model
 
-import "errors"
+import (
+	"local-test/pkg/apperrors"
+)
 
 type BlockUserParams struct {
 	BlockerAccountID string
@@ -9,7 +11,9 @@ type BlockUserParams struct {
 
 func (p *BlockUserParams) Validate() error {
 	if p.BlockedAccountID == p.BlockerAccountID {
-		return errors.New("blocked account id and blocker account id must be different")
+		return &apperrors.ErrInvalidInput{
+			Message: "blocked account id and blocker account id must be different",
+		}
 	}
 
 	return nil
@@ -22,7 +26,9 @@ type UnblockUserParams struct {
 
 func (p *UnblockUserParams) Validate() error {
 	if p.BlockedAccountID == p.BlockerAccountID {
-		return errors.New("blocked account id and blocker account id must be different")
+		return &apperrors.ErrInvalidInput{
+			Message: "blocked account id and blocker account id must be different",
+		}
 	}
 
 	return nil
@@ -42,10 +48,14 @@ type GetBlockedInfosParams struct {
 
 func (p *GetBlockedInfosParams) Validate() error {
 	if p.Limit < 1 {
-		return errors.New("limit must be greater than 0")
+		return &apperrors.ErrInvalidInput{
+			Message: "limit must be greater than or equal to 1",
+		}
 	}
 	if p.Offset < 0 {
-		return errors.New("offset must be greater than or equal to 0")
+		return &apperrors.ErrInvalidInput{
+			Message: "offset must be greater than or equal to 0",
+		}
 	}
 
 	return nil

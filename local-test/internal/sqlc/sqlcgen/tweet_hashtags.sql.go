@@ -10,8 +10,25 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/sqlc-dev/pqtype"
 )
+
+const associateTweetWithHashtags = `-- name: AssociateTweetWithHashtags :exec
+INSERT INTO tweet_hashtags (tweet_id, hashtag_id)
+VALUES
+    ($1, unnest($2::bigint[]))
+`
+
+type AssociateTweetWithHashtagsParams struct {
+	TweetID    int64
+	HashtagIds []int64
+}
+
+func (q *Queries) AssociateTweetWithHashtags(ctx context.Context, arg AssociateTweetWithHashtagsParams) error {
+	_, err := q.db.ExecContext(ctx, associateTweetWithHashtags, arg.TweetID, pq.Array(arg.HashtagIds))
+	return err
+}
 
 const checkTweetHashtagExists = `-- name: CheckTweetHashtagExists :one
 SELECT EXISTS(
@@ -32,21 +49,6 @@ func (q *Queries) CheckTweetHashtagExists(ctx context.Context, arg CheckTweetHas
 	return hashtag_exists, err
 }
 
-const createTweetHashtag = `-- name: CreateTweetHashtag :exec
-INSERT INTO tweet_hashtags (tweet_id, hashtag_id)
-VALUES ($1, $2)
-`
-
-type CreateTweetHashtagParams struct {
-	TweetID   int64
-	HashtagID int64
-}
-
-func (q *Queries) CreateTweetHashtag(ctx context.Context, arg CreateTweetHashtagParams) error {
-	_, err := q.db.ExecContext(ctx, createTweetHashtag, arg.TweetID, arg.HashtagID)
-	return err
-}
-
 const deleteAllHashtagsForTweet = `-- name: DeleteAllHashtagsForTweet :exec
 DELETE FROM tweet_hashtags
 WHERE tweet_id = $1
@@ -54,21 +56,6 @@ WHERE tweet_id = $1
 
 func (q *Queries) DeleteAllHashtagsForTweet(ctx context.Context, tweetID int64) error {
 	_, err := q.db.ExecContext(ctx, deleteAllHashtagsForTweet, tweetID)
-	return err
-}
-
-const deleteTweetHashtag = `-- name: DeleteTweetHashtag :exec
-DELETE FROM tweet_hashtags
-WHERE tweet_id = $1 AND hashtag_id = $2
-`
-
-type DeleteTweetHashtagParams struct {
-	TweetID   int64
-	HashtagID int64
-}
-
-func (q *Queries) DeleteTweetHashtag(ctx context.Context, arg DeleteTweetHashtagParams) error {
-	_, err := q.db.ExecContext(ctx, deleteTweetHashtag, arg.TweetID, arg.HashtagID)
 	return err
 }
 
@@ -152,7 +139,7 @@ func (q *Queries) GetMostUsedHashtags(ctx context.Context, arg GetMostUsedHashta
 }
 
 const getRecentTweetsWithHashtag = `-- name: GetRecentTweetsWithHashtag :many
-SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at, h.tag
+SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.original_tweet_id, t.engagement_score, t.media, t.created_at, t.updated_at, h.tag
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
 JOIN hashtags h ON th.hashtag_id = h.id
@@ -179,6 +166,7 @@ type GetRecentTweetsWithHashtagRow struct {
 	IsRetweet       bool
 	IsReply         bool
 	IsQuote         bool
+	OriginalTweetID sql.NullInt64
 	EngagementScore int32
 	Media           pqtype.NullRawMessage
 	CreatedAt       time.Time
@@ -207,6 +195,7 @@ func (q *Queries) GetRecentTweetsWithHashtag(ctx context.Context, arg GetRecentT
 			&i.IsRetweet,
 			&i.IsReply,
 			&i.IsQuote,
+			&i.OriginalTweetID,
 			&i.EngagementScore,
 			&i.Media,
 			&i.CreatedAt,
@@ -240,7 +229,7 @@ func (q *Queries) GetTweetCountByHashtagID(ctx context.Context, hashtagID int64)
 }
 
 const getTweetsByHashtagID = `-- name: GetTweetsByHashtagID :many
-SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.engagement_score, t.media, t.created_at, t.updated_at
+SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.original_tweet_id, t.engagement_score, t.media, t.created_at, t.updated_at
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
 WHERE th.hashtag_id = $1
@@ -274,6 +263,7 @@ func (q *Queries) GetTweetsByHashtagID(ctx context.Context, arg GetTweetsByHasht
 			&i.IsRetweet,
 			&i.IsReply,
 			&i.IsQuote,
+			&i.OriginalTweetID,
 			&i.EngagementScore,
 			&i.Media,
 			&i.CreatedAt,

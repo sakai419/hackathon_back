@@ -1,10 +1,7 @@
--- name: CreateTweetHashtag :exec
+-- name: AssociateTweetWithHashtags :exec
 INSERT INTO tweet_hashtags (tweet_id, hashtag_id)
-VALUES ($1, $2);
-
--- name: DeleteTweetHashtag :exec
-DELETE FROM tweet_hashtags
-WHERE tweet_id = $1 AND hashtag_id = $2;
+VALUES
+    (@tweet_id, unnest(@hashtag_ids::bigint[]));
 
 -- name: GetHashtagsByTweetID :many
 SELECT h.*

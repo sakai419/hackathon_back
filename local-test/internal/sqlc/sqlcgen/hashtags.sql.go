@@ -7,51 +7,36 @@ package sqlcgen
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
-const createHashtag = `-- name: CreateHashtag :exec
-INSERT INTO hashtags (tag) VALUES ($1)
-ON CONFLICT (tag) DO NOTHING
+const getHashtagIDs = `-- name: GetHashtagIDs :many
+WITH new_hashtags AS (
+    INSERT INTO hashtags (tag)
+    SELECT UNNEST($1::VARCHAR(30)[])
+    ON CONFLICT (tag) DO NOTHING
+    RETURNING id, tag
+)
+SELECT id FROM new_hashtags
+UNION
+SELECT id FROM hashtags WHERE tag = ANY($1::VARCHAR(30)[])
+ORDER BY id
 `
 
-func (q *Queries) CreateHashtag(ctx context.Context, tag string) error {
-	_, err := q.db.ExecContext(ctx, createHashtag, tag)
-	return err
-}
-
-const deleteHashtag = `-- name: DeleteHashtag :exec
-DELETE FROM hashtags WHERE id = $1
-`
-
-func (q *Queries) DeleteHashtag(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteHashtag, id)
-	return err
-}
-
-const getAllHashtags = `-- name: GetAllHashtags :many
-SELECT id, tag, created_at FROM hashtags
-ORDER BY tag ASC
-LIMIT $1 OFFSET $2
-`
-
-type GetAllHashtagsParams struct {
-	Limit  int32
-	Offset int32
-}
-
-func (q *Queries) GetAllHashtags(ctx context.Context, arg GetAllHashtagsParams) ([]Hashtag, error) {
-	rows, err := q.db.QueryContext(ctx, getAllHashtags, arg.Limit, arg.Offset)
+func (q *Queries) GetHashtagIDs(ctx context.Context, tags []string) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getHashtagIDs, pq.Array(tags))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Hashtag
+	var items []int64
 	for rows.Next() {
-		var i Hashtag
-		if err := rows.Scan(&i.ID, &i.Tag, &i.CreatedAt); err != nil {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -60,83 +45,4 @@ func (q *Queries) GetAllHashtags(ctx context.Context, arg GetAllHashtagsParams) 
 		return nil, err
 	}
 	return items, nil
-}
-
-const getHashtagByID = `-- name: GetHashtagByID :one
-SELECT id, tag, created_at FROM hashtags WHERE id = $1
-`
-
-func (q *Queries) GetHashtagByID(ctx context.Context, id int64) (Hashtag, error) {
-	row := q.db.QueryRowContext(ctx, getHashtagByID, id)
-	var i Hashtag
-	err := row.Scan(&i.ID, &i.Tag, &i.CreatedAt)
-	return i, err
-}
-
-const getHashtagByTag = `-- name: GetHashtagByTag :one
-SELECT id, tag, created_at FROM hashtags WHERE tag = $1
-`
-
-func (q *Queries) GetHashtagByTag(ctx context.Context, tag string) (Hashtag, error) {
-	row := q.db.QueryRowContext(ctx, getHashtagByTag, tag)
-	var i Hashtag
-	err := row.Scan(&i.ID, &i.Tag, &i.CreatedAt)
-	return i, err
-}
-
-const getHashtagCount = `-- name: GetHashtagCount :one
-SELECT COUNT(*) FROM hashtags
-`
-
-func (q *Queries) GetHashtagCount(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getHashtagCount)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const searchHashtags = `-- name: SearchHashtags :many
-SELECT id, tag, created_at FROM hashtags
-WHERE tag LIKE CONCAT('%', $1, '%')
-ORDER BY tag ASC
-LIMIT $2
-`
-
-type SearchHashtagsParams struct {
-	Concat interface{}
-	Limit  int32
-}
-
-func (q *Queries) SearchHashtags(ctx context.Context, arg SearchHashtagsParams) ([]Hashtag, error) {
-	rows, err := q.db.QueryContext(ctx, searchHashtags, arg.Concat, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Hashtag
-	for rows.Next() {
-		var i Hashtag
-		if err := rows.Scan(&i.ID, &i.Tag, &i.CreatedAt); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const updateHashtagCreatedAt = `-- name: UpdateHashtagCreatedAt :exec
-UPDATE hashtags
-SET created_at = CURRENT_TIMESTAMP
-WHERE id = $1
-`
-
-func (q *Queries) UpdateHashtagCreatedAt(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, updateHashtagCreatedAt, id)
-	return err
 }
