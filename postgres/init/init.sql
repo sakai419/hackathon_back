@@ -1,97 +1,56 @@
--- Drop tables
-DROP TABLE IF EXISTS tweet_hashtags;
-DROP TABLE IF EXISTS hashtags;
-DROP TABLE IF EXISTS interests;
-DROP TABLE IF EXISTS labels;
-DROP TABLE IF EXISTS retweets_and_quotes;
-DROP TABLE IF EXISTS replies;
-DROP TABLE IF EXISTS reports;
-DROP TABLE IF EXISTS likes;
-DROP TABLE IF EXISTS messages;
-DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS follow_requests;
-DROP TABLE IF EXISTS follows;
-DROP TABLE IF EXISTS blocks;
-DROP TABLE IF EXISTS settings;
-DROP TABLE IF EXISTS profiles;
-DROP TABLE IF EXISTS tweets;
-DROP TABLE IF EXISTS accounts;
+---Drop tables---
+DROP TABLE IF EXISTS accounts CASCADE;
+DROP TABLE IF EXISTS blocks CASCADE;
+DROP TABLE IF EXISTS conversations CASCADE;
+DROP TABLE IF EXISTS follows CASCADE;
+DROP TABLE IF EXISTS hashtags CASCADE;
+DROP TABLE IF EXISTS interests CASCADE;
+DROP TABLE IF EXISTS labels CASCADE;
+DROP TABLE IF EXISTS likes CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS quotes CASCADE;
+DROP TABLE IF EXISTS replies CASCADE;
+DROP TABLE IF EXISTS reports CASCADE;
+DROP TABLE IF EXISTS retweets CASCADE;
+DROP TABLE IF EXISTS settings CASCADE;
+DROP TABLE IF EXISTS tweet_hashtags CASCADE;
+DROP TABLE IF EXISTS tweets CASCADE;
 
--- Define functions
-CREATE OR REPLACE FUNCTION update_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create tables
+---Create tables---
 
 -- Table: accounts
-
 CREATE TABLE accounts (
     id CHAR(28) PRIMARY KEY,
     user_id VARCHAR(30) UNIQUE NOT NULL,
     user_name VARCHAR(30) NOT NULL,
     is_suspended BOOLEAN NOT NULL DEFAULT FALSE,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT idx_accounts_user_name UNIQUE (user_name)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
--- Table: tweets
-
-CREATE TABLE tweets (
-    id BIGSERIAL PRIMARY KEY,
-    account_id CHAR(28) NOT NULL,
-    is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
-    content TEXT DEFAULT NULL,
-    code TEXT DEFAULT NULL,
-    likes_count INTEGER NOT NULL DEFAULT 0,
-    replies_count INTEGER NOT NULL DEFAULT 0,
-    retweets_count INTEGER NOT NULL DEFAULT 0,
-    is_retweet BOOLEAN NOT NULL DEFAULT FALSE,
-    is_reply BOOLEAN NOT NULL DEFAULT FALSE,
-    is_quote BOOLEAN NOT NULL DEFAULT FALSE,
-    original_tweet_id BIGINT,
-    engagement_score INTEGER NOT NULL DEFAULT 0,
-    media JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_tweets_account_id FOREIGN KEY (account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_tweets_original_tweet_id FOREIGN KEY (original_tweet_id)
-        REFERENCES tweets(id) ON DELETE SET NULL
-);
-
-CREATE INDEX idx_tweets_account_id ON tweets(account_id);
-CREATE INDEX idx_tweets_engagement_score ON tweets(engagement_score);
-CREATE INDEX idx_tweets_created_at ON tweets(created_at);
-CREATE INDEX idx_tweets_type ON tweets(is_retweet, is_reply, is_quote);
-
-CREATE TRIGGER trigger_update_tweet_timestamp
-BEFORE UPDATE ON tweets
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
 
 -- Table: blocks
-
 CREATE TABLE blocks (
     blocker_account_id CHAR(28) NOT NULL,
     blocked_account_id CHAR(28) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (blocker_account_id, blocked_account_id),
-    CONSTRAINT fk_blocks_blocker_account_id FOREIGN KEY (blocker_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_blocks_blocked_account_id FOREIGN KEY (blocked_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    PRIMARY KEY (blocker_account_id, blocked_account_id)
 );
 
 CREATE INDEX idx_blocks_created_at ON blocks(created_at);
 
--- Table: follows
+-- Table: conversations
+CREATE TABLE conversations (
+    id BIGSERIAL PRIMARY KEY,
+    account1_id CHAR(28) NOT NULL,
+    account2_id CHAR(28) NOT NULL,
+    last_message_id BIGINT,
+    last_message_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (account1_id, account2_id)
+);
 
+-- Table: follows
 CREATE TYPE follow_status AS ENUM (
     'accepted',
     'pending'
@@ -102,27 +61,19 @@ CREATE TABLE follows (
     following_account_id CHAR(28) NOT NULL,
     status follow_status NOT NULL DEFAULT 'accepted',
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (follower_account_id, following_account_id),
-    CONSTRAINT fk_follows_follower_account_id FOREIGN KEY (follower_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_follows_following_account_id FOREIGN KEY (following_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    PRIMARY KEY (follower_account_id, following_account_id)
 );
 
 CREATE INDEX idx_follows_created_at ON follows(created_at);
 
 -- Table: hashtags
-
 CREATE TABLE hashtags (
     id BIGSERIAL PRIMARY KEY,
     tag VARCHAR(30) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_hashtags_tag ON hashtags(tag);
-
 -- Table: interests
-
 CREATE TABLE interests (
     account_id CHAR(28) PRIMARY KEY,
     news_score SMALLINT DEFAULT 0 CHECK (news_score BETWEEN 0 AND 100),
@@ -224,9 +175,7 @@ CREATE TABLE interests (
     open_source_score SMALLINT DEFAULT 0 CHECK (open_source_score BETWEEN 0 AND 100),
     version_control_score SMALLINT DEFAULT 0 CHECK (version_control_score BETWEEN 0 AND 100),
     api_design_score SMALLINT DEFAULT 0 CHECK (api_design_score BETWEEN 0 AND 100),
-    performance_optimization_score SMALLINT DEFAULT 0 CHECK (performance_optimization_score BETWEEN 0 AND 100),
-    CONSTRAINT fk_interests_account_id FOREIGN KEY (account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    performance_optimization_score SMALLINT DEFAULT 0 CHECK (performance_optimization_score BETWEEN 0 AND 100)
 );
 
 -- Table: labels
@@ -338,28 +287,20 @@ CREATE TABLE labels (
     label1 tweet_label,
     label2 tweet_label,
     label3 tweet_label,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_labels_tweet_id FOREIGN KEY (tweet_id)
-        REFERENCES tweets(id) ON DELETE CASCADE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Table: likes
-
 CREATE TABLE likes (
     liking_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (liking_account_id, original_tweet_id),
-    CONSTRAINT fk_likes_liking_account_id FOREIGN KEY (liking_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_likes_original_tweet_id FOREIGN KEY (original_tweet_id)
-        REFERENCES tweets(id) ON DELETE CASCADE
+    PRIMARY KEY (liking_account_id, original_tweet_id)
 );
 
 CREATE INDEX idx_likes_original_tweet_id ON likes(original_tweet_id);
 
 -- Table: messages
-
 CREATE TABLE messages (
     id BIGSERIAL PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
@@ -372,38 +313,6 @@ CREATE TABLE messages (
 CREATE INDEX idx_messages_conversation_id ON messages (conversation_id);
 CREATE INDEX idx_messages_sender_account_id ON messages (sender_account_id);
 CREATE INDEX idx_messages_created_at_account_id ON messages (created_at);
-
--- Table: conversations
-
-CREATE TABLE conversations (
-    id BIGSERIAL PRIMARY KEY,
-    account1_id CHAR(28) NOT NULL,
-    account2_id CHAR(28) NOT NULL,
-    last_message_id BIGINT,
-    last_message_time TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (account1_id, account2_id)
-);
-
-ALTER TABLE conversations
-    ADD CONSTRAINT fk_conversations_account1_id FOREIGN KEY (account1_id)
-        REFERENCES accounts(id) ON DELETE CASCADE;
-
-ALTER TABLE conversations
-    ADD CONSTRAINT fk_conversations_account2_id FOREIGN KEY (account2_id)
-        REFERENCES accounts(id) ON DELETE CASCADE;
-
-ALTER TABLE conversations
-    ADD CONSTRAINT fk_conversations_last_message_id FOREIGN KEY (last_message_id)
-        REFERENCES messages(id) ON DELETE SET NULL;
-
-ALTER TABLE messages
-    ADD CONSTRAINT fk_messages_conversation_id FOREIGN KEY (conversation_id)
-        REFERENCES conversations(id) ON DELETE CASCADE;
-
-ALTER TABLE messages
-    ADD CONSTRAINT fk_messages_sender_account_id FOREIGN KEY (sender_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE;
-
 
 -- Table: notifications
 CREATE TYPE notification_type AS ENUM (
@@ -428,49 +337,39 @@ CREATE TABLE notifications (
     content TEXT,
     tweet_id BIGINT,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_notifications_sender_account_id FOREIGN KEY (sender_account_id)
-        REFERENCES accounts(id) ON DELETE SET NULL,
-    CONSTRAINT fk_notifications_recipient_account_id FOREIGN KEY (recipient_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_notifications_tweet_id FOREIGN KEY (tweet_id)
-        REFERENCES tweets(id) ON DELETE SET NULL
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
 
 CREATE INDEX idx_notifications_recipient_account_id ON notifications(recipient_account_id);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at);
 
+-- Table: profile
 CREATE TABLE profiles (
     account_id CHAR(28) PRIMARY KEY,
     bio TEXT,
     profile_image_url VARCHAR(2083),
     banner_image_url VARCHAR(2083),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_profiles_account_id FOREIGN KEY (account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TRIGGER trigger_update_profile_timestamp
-BEFORE UPDATE ON profiles
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
+-- Table: quotes
+CREATE TABLE quotes (
+    quote_id BIGINT PRIMARY KEY,
+    quoting_account_id CHAR(28) NOT NULL,
+    original_tweet_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_quotes_original_tweet_id ON quotes (original_tweet_id);
+CREATE INDEX idx_quotes_quoting_account_id ON quotes (quoting_account_id);
 
 -- Table: replies
-
 CREATE TABLE replies (
-    reply_id BIGINT NOT NULL,
+    reply_id BIGINT NOT NULL PRIMARY KEY,
+    original_tweet_id BIGINT NOT NULL,
     parent_reply_id BIGINT,
     replying_account_id CHAR(28) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (reply_id),
-    CONSTRAINT fk_replies_reply_id FOREIGN KEY (reply_id)
-        REFERENCES tweets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_replies_parent_reply_id FOREIGN KEY (parent_reply_id)
-        REFERENCES replies(reply_id) ON DELETE SET NULL,
-    CONSTRAINT fk_replies_replying_account_id FOREIGN KEY (replying_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_replies_original_tweet_id ON replies (original_tweet_id);
@@ -492,61 +391,307 @@ CREATE TABLE reports (
     reported_account_id CHAR(28) NOT NULL,
     reason report_reason NOT NULL,
     content TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_reports_reporter_account_id FOREIGN KEY (reporter_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_reports_reported_account_id FOREIGN KEY (reported_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_reports_created_at ON reports (created_at);
 CREATE INDEX idx_reports_reported_account_id ON reports (reported_account_id);
 
--- Table: retweets_and_quotes
+-- Table: retweets
 
-CREATE TABLE retweets_and_quotes (
-    retweet_id BIGINT NOT NULL,
+CREATE TABLE retweets (
     retweeting_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (retweet_id),
-    CONSTRAINT fk_retweets_and_quotes_retweet_id FOREIGN KEY (retweet_id)
-        REFERENCES tweets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_retweets_and_quotes_retweeting_account_id FOREIGN KEY (retweeting_account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_retweets_and_quotes_original_tweet_id FOREIGN KEY (original_tweet_id)
-        REFERENCES tweets(id) ON DELETE CASCADE
+    PRIMARY KEY (retweeting_account_id, original_tweet_id)
 );
 
-CREATE INDEX idx_retweets_retweet_id ON retweets_and_quotes (retweet_id);
-
+CREATE INDEX idx_retweets_orginal_tweet_id ON retweets(original_tweet_id);
 
 -- Table: settings
 CREATE TABLE settings (
     account_id CHAR(28) PRIMARY KEY,
     is_private BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_settings_account_id FOREIGN KEY (account_id)
-        REFERENCES accounts(id) ON DELETE CASCADE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX idx_settings_account_id ON settings (account_id);
-
-CREATE TRIGGER trigger_update_settings_timestamp
-BEFORE UPDATE ON settings
-FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
 
 -- Table: tweet_hashtags
 CREATE TABLE tweet_hashtags (
     tweet_id BIGINT NOT NULL,
     hashtag_id BIGINT NOT NULL,
-    PRIMARY KEY (tweet_id, hashtag_id),
-    CONSTRAINT fk_tweet_hashtags_tweet_id FOREIGN KEY (tweet_id)
-        REFERENCES tweets(id) ON DELETE CASCADE,
-    CONSTRAINT fk_tweet_hashtags_hashtag_id FOREIGN KEY (hashtag_id)
-        REFERENCES hashtags(id) ON DELETE CASCADE
+    PRIMARY KEY (tweet_id, hashtag_id)
 );
 
 CREATE INDEX idx_tweet_hashtags_hashtag_id ON tweet_hashtags (hashtag_id);
+
+-- Table: tweets
+CREATE TABLE tweets (
+    id BIGSERIAL PRIMARY KEY,
+    account_id CHAR(28) NOT NULL,
+    is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
+    content TEXT DEFAULT NULL,
+    code TEXT DEFAULT NULL,
+    likes_count INTEGER NOT NULL DEFAULT 0,
+    replies_count INTEGER NOT NULL DEFAULT 0,
+    retweets_count INTEGER NOT NULL DEFAULT 0,
+    is_retweet BOOLEAN NOT NULL DEFAULT FALSE,
+    is_reply BOOLEAN NOT NULL DEFAULT FALSE,
+    is_quote BOOLEAN NOT NULL DEFAULT FALSE,
+    media JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_tweets_account_id ON tweets(account_id);
+CREATE INDEX idx_tweets_created_at ON tweets(created_at);
+CREATE INDEX idx_tweets_type ON tweets(is_retweet, is_reply, is_quote);
+
+---Define foreign keys---
+
+-- Table: blocks
+ALTER TABLE blocks
+    ADD CONSTRAINT fk_blocks_blocker_account_id FOREIGN KEY (blocker_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_blocks_blocked_account_id FOREIGN KEY (blocked_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: conversations
+ALTER TABLE conversations
+    ADD CONSTRAINT fk_conversations_account1_id FOREIGN KEY (account1_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_conversations_account2_id FOREIGN KEY (account2_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_conversations_last_message_id FOREIGN KEY (last_message_id)
+        REFERENCES messages(id) ON DELETE SET NULL;
+
+-- Table: follows
+ALTER TABLE follows
+    ADD CONSTRAINT fk_follows_follower_account_id FOREIGN KEY (follower_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_follows_following_account_id FOREIGN KEY (following_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: interests
+ALTER TABLE interests
+    ADD CONSTRAINT fk_interests_account_id FOREIGN KEY (account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: labels
+ALTER TABLE labels
+    ADD CONSTRAINT fk_labels_tweet_id FOREIGN KEY (tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE;
+
+-- Table: likes
+ALTER TABLE likes
+    ADD CONSTRAINT fk_likes_liking_account_id FOREIGN KEY (liking_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_likes_original_tweet_id FOREIGN KEY (original_tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE;
+
+-- Table: messages
+ALTER TABLE messages
+    ADD CONSTRAINT fk_messages_conversation_id FOREIGN KEY (conversation_id)
+        REFERENCES conversations(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_messages_sender_account_id FOREIGN KEY (sender_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: notifications
+ALTER TABLE notifications
+    ADD CONSTRAINT fk_notifications_sender_account_id FOREIGN KEY (sender_account_id)
+        REFERENCES accounts(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_notifications_recipient_account_id FOREIGN KEY (recipient_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_notifications_tweet_id FOREIGN KEY (tweet_id)
+        REFERENCES tweets(id) ON DELETE SET NULL;
+
+-- Table: profiles
+ALTER TABLE profiles
+    ADD CONSTRAINT fk_profiles_account_id FOREIGN KEY (account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: quotes
+ALTER TABLE quotes
+    ADD CONSTRAINT fk_quotes_quote_id FOREIGN KEY (quote_id)
+        REFERENCES tweets(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_quotes_quoting_account_id FOREIGN KEY (quoting_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_quotes_original_tweet_id FOREIGN KEY (original_tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE;
+
+-- Table: replies
+ALTER TABLE replies
+    ADD CONSTRAINT fk_replies_reply_id FOREIGN KEY (reply_id)
+        REFERENCES tweets(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_replies_original_tweet_id FOREIGN KEY (original_tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_replies_parent_reply_id FOREIGN KEY (parent_reply_id)
+        REFERENCES replies(reply_id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_replies_replying_account_id FOREIGN KEY (replying_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: reports
+ALTER TABLE reports
+    ADD CONSTRAINT fk_reports_reporter_account_id FOREIGN KEY (reporter_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_reports_reported_account_id FOREIGN KEY (reported_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: retweets
+ALTER TABLE retweets
+    ADD CONSTRAINT fk_retweets_retweeting_account_id FOREIGN KEY (retweeting_account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_retweets_original_tweet_id FOREIGN KEY (original_tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE;
+
+-- Table: settings
+ALTER TABLE settings
+    ADD CONSTRAINT fk_settings_account_id FOREIGN KEY (account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+-- Table: tweet_hashtags
+ALTER TABLE tweet_hashtags
+    ADD CONSTRAINT fk_tweet_hashtags_tweet_id FOREIGN KEY (tweet_id)
+        REFERENCES tweets(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_tweet_hashtags_hashtag_id FOREIGN KEY (hashtag_id)
+        REFERENCES hashtags(id) ON DELETE CASCADE;
+
+-- Table: tweets
+ALTER TABLE tweets
+    ADD CONSTRAINT fk_tweets_account_id FOREIGN KEY (account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE;
+
+---Define functions---
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION increment_like_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET likes_count = likes_count + 1
+    WHERE id = NEW.original_tweet_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION decrement_like_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET likes_count = likes_count - 1
+    WHERE id = OLD.original_tweet_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION increment_quote_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET retweets_count = retweets_count + 1
+    WHERE id = NEW.original_tweet_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION decrement_quote_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET retweets_count = retweets_count - 1
+    WHERE id = OLD.original_tweet_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION increment_reply_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET reply_count = reply_count + 1
+    WHERE id = NEW.tweet_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION decrement_reply_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET reply_count = reply_count - 1
+    WHERE id = OLD.tweet_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION increment_retweet_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET retweets_count = retweets_count + 1
+    WHERE id = NEW.original_tweet_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION decrement_retweet_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE tweets
+    SET retweets_count = retweets_count - 1
+    WHERE id = OLD.original_tweet_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+---Define triggers---
+
+CREATE TRIGGER trigger_update_tweet_timestamp
+BEFORE UPDATE ON tweets
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
+
+CREATE TRIGGER trigger_increment_like_count
+AFTER INSERT ON likes
+FOR EACH ROW
+EXECUTE FUNCTION increment_like_count();
+
+CREATE TRIGGER trigger_decrement_like_count
+AFTER DELETE ON likes
+FOR EACH ROW
+EXECUTE FUNCTION decrement_like_count();
+
+CREATE TRIGGER trigger_increment_quote_count
+AFTER INSERT ON quotes
+FOR EACH ROW
+EXECUTE FUNCTION increment_quote_count();
+
+CREATE TRIGGER trigger_decrement_quote_count
+AFTER DELETE ON quotes
+FOR EACH ROW
+EXECUTE FUNCTION decrement_quote_count();
+
+CREATE TRIGGER trigger_increment_reply_count
+AFTER INSERT ON replies
+FOR EACH ROW
+EXECUTE FUNCTION increment_reply_count();
+
+CREATE TRIGGER trigger_decrement_reply_count
+AFTER DELETE ON replies
+FOR EACH ROW
+EXECUTE FUNCTION decrement_reply_count();
+
+CREATE TRIGGER trigger_increment_retweet_count
+AFTER INSERT ON retweets
+FOR EACH ROW
+EXECUTE FUNCTION increment_retweet_count();
+
+CREATE TRIGGER trigger_decrement_retweet_count
+AFTER DELETE ON retweets
+FOR EACH ROW
+EXECUTE FUNCTION decrement_retweet_count();
