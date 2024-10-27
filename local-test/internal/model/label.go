@@ -218,7 +218,7 @@ func (l Label) Validate() error {
 }
 
 type LabelTweetParams struct {
-	TweetID string
+	TweetID int64
 	Label1  *Label
 	Label2  *Label
 	Label3  *Label

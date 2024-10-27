@@ -7,7 +7,6 @@ package sqlcgen
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createLabel = `-- name: CreateLabel :exec
@@ -17,9 +16,9 @@ VALUES ($1, $2, $3, $4)
 
 type CreateLabelParams struct {
 	TweetID int64
-	Label1  string
-	Label2  sql.NullString
-	Label3  sql.NullString
+	Label1  NullTweetLabel
+	Label2  NullTweetLabel
+	Label3  NullTweetLabel
 }
 
 func (q *Queries) CreateLabel(ctx context.Context, arg CreateLabelParams) error {
@@ -69,9 +68,9 @@ LIMIT $4 OFFSET $5
 `
 
 type GetTweetsByLabelParams struct {
-	Label1 string
-	Label2 sql.NullString
-	Label3 sql.NullString
+	Label1 NullTweetLabel
+	Label2 NullTweetLabel
+	Label3 NullTweetLabel
 	Limit  int32
 	Offset int32
 }
@@ -182,9 +181,9 @@ WHERE tweet_id = $4
 `
 
 type UpdateLabelsParams struct {
-	Label1  string
-	Label2  sql.NullString
-	Label3  sql.NullString
+	Label1  NullTweetLabel
+	Label2  NullTweetLabel
+	Label3  NullTweetLabel
 	TweetID int64
 }
 

@@ -339,7 +339,7 @@ CREATE TYPE tweet_label AS ENUM (
 
 CREATE TABLE labels (
     tweet_id BIGINT PRIMARY KEY,
-    label1 tweet_label NOT NULL,
+    label1 tweet_label,
     label2 tweet_label,
     label3 tweet_label,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -348,7 +348,6 @@ CREATE TABLE labels (
 );
 
 -- Table: likes
-
 CREATE TABLE likes (
     liking_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT NOT NULL,

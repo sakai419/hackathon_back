@@ -150,6 +150,146 @@ func (ns NullReportReason) Value() (driver.Value, error) {
 	return string(ns.ReportReason), nil
 }
 
+type TweetLabel string
+
+const (
+	TweetLabelNews                          TweetLabel = "news"
+	TweetLabelPolitics                      TweetLabel = "politics"
+	TweetLabelEconomics                     TweetLabel = "economics"
+	TweetLabelHealth                        TweetLabel = "health"
+	TweetLabelSports                        TweetLabel = "sports"
+	TweetLabelEntertainment                 TweetLabel = "entertainment"
+	TweetLabelArt                           TweetLabel = "art"
+	TweetLabelCooking                       TweetLabel = "cooking"
+	TweetLabelTravel                        TweetLabel = "travel"
+	TweetLabelFashion                       TweetLabel = "fashion"
+	TweetLabelBeauty                        TweetLabel = "beauty"
+	TweetLabelPets                          TweetLabel = "pets"
+	TweetLabelParenting                     TweetLabel = "parenting"
+	TweetLabelEducation                     TweetLabel = "education"
+	TweetLabelEnvironment                   TweetLabel = "environment"
+	TweetLabelClimate                       TweetLabel = "climate"
+	TweetLabelSpace                         TweetLabel = "space"
+	TweetLabelMentalHealth                  TweetLabel = "mental_health"
+	TweetLabelFitness                       TweetLabel = "fitness"
+	TweetLabelReading                       TweetLabel = "reading"
+	TweetLabelHistory                       TweetLabel = "history"
+	TweetLabelPhilosophy                    TweetLabel = "philosophy"
+	TweetLabelReligion                      TweetLabel = "religion"
+	TweetLabelCulture                       TweetLabel = "culture"
+	TweetLabelVolunteering                  TweetLabel = "volunteering"
+	TweetLabelSocialIssues                  TweetLabel = "social_issues"
+	TweetLabelLaw                           TweetLabel = "law"
+	TweetLabelTaxes                         TweetLabel = "taxes"
+	TweetLabelInvestment                    TweetLabel = "investment"
+	TweetLabelRealEstate                    TweetLabel = "real_estate"
+	TweetLabelDiy                           TweetLabel = "diy"
+	TweetLabelGardening                     TweetLabel = "gardening"
+	TweetLabelInteriorDesign                TweetLabel = "interior_design"
+	TweetLabelAutomotive                    TweetLabel = "automotive"
+	TweetLabelGaming                        TweetLabel = "gaming"
+	TweetLabelAnimeManga                    TweetLabel = "anime_manga"
+	TweetLabelCreativeWorks                 TweetLabel = "creative_works"
+	TweetLabelPhotographyVideo              TweetLabel = "photography_video"
+	TweetLabelMedia                         TweetLabel = "media"
+	TweetLabelMarketing                     TweetLabel = "marketing"
+	TweetLabelBranding                      TweetLabel = "branding"
+	TweetLabelEntrepreneurship              TweetLabel = "entrepreneurship"
+	TweetLabelRemoteWork                    TweetLabel = "remote_work"
+	TweetLabelDataScience                   TweetLabel = "data_science"
+	TweetLabelIot                           TweetLabel = "iot"
+	TweetLabelRoboticsEngineering           TweetLabel = "robotics_engineering"
+	TweetLabelBiotechnology                 TweetLabel = "biotechnology"
+	TweetLabelNanotechnology                TweetLabel = "nanotechnology"
+	TweetLabelEnergyTechnology              TweetLabel = "energy_technology"
+	TweetLabelArchaeology                   TweetLabel = "archaeology"
+	TweetLabelPsychology                    TweetLabel = "psychology"
+	TweetLabelSociology                     TweetLabel = "sociology"
+	TweetLabelAnthropology                  TweetLabel = "anthropology"
+	TweetLabelGeography                     TweetLabel = "geography"
+	TweetLabelGeology                       TweetLabel = "geology"
+	TweetLabelMeteorology                   TweetLabel = "meteorology"
+	TweetLabelDisasterEmergencyManagement   TweetLabel = "disaster_emergency_management"
+	TweetLabelUrbanPlanning                 TweetLabel = "urban_planning"
+	TweetLabelArchitecture                  TweetLabel = "architecture"
+	TweetLabelAgriculture                   TweetLabel = "agriculture"
+	TweetLabelNutritionScience              TweetLabel = "nutrition_science"
+	TweetLabelSleepScience                  TweetLabel = "sleep_science"
+	TweetLabelProductivity                  TweetLabel = "productivity"
+	TweetLabelLeadership                    TweetLabel = "leadership"
+	TweetLabelInternationalRelations        TweetLabel = "international_relations"
+	TweetLabelFuturePredictions             TweetLabel = "future_predictions"
+	TweetLabelEvents                        TweetLabel = "events"
+	TweetLabelCommunity                     TweetLabel = "community"
+	TweetLabelTrends                        TweetLabel = "trends"
+	TweetLabelLifestyle                     TweetLabel = "lifestyle"
+	TweetLabelSoftwareDevelopment           TweetLabel = "software_development"
+	TweetLabelProgrammingLanguages          TweetLabel = "programming_languages"
+	TweetLabelWebDevelopment                TweetLabel = "web_development"
+	TweetLabelMobileAppDevelopment          TweetLabel = "mobile_app_development"
+	TweetLabelDebuggingTechniques           TweetLabel = "debugging_techniques"
+	TweetLabelAlgorithmsMathematics         TweetLabel = "algorithms_mathematics"
+	TweetLabelDatabaseDesign                TweetLabel = "database_design"
+	TweetLabelCloudComputing                TweetLabel = "cloud_computing"
+	TweetLabelServerManagement              TweetLabel = "server_management"
+	TweetLabelNetworkSecurity               TweetLabel = "network_security"
+	TweetLabelCryptography                  TweetLabel = "cryptography"
+	TweetLabelArtificialIntelligence        TweetLabel = "artificial_intelligence"
+	TweetLabelMachineLearning               TweetLabel = "machine_learning"
+	TweetLabelDeepLearning                  TweetLabel = "deep_learning"
+	TweetLabelComputerVision                TweetLabel = "computer_vision"
+	TweetLabelNaturalLanguageProcessing     TweetLabel = "natural_language_processing"
+	TweetLabelBlockchainTechnology          TweetLabel = "blockchain_technology"
+	TweetLabelQuantumComputing              TweetLabel = "quantum_computing"
+	TweetLabelEdgeComputing                 TweetLabel = "edge_computing"
+	TweetLabelMicroservicesArchitecture     TweetLabel = "microservices_architecture"
+	TweetLabelDevops                        TweetLabel = "devops"
+	TweetLabelContainerTechnology           TweetLabel = "container_technology"
+	TweetLabelCiCd                          TweetLabel = "ci_cd"
+	TweetLabelTestAutomation                TweetLabel = "test_automation"
+	TweetLabelUxUiDesign                    TweetLabel = "ux_ui_design"
+	TweetLabelAgileDevelopmentMethodologies TweetLabel = "agile_development_methodologies"
+	TweetLabelOpenSource                    TweetLabel = "open_source"
+	TweetLabelVersionControl                TweetLabel = "version_control"
+	TweetLabelApiDesign                     TweetLabel = "api_design"
+	TweetLabelPerformanceOptimization       TweetLabel = "performance_optimization"
+)
+
+func (e *TweetLabel) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TweetLabel(s)
+	case string:
+		*e = TweetLabel(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TweetLabel: %T", src)
+	}
+	return nil
+}
+
+type NullTweetLabel struct {
+	TweetLabel TweetLabel
+	Valid      bool // Valid is true if TweetLabel is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTweetLabel) Scan(value interface{}) error {
+	if value == nil {
+		ns.TweetLabel, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TweetLabel.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTweetLabel) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TweetLabel), nil
+}
+
 type Account struct {
 	ID          string
 	UserID      string
@@ -293,9 +433,9 @@ type Interest struct {
 
 type Label struct {
 	TweetID   int64
-	Label1    string
-	Label2    sql.NullString
-	Label3    sql.NullString
+	Label1    NullTweetLabel
+	Label2    NullTweetLabel
+	Label3    NullTweetLabel
 	CreatedAt time.Time
 }
 

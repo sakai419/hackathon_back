@@ -11,11 +11,11 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
-func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetParams) error {
+func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetParams) (int64, error) {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
-		return apperrors.WrapRepositoryError(
+		return 0, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "begin transaction",
 				Err: err,
@@ -30,7 +30,7 @@ func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetP
 	sqlcParams, err := convertToCreateTweetParams(params)
 	if err != nil {
 		tx.Rollback()
-		return apperrors.WrapRepositoryError(
+		return 0, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "convert to create tweet params",
 				Err: err,
@@ -41,7 +41,7 @@ func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetP
 	// Create tweet
 	tweetID, err := q.CreateTweet(ctx, *sqlcParams)
 	if err != nil {
-		return apperrors.WrapRepositoryError(
+		return 0, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "create tweet",
 				Err: err,
@@ -57,7 +57,7 @@ func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetP
 			HashtagIds: params.HashtagIDs,
 		}); err != nil {
 			tx.Rollback()
-			return apperrors.WrapRepositoryError(
+			return 0, apperrors.WrapRepositoryError(
 				&apperrors.ErrOperationFailed{
 					Operation: "create tweet hashtag",
 					Err: err,
@@ -68,7 +68,7 @@ func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetP
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		return apperrors.WrapRepositoryError(
+		return 0, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "commit transaction",
 				Err: err,
@@ -76,7 +76,7 @@ func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetP
 		)
 	}
 
-	return nil
+	return tweetID, nil
 }
 
 func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.CreateTweetParams, error) {
