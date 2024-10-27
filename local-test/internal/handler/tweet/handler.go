@@ -61,6 +61,32 @@ func (h *TweetHandler) PostTweet(w http.ResponseWriter, r *http.Request) {
     utils.Respond(w, nil)
 }
 
+// Like tweet and notify poster
+// (POST /tweets/{tweet_id}/like)
+func (h *TweetHandler) LikeTweetAndNotify(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Like and notify
+	if err := h.svc.LikeTweetAndNotify(r.Context(), &model.LikeTweetAndNotifyParams{
+		LikingAccountID: clientAccountID,
+		OriginalTweetID: tweetID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("like tweet", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}
+
 // Retweet and notify poster
 // (POST /tweets/{tweet_id}/retweet)
 func (h *TweetHandler) RetweetAndNotify(w http.ResponseWriter, r *http.Request, tweetID int64) {
@@ -81,6 +107,32 @@ func (h *TweetHandler) RetweetAndNotify(w http.ResponseWriter, r *http.Request, 
 		OriginalTweetID:   tweetID,
 	}); err != nil {
 		utils.RespondError(w, apperrors.NewHandlerError("retweet", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}
+
+// Unlike tweet
+// (DELETE /tweets/{tweet_id}/like)
+func (h *TweetHandler) UnlikeTweet(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Unlike
+	if err := h.svc.UnlikeTweet(r.Context(), &model.UnlikeTweetParams{
+		LikingAccountID: clientAccountID,
+		OriginalTweetID: tweetID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("unlike", err))
 		return
 	}
 

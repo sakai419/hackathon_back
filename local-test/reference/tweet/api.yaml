@@ -23,6 +23,42 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/{tweet_id}/like:
+        post:
+            summary: Like a tweet and notify poster
+            operationId: LikeTweetAndNotify
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet liked successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Unlike a tweet
+            operationId: UnlikeTweet
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet unliked successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
     /tweets/{tweet_id}/retweet:
         post:
             summary: Retweet and notify poster

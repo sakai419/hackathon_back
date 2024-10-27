@@ -60,11 +60,40 @@ func (s *Service) PostTweet(ctx context.Context, params *model.PostTweetParams) 
 	return nil
 }
 
+func (s *Service) LikeTweetAndNotify(ctx context.Context, params *model.LikeTweetAndNotifyParams) error {
+	// Get poster account id
+	posterAccountID, err := s.repo.GetAccountIDByTweetID(ctx, params.OriginalTweetID)
+	if err != nil {
+		return apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if blocked
+	isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: posterAccountID,
+		BlockedAccountID: params.LikingAccountID,
+	}); if err != nil {
+		return apperrors.NewInternalAppError("check if blocked", err)
+	} else if isBlocked {
+		return apperrors.NewForbiddenAppError("Like request", err)
+	}
+
+	// Create like
+	if err := s.repo.CreateLikeAndNotify(ctx, &model.CreateLikeAndNotifyParams{
+		LikingAccountID: params.LikingAccountID,
+		OriginalTweetID: params.OriginalTweetID,
+		LikedAccountID:  posterAccountID,
+	}); err != nil {
+		return apperrors.NewDuplicateEntryAppError("like", "create like and notify", err)
+	}
+
+	return nil
+}
+
 func (s *Service) RetweetAndNotify(ctx context.Context, params *model.RetweetAndNotifyParams) error {
 	// Get poster account id
 	posterAccountID, err := s.repo.GetAccountIDByTweetID(ctx, params.OriginalTweetID)
 	if err != nil {
-		return apperrors.NewNotFoundAppError("account id", "get account id by tweet id", err)
+		return apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
 	}
 
 	// Check if blocked
@@ -83,7 +112,16 @@ func (s *Service) RetweetAndNotify(ctx context.Context, params *model.RetweetAnd
 		OriginalTweetID:     params.OriginalTweetID,
 		RetweetedAccountID:  posterAccountID,
 	}); err != nil {
-		return apperrors.NewInternalAppError("create retweet and notify", err)
+		return apperrors.NewDuplicateEntryAppError("retweet", "create retweet and notify", err)
+	}
+
+	return nil
+}
+
+func (s *Service) UnlikeTweet(ctx context.Context, params *model.UnlikeTweetParams) error {
+	// Unlike tweet
+	if err := s.repo.UnlikeTweet(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("like", "unlike", err)
 	}
 
 	return nil

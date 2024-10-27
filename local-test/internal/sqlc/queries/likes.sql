@@ -2,7 +2,7 @@
 INSERT INTO likes (liking_account_id, original_tweet_id)
 VALUES ($1, $2);
 
--- name: DeleteLike :exec
+-- name: DeleteLike :execresult
 DELETE FROM likes
 WHERE liking_account_id = $1 AND original_tweet_id = $2;
 

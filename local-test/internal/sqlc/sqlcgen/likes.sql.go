@@ -7,6 +7,7 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createLike = `-- name: CreateLike :exec
@@ -24,7 +25,7 @@ func (q *Queries) CreateLike(ctx context.Context, arg CreateLikeParams) error {
 	return err
 }
 
-const deleteLike = `-- name: DeleteLike :exec
+const deleteLike = `-- name: DeleteLike :execresult
 DELETE FROM likes
 WHERE liking_account_id = $1 AND original_tweet_id = $2
 `
@@ -34,9 +35,8 @@ type DeleteLikeParams struct {
 	OriginalTweetID int64
 }
 
-func (q *Queries) DeleteLike(ctx context.Context, arg DeleteLikeParams) error {
-	_, err := q.db.ExecContext(ctx, deleteLike, arg.LikingAccountID, arg.OriginalTweetID)
-	return err
+func (q *Queries) DeleteLike(ctx context.Context, arg DeleteLikeParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteLike, arg.LikingAccountID, arg.OriginalTweetID)
 }
 
 const getLikeCount = `-- name: GetLikeCount :one
