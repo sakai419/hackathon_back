@@ -59,3 +59,29 @@ func (h *TweetHandler) PostTweet(w http.ResponseWriter, r *http.Request) {
 
     utils.Respond(w, nil)
 }
+
+// Post retweet
+// (POST /tweets/{tweet_id}/retweet)
+func (h *TweetHandler) RetweetTweet(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Retweet tweet
+	if err := h.svc.PostRetweet(r.Context(), &model.PostRetweetParams{
+		AccountID: clientAccountID,
+		OriginalTweetID:   tweetID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("retweet tweet", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}

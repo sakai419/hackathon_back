@@ -1,14 +1,14 @@
 -- name: CreateRetweetOrQuote :exec
-INSERT INTO retweets_and_quotes (retweeting_account_id, original_tweet_id)
-VALUES ($1, $2);
+INSERT INTO retweets_and_quotes (retweet_id, retweeting_account_id, original_tweet_id)
+VALUES ($1, $2, $3);
 
 -- name: GetRetweetOrQuoteByID :one
 SELECT * FROM retweets_and_quotes
-WHERE tweet_id = $1;
+WHERE retweet_id = $1;
 
 -- name: DeleteRetweetOrQuote :exec
 DELETE FROM retweets_and_quotes
-WHERE tweet_id = $1;
+WHERE retweet_id = $1;
 
 -- name: GetRetweetsAndQuotesByOriginalTweetID :many
 SELECT r.*, t.content AS retweet_content

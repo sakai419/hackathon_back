@@ -479,9 +479,8 @@ CREATE INDEX idx_reports_created_at ON reports (created_at);
 CREATE INDEX idx_reports_reported_account_id ON reports (reported_account_id);
 
 -- Table: retweets_and_quotes
-
 CREATE TABLE retweets_and_quotes (
-    tweet_id BIGINT NOT NULL,
+    retweet_id BIGINT NOT NULL,
     retweeting_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

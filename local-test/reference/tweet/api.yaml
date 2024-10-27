@@ -23,6 +23,25 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/{tweet_id}/retweet:
+        post:
+            summary: Retweet a tweet
+            operationId: RetweetTweet
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "201":
+                    description: Tweet retweeted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         PostTweetRequest:

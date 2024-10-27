@@ -56,7 +56,7 @@ func RespondError(w http.ResponseWriter, err error) {
         }); encodeErr != nil {
             log.Printf("Failed to encode error response: %v", encodeErr)
         }
-        log.Printf("Error: %v", appErr.Err)
+        log.Printf("Error: %v", err)
     } else {
         w.WriteHeader(http.StatusInternalServerError)
         if encodeErr := json.NewEncoder(w).Encode(errorResponse{

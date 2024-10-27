@@ -60,6 +60,15 @@ func (s *Service) PostTweet(ctx context.Context, params *model.PostTweetParams) 
 	return nil
 }
 
+func (s *Service) PostRetweet(ctx context.Context, params *model.PostRetweetParams) (error) {
+	// Post retweet
+	if err := s.repo.PostRetweet(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("original tweet id", "post retweet", err)
+	}
+
+	return nil
+}
+
 func getTweetLabels(_ context.Context, _ *model.PostTweetParams) []model.Label{
 	// Temporary function to get the label of a tweet
 	// This function should be implemented in the future

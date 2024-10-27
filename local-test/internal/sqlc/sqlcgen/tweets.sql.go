@@ -84,15 +84,23 @@ func (q *Queries) CreateTweetAsReply(ctx context.Context, arg CreateTweetAsReply
 	return err
 }
 
-const createTweetAsRetweet = `-- name: CreateTweetAsRetweet :exec
+const createTweetAsRetweet = `-- name: CreateTweetAsRetweet :one
 INSERT INTO tweets (
-    account_id, is_retweet
-) VALUES ($1, TRUE)
+    account_id, original_tweet_id, is_retweet
+) VALUES ($1, $2, TRUE)
+RETURNING id
 `
 
-func (q *Queries) CreateTweetAsRetweet(ctx context.Context, accountID string) error {
-	_, err := q.db.ExecContext(ctx, createTweetAsRetweet, accountID)
-	return err
+type CreateTweetAsRetweetParams struct {
+	AccountID       string
+	OriginalTweetID sql.NullInt64
+}
+
+func (q *Queries) CreateTweetAsRetweet(ctx context.Context, arg CreateTweetAsRetweetParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createTweetAsRetweet, arg.AccountID, arg.OriginalTweetID)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteTweet = `-- name: DeleteTweet :exec

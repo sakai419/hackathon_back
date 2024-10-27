@@ -4,10 +4,11 @@ INSERT INTO tweets (
 ) VALUES ($1, $2, $3, $4)
 RETURNING id;
 
--- name: CreateTweetAsRetweet :exec
+-- name: CreateTweetAsRetweet :one
 INSERT INTO tweets (
-    account_id, is_retweet
-) VALUES ($1, TRUE);
+    account_id, original_tweet_id, is_retweet
+) VALUES ($1, $2, TRUE)
+RETURNING id;
 
 -- name: CreateTweetAsReply :exec
 INSERT INTO tweets (

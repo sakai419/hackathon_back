@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Media defines model for Media.
@@ -31,6 +32,9 @@ type ServerInterface interface {
 	// Create a tweet
 	// (POST /tweets)
 	PostTweet(w http.ResponseWriter, r *http.Request)
+	// Retweet a tweet
+	// (POST /tweets/{tweet_id}/retweet)
+	RetweetTweet(w http.ResponseWriter, r *http.Request, tweetId int64)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -47,6 +51,31 @@ func (siw *ServerInterfaceWrapper) PostTweet(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostTweet(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RetweetTweet operation middleware
+func (siw *ServerInterfaceWrapper) RetweetTweet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RetweetTweet(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -170,6 +199,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/tweets", wrapper.PostTweet).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.RetweetTweet).Methods("POST")
 
 	return r
 }

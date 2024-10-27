@@ -491,7 +491,7 @@ type Report struct {
 }
 
 type RetweetsAndQuote struct {
-	TweetID             int64
+	RetweetID           int64
 	RetweetingAccountID string
 	OriginalTweetID     int64
 	CreatedAt           time.Time
