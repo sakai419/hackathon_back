@@ -4,12 +4,6 @@ INSERT INTO tweets (
 ) VALUES ($1, $2, $3, $4)
 RETURNING id;
 
--- name: CreateTweetAsRetweet :one
-INSERT INTO tweets (
-    account_id, original_tweet_id, is_retweet
-) VALUES ($1, $2, TRUE)
-RETURNING id;
-
 -- name: CreateTweetAsReply :exec
 INSERT INTO tweets (
     account_id, is_reply, content, code, media
@@ -20,8 +14,8 @@ INSERT INTO tweets (
     account_id, is_quote, content, code, media
 ) VALUES ($1, TRUE, $2, $3, $4);
 
--- name: GetTweetByID :one
-SELECT * FROM tweets WHERE id = $1;
+-- name: GetAccountIDByTweetID :one
+SELECT account_id FROM tweets WHERE id = $1;
 
 -- name: GetTweetsByAccountID :many
 SELECT * FROM tweets
@@ -41,25 +35,6 @@ WHERE id = $2 AND account_id = $3;
 
 -- name: DeleteTweet :exec
 DELETE FROM tweets WHERE id = $1 AND account_id = $2;
-
--- name: IncrementLikesCount :exec
-UPDATE tweets SET likes_count = likes_count + 1 WHERE id = $1;
-
--- name: IncrementRepliesCount :exec
-UPDATE tweets SET replies_count = replies_count + 1 WHERE id = $1;
-
--- name: IncrementRetweetsCount :exec
-UPDATE tweets SET retweets_count = retweets_count + 1 WHERE id = $1;
-
--- name: UpdateEngagementScore :exec
-UPDATE tweets
-SET engagement_score = likes_count + replies_count + retweets_count
-WHERE id = $1;
-
--- name: GetTrendingTweets :many
-SELECT * FROM tweets
-ORDER BY engagement_score DESC
-LIMIT $1 OFFSET $2;
 
 -- name: GetPinnedTweetForAccount :one
 SELECT * FROM tweets

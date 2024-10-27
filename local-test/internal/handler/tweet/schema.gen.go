@@ -32,9 +32,9 @@ type ServerInterface interface {
 	// Create a tweet
 	// (POST /tweets)
 	PostTweet(w http.ResponseWriter, r *http.Request)
-	// Retweet a tweet
+	// Retweet and notify poster
 	// (POST /tweets/{tweet_id}/retweet)
-	RetweetTweet(w http.ResponseWriter, r *http.Request, tweetId int64)
+	RetweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -60,8 +60,8 @@ func (siw *ServerInterfaceWrapper) PostTweet(w http.ResponseWriter, r *http.Requ
 	handler.ServeHTTP(w, r)
 }
 
-// RetweetTweet operation middleware
-func (siw *ServerInterfaceWrapper) RetweetTweet(w http.ResponseWriter, r *http.Request) {
+// RetweetAndNotify operation middleware
+func (siw *ServerInterfaceWrapper) RetweetAndNotify(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -75,7 +75,7 @@ func (siw *ServerInterfaceWrapper) RetweetTweet(w http.ResponseWriter, r *http.R
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RetweetTweet(w, r, tweetId)
+		siw.Handler.RetweetAndNotify(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -200,7 +200,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/tweets", wrapper.PostTweet).Methods("POST")
 
-	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.RetweetTweet).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.RetweetAndNotify).Methods("POST")
 
 	return r
 }

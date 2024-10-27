@@ -305,7 +305,7 @@ CREATE TABLE messages (
     id BIGSERIAL PRIMARY KEY,
     conversation_id BIGINT NOT NULL,
     sender_account_id CHAR(28) NOT NULL,
-    content TEXT,
+    content TEXT NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -397,15 +397,8 @@ CREATE TABLE reports (
 CREATE INDEX idx_reports_created_at ON reports (created_at);
 CREATE INDEX idx_reports_reported_account_id ON reports (reported_account_id);
 
-<<<<<<< HEAD
--- Table: retweets_and_quotes
-CREATE TABLE retweets_and_quotes (
-    retweet_id BIGINT NOT NULL,
-=======
 -- Table: retweets
-
 CREATE TABLE retweets (
->>>>>>> 2da2c72 (Modify database)
     retweeting_account_id CHAR(28) NOT NULL,
     original_tweet_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -440,7 +433,6 @@ CREATE TABLE tweets (
     likes_count INTEGER NOT NULL DEFAULT 0,
     replies_count INTEGER NOT NULL DEFAULT 0,
     retweets_count INTEGER NOT NULL DEFAULT 0,
-    is_retweet BOOLEAN NOT NULL DEFAULT FALSE,
     is_reply BOOLEAN NOT NULL DEFAULT FALSE,
     is_quote BOOLEAN NOT NULL DEFAULT FALSE,
     media JSONB,

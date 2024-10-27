@@ -434,7 +434,6 @@ CREATE TABLE tweets (
     likes_count INTEGER NOT NULL DEFAULT 0,
     replies_count INTEGER NOT NULL DEFAULT 0,
     retweets_count INTEGER NOT NULL DEFAULT 0,
-    is_retweet BOOLEAN NOT NULL DEFAULT FALSE,
     is_reply BOOLEAN NOT NULL DEFAULT FALSE,
     is_quote BOOLEAN NOT NULL DEFAULT FALSE,
     media JSONB,

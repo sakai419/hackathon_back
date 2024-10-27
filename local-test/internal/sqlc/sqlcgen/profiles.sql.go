@@ -42,7 +42,7 @@ func (q *Queries) DeleteProfiles(ctx context.Context, accountID string) error {
 }
 
 const getProfilesByAccountID = `-- name: GetProfilesByAccountID :one
-SELECT account_id, bio, profile_image_url, banner_image_url, created_at, updated_at FROM profiles
+SELECT account_id, bio, profile_image_url, banner_image_url, created_at FROM profiles
 WHERE account_id = $1
 `
 
@@ -55,7 +55,6 @@ func (q *Queries) GetProfilesByAccountID(ctx context.Context, accountID string) 
 		&i.ProfileImageUrl,
 		&i.BannerImageUrl,
 		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }

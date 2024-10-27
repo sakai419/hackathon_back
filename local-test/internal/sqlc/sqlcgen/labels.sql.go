@@ -60,7 +60,7 @@ func (q *Queries) GetLabelsByTweetID(ctx context.Context, tweetID int64) (Label,
 }
 
 const getTweetsByLabel = `-- name: GetTweetsByLabel :many
-SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.original_tweet_id, t.engagement_score, t.media, t.created_at, t.updated_at FROM tweets t
+SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at, t.updated_at FROM tweets t
 JOIN labels l ON t.id = l.tweet_id
 WHERE l.label1 = $1 OR l.label2 = $2 OR l.label3 = $3
 ORDER BY t.created_at DESC
@@ -99,11 +99,8 @@ func (q *Queries) GetTweetsByLabel(ctx context.Context, arg GetTweetsByLabelPara
 			&i.LikesCount,
 			&i.RepliesCount,
 			&i.RetweetsCount,
-			&i.IsRetweet,
 			&i.IsReply,
 			&i.IsQuote,
-			&i.OriginalTweetID,
-			&i.EngagementScore,
 			&i.Media,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -122,7 +119,7 @@ func (q *Queries) GetTweetsByLabel(ctx context.Context, arg GetTweetsByLabelPara
 }
 
 const getTweetsWithoutLabels = `-- name: GetTweetsWithoutLabels :many
-SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_retweet, t.is_reply, t.is_quote, t.original_tweet_id, t.engagement_score, t.media, t.created_at, t.updated_at FROM tweets t
+SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at, t.updated_at FROM tweets t
 LEFT JOIN labels l ON t.id = l.tweet_id
 WHERE l.tweet_id IS NULL
 ORDER BY t.created_at DESC
@@ -152,11 +149,8 @@ func (q *Queries) GetTweetsWithoutLabels(ctx context.Context, arg GetTweetsWitho
 			&i.LikesCount,
 			&i.RepliesCount,
 			&i.RetweetsCount,
-			&i.IsRetweet,
 			&i.IsReply,
 			&i.IsQuote,
-			&i.OriginalTweetID,
-			&i.EngagementScore,
 			&i.Media,
 			&i.CreatedAt,
 			&i.UpdatedAt,

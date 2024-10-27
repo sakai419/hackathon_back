@@ -1,6 +1,7 @@
 package tweet
 
 import (
+	"errors"
 	"local-test/internal/model"
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
@@ -60,9 +61,9 @@ func (h *TweetHandler) PostTweet(w http.ResponseWriter, r *http.Request) {
     utils.Respond(w, nil)
 }
 
-// Post retweet
+// Retweet and notify poster
 // (POST /tweets/{tweet_id}/retweet)
-func (h *TweetHandler) RetweetTweet(w http.ResponseWriter, r *http.Request, tweetID int64) {
+func (h *TweetHandler) RetweetAndNotify(w http.ResponseWriter, r *http.Request, tweetID int64) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) {
 		return
@@ -74,14 +75,36 @@ func (h *TweetHandler) RetweetTweet(w http.ResponseWriter, r *http.Request, twee
 		return
 	}
 
-	// Retweet tweet
-	if err := h.svc.PostRetweet(r.Context(), &model.PostRetweetParams{
-		AccountID: clientAccountID,
+	// Retweet and notify
+	if err := h.svc.RetweetAndNotify(r.Context(), &model.RetweetAndNotifyParams{
+		RetweetingAccountID: clientAccountID,
 		OriginalTweetID:   tweetID,
 	}); err != nil {
-		utils.RespondError(w, apperrors.NewHandlerError("retweet tweet", err))
+		utils.RespondError(w, apperrors.NewHandlerError("retweet", err))
 		return
 	}
 
 	utils.Respond(w, nil)
+}
+
+// ErrorHandlerFunc is the error handler for tweet handlers
+// ErrorHandlerFunc is the error handler for the follow handler
+func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
+	var invalidParamFormatError *InvalidParamFormatError
+	var requiredParamError *RequiredParamError
+	if errors.As(err, &invalidParamFormatError) {
+		utils.RespondError(w, apperrors.NewInvalidParamFormatError(
+			invalidParamFormatError.ParamName,
+			invalidParamFormatError.Err,
+		))
+		return
+	} else if errors.As(err, &requiredParamError) {
+		utils.RespondError(w, apperrors.NewRequiredParamError(
+			requiredParamError.ParamName,
+			requiredParamError,
+		))
+		return
+	}
+
+	utils.RespondError(w, apperrors.NewUnexpectedError(err))
 }

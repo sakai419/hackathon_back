@@ -16,8 +16,8 @@ import (
 type FollowStatus string
 
 const (
-	FollowStatusPending  FollowStatus = "pending"
 	FollowStatusAccepted FollowStatus = "accepted"
+	FollowStatusPending  FollowStatus = "pending"
 )
 
 func (e *FollowStatus) Scan(src interface{}) error {
@@ -297,7 +297,6 @@ type Account struct {
 	IsSuspended bool
 	IsAdmin     bool
 	CreatedAt   time.Time
-	UpdatedAt   time.Time
 }
 
 type Block struct {
@@ -471,11 +470,18 @@ type Profile struct {
 	ProfileImageUrl sql.NullString
 	BannerImageUrl  sql.NullString
 	CreatedAt       time.Time
-	UpdatedAt       time.Time
+}
+
+type Quote struct {
+	QuoteID          int64
+	QuotingAccountID string
+	OriginalTweetID  int64
+	CreatedAt        time.Time
 }
 
 type Reply struct {
 	ReplyID           int64
+	OriginalTweetID   int64
 	ParentReplyID     sql.NullInt64
 	ReplyingAccountID string
 	CreatedAt         time.Time
@@ -490,8 +496,7 @@ type Report struct {
 	CreatedAt         time.Time
 }
 
-type RetweetsAndQuote struct {
-	RetweetID           int64
+type Retweet struct {
 	RetweetingAccountID string
 	OriginalTweetID     int64
 	CreatedAt           time.Time
@@ -501,26 +506,22 @@ type Setting struct {
 	AccountID string
 	IsPrivate sql.NullBool
 	CreatedAt time.Time
-	UpdatedAt time.Time
 }
 
 type Tweet struct {
-	ID              int64
-	AccountID       string
-	IsPinned        bool
-	Content         sql.NullString
-	Code            sql.NullString
-	LikesCount      int32
-	RepliesCount    int32
-	RetweetsCount   int32
-	IsRetweet       bool
-	IsReply         bool
-	IsQuote         bool
-	OriginalTweetID sql.NullInt64
-	EngagementScore int32
-	Media           pqtype.NullRawMessage
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID            int64
+	AccountID     string
+	IsPinned      bool
+	Content       sql.NullString
+	Code          sql.NullString
+	LikesCount    int32
+	RepliesCount  int32
+	RetweetsCount int32
+	IsReply       bool
+	IsQuote       bool
+	Media         pqtype.NullRawMessage
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type TweetHashtag struct {

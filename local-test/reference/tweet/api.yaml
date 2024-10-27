@@ -25,8 +25,8 @@ paths:
 
     /tweets/{tweet_id}/retweet:
         post:
-            summary: Retweet a tweet
-            operationId: RetweetTweet
+            summary: Retweet and notify poster
+            operationId: RetweetAndNotify
             parameters:
                 - name: tweet_id
                   in: path
@@ -35,8 +35,8 @@ paths:
                       type: integer
                       format: int64
             responses:
-                "201":
-                    description: Tweet retweeted successfully
+                "200":
+                    description: Retweet successful
                 "400":
                     description: Bad request
                 "500":

@@ -60,10 +60,30 @@ func (s *Service) PostTweet(ctx context.Context, params *model.PostTweetParams) 
 	return nil
 }
 
-func (s *Service) PostRetweet(ctx context.Context, params *model.PostRetweetParams) (error) {
-	// Post retweet
-	if err := s.repo.PostRetweet(ctx, params); err != nil {
-		return apperrors.NewNotFoundAppError("original tweet id", "post retweet", err)
+func (s *Service) RetweetAndNotify(ctx context.Context, params *model.RetweetAndNotifyParams) error {
+	// Get poster account id
+	posterAccountID, err := s.repo.GetAccountIDByTweetID(ctx, params.OriginalTweetID)
+	if err != nil {
+		return apperrors.NewNotFoundAppError("account id", "get account id by tweet id", err)
+	}
+
+	// Check if blocked
+	isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: posterAccountID,
+		BlockedAccountID: params.RetweetingAccountID,
+	}); if err != nil {
+		return apperrors.NewInternalAppError("check if blocked", err)
+	} else if isBlocked {
+		return apperrors.NewForbiddenAppError("Retweet request", err)
+	}
+
+	// Create retweet
+	if err := s.repo.CreateRetweetAndNotify(ctx, &model.CreateRetweetAndNotifyParams{
+		RetweetingAccountID: params.RetweetingAccountID,
+		OriginalTweetID:     params.OriginalTweetID,
+		RetweetedAccountID:  posterAccountID,
+	}); err != nil {
+		return apperrors.NewInternalAppError("create retweet and notify", err)
 	}
 
 	return nil

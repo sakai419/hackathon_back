@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/apperrors"
@@ -77,6 +78,29 @@ func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetP
 	}
 
 	return tweetID, nil
+}
+
+func (r *Repository) GetAccountIDByTweetID(ctx context.Context, tweetID int64) (string, error) {
+	// Get account id by tweet id
+	accountID, err := r.q.GetAccountIDByTweetID(ctx, tweetID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", apperrors.WrapRepositoryError(
+				&apperrors.ErrRecordNotFound{
+					Condition: "tweet id",
+				},
+			)
+		}
+
+		return "", apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get account id by tweet id",
+				Err: err,
+			},
+		)
+	}
+
+	return accountID, nil
 }
 
 func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.CreateTweetParams, error) {

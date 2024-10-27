@@ -139,7 +139,7 @@ func (q *Queries) IsSuspended(ctx context.Context, id string) (bool, error) {
 }
 
 const searchAccountsByUserID = `-- name: SearchAccountsByUserID :many
-SELECT id, user_id, user_name, is_suspended, is_admin, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, is_admin, created_at FROM accounts
 WHERE user_id LIKE CONCAT('%', $1, '%')
 ORDER BY user_id
 LIMIT $2 OFFSET $3
@@ -167,7 +167,6 @@ func (q *Queries) SearchAccountsByUserID(ctx context.Context, arg SearchAccounts
 			&i.IsSuspended,
 			&i.IsAdmin,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -183,7 +182,7 @@ func (q *Queries) SearchAccountsByUserID(ctx context.Context, arg SearchAccounts
 }
 
 const searchAccountsByUserName = `-- name: SearchAccountsByUserName :many
-SELECT id, user_id, user_name, is_suspended, is_admin, created_at, updated_at FROM accounts
+SELECT id, user_id, user_name, is_suspended, is_admin, created_at FROM accounts
 WHERE user_name LIKE CONCAT('%', $1, '%')
 ORDER BY user_name
 LIMIT $2 OFFSET $3
@@ -211,7 +210,6 @@ func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccoun
 			&i.IsSuspended,
 			&i.IsAdmin,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

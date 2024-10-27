@@ -60,3 +60,8 @@ type CreateTweetParams struct {
 	Media       *Media
 	HashtagIDs  []int64
 }
+
+type RetweetAndNotifyParams struct {
+	RetweetingAccountID string
+	OriginalTweetID	    int64
+}

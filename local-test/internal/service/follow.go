@@ -22,7 +22,6 @@ func (s *Service) FollowAndNotify(ctx context.Context, params *model.FollowAndNo
 		return apperrors.NewForbiddenAppError("Follow", err)
 	}
 
-
 	// Create follow
 	if err := s.repo.FollowAndNotify(ctx, params); err != nil {
 		return apperrors.NewDuplicateEntryAppError("Follow", "follow", err)
