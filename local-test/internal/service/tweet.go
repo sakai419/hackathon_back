@@ -89,6 +89,15 @@ func (s *Service) RetweetAndNotify(ctx context.Context, params *model.RetweetAnd
 	return nil
 }
 
+func (s *Service) Unretweet(ctx context.Context, params *model.UnretweetParams) error {
+	// Unretweet
+	if err := s.repo.Unretweet(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("retweet", "unretweet", err)
+	}
+
+	return nil
+}
+
 func getTweetLabels(_ context.Context, _ *model.PostTweetParams) []model.Label{
 	// Temporary function to get the label of a tweet
 	// This function should be implemented in the future

@@ -76,3 +76,39 @@ func (r *Repository) CreateRetweetAndNotify(ctx context.Context, params *model.C
 
 	return nil
 }
+
+func (r *Repository) Unretweet(ctx context.Context, params *model.UnretweetParams) error {
+	// Delete retweet
+	res, err := r.q.DeleteRetweet(ctx, sqlcgen.DeleteRetweetParams{
+		RetweetingAccountID: params.RetweetingAccountID,
+		OriginalTweetID: params.OriginalTweetID,
+	})
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "delete retweet",
+				Err: err,
+			},
+		)
+	}
+
+	// Check if retweet exists
+	num, err := res.RowsAffected()
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check if retweet exists",
+				Err: err,
+			},
+		)
+	}
+	if num == 0 {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "retweet",
+			},
+		)
+	}
+
+	return nil
+}

@@ -7,6 +7,7 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createRetweet = `-- name: CreateRetweet :exec
@@ -22,4 +23,18 @@ type CreateRetweetParams struct {
 func (q *Queries) CreateRetweet(ctx context.Context, arg CreateRetweetParams) error {
 	_, err := q.db.ExecContext(ctx, createRetweet, arg.RetweetingAccountID, arg.OriginalTweetID)
 	return err
+}
+
+const deleteRetweet = `-- name: DeleteRetweet :execresult
+DELETE FROM retweets
+WHERE retweeting_account_id = $1 AND original_tweet_id = $2
+`
+
+type DeleteRetweetParams struct {
+	RetweetingAccountID string
+	OriginalTweetID     int64
+}
+
+func (q *Queries) DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, deleteRetweet, arg.RetweetingAccountID, arg.OriginalTweetID)
 }

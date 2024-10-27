@@ -87,8 +87,33 @@ func (h *TweetHandler) RetweetAndNotify(w http.ResponseWriter, r *http.Request, 
 	utils.Respond(w, nil)
 }
 
+// Unretweet
+// (DELETE /tweets/{tweet_id}/retweet)
+func (h *TweetHandler) Unretweet(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Unretweet
+	if err := h.svc.Unretweet(r.Context(), &model.UnretweetParams{
+		RetweetingAccountID: clientAccountID,
+		OriginalTweetID:   tweetID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("unretweet", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}
+
 // ErrorHandlerFunc is the error handler for tweet handlers
-// ErrorHandlerFunc is the error handler for the follow handler
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError
 	var requiredParamError *RequiredParamError

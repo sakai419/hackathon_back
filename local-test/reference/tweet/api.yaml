@@ -41,6 +41,23 @@ paths:
                     description: Bad request
                 "500":
                     description: Internal server error
+        delete:
+            summary: Delete retweet
+            operationId: Unretweet
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Retweet deleted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
 
 components:
     schemas:

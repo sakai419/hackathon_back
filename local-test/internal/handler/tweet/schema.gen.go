@@ -32,6 +32,9 @@ type ServerInterface interface {
 	// Create a tweet
 	// (POST /tweets)
 	PostTweet(w http.ResponseWriter, r *http.Request)
+	// Delete retweet
+	// (DELETE /tweets/{tweet_id}/retweet)
+	Unretweet(w http.ResponseWriter, r *http.Request, tweetId int64)
 	// Retweet and notify poster
 	// (POST /tweets/{tweet_id}/retweet)
 	RetweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -51,6 +54,31 @@ func (siw *ServerInterfaceWrapper) PostTweet(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostTweet(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// Unretweet operation middleware
+func (siw *ServerInterfaceWrapper) Unretweet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.Unretweet(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -199,6 +227,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/tweets", wrapper.PostTweet).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.Unretweet).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.RetweetAndNotify).Methods("POST")
 
