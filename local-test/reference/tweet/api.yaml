@@ -95,7 +95,7 @@ paths:
                 "500":
                     description: Internal server error
 
-    /tweets/{tweet_id}/retweet/quote:
+    /tweets/{tweet_id}/quote:
         post:
             summary: Quote retweet and notify poster
             operationId: PostQuoteAndNotify

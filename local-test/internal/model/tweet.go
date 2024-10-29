@@ -2,6 +2,7 @@ package model
 
 import (
 	"local-test/pkg/apperrors"
+	"time"
 )
 
 const (
@@ -65,4 +66,16 @@ type GetTweetLabelsParams struct {
 	Content *string
 	Code    *string
 	Media   *Media
+}
+
+type TweetInfo struct {
+	ID            int64
+	PosterInfo    *UserInfoWithoutBio
+	Content       *string
+	Code          *string
+	Media         *Media
+	LikesCount    int64
+	RetweetsCount int64
+	RepliesCount  int64
+	CreatedAt	  time.Time
 }

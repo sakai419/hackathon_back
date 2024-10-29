@@ -114,7 +114,7 @@ func (h *TweetHandler) RetweetAndNotify(w http.ResponseWriter, r *http.Request, 
 }
 
 // Quote tweet
-// (POST /tweets/{tweet_id}/retweet/quote)
+// (POST /tweets/{tweet_id}/quote)
 func (h *TweetHandler) PostQuoteAndNotify(w http.ResponseWriter, r *http.Request, tweetID int64) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) {

@@ -27,11 +27,11 @@ type PostTweetRequest struct {
 // PostTweetJSONRequestBody defines body for PostTweet for application/json ContentType.
 type PostTweetJSONRequestBody = PostTweetRequest
 
-// PostReplyAndNotifyJSONRequestBody defines body for PostReplyAndNotify for application/json ContentType.
-type PostReplyAndNotifyJSONRequestBody = PostTweetRequest
-
 // PostQuoteAndNotifyJSONRequestBody defines body for PostQuoteAndNotify for application/json ContentType.
 type PostQuoteAndNotifyJSONRequestBody = PostTweetRequest
+
+// PostReplyAndNotifyJSONRequestBody defines body for PostReplyAndNotify for application/json ContentType.
+type PostReplyAndNotifyJSONRequestBody = PostTweetRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -44,6 +44,9 @@ type ServerInterface interface {
 	// Like a tweet and notify poster
 	// (POST /tweets/{tweet_id}/like)
 	LikeTweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
+	// Quote retweet and notify poster
+	// (POST /tweets/{tweet_id}/quote)
+	PostQuoteAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
 	// Reply to a tweet
 	// (POST /tweets/{tweet_id}/reply)
 	PostReplyAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -53,9 +56,6 @@ type ServerInterface interface {
 	// Retweet and notify poster
 	// (POST /tweets/{tweet_id}/retweet)
 	RetweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
-	// Quote retweet and notify poster
-	// (POST /tweets/{tweet_id}/retweet/quote)
-	PostQuoteAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -131,6 +131,31 @@ func (siw *ServerInterfaceWrapper) LikeTweetAndNotify(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// PostQuoteAndNotify operation middleware
+func (siw *ServerInterfaceWrapper) PostQuoteAndNotify(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostQuoteAndNotify(w, r, tweetId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PostReplyAndNotify operation middleware
 func (siw *ServerInterfaceWrapper) PostReplyAndNotify(w http.ResponseWriter, r *http.Request) {
 
@@ -197,31 +222,6 @@ func (siw *ServerInterfaceWrapper) RetweetAndNotify(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RetweetAndNotify(w, r, tweetId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// PostQuoteAndNotify operation middleware
-func (siw *ServerInterfaceWrapper) PostQuoteAndNotify(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-
-	// ------------- Path parameter "tweet_id" -------------
-	var tweetId int64
-
-	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
-		return
-	}
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostQuoteAndNotify(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -350,13 +350,13 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.LikeTweetAndNotify).Methods("POST")
 
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/quote", wrapper.PostQuoteAndNotify).Methods("POST")
+
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/reply", wrapper.PostReplyAndNotify).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.Unretweet).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.RetweetAndNotify).Methods("POST")
-
-	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet/quote", wrapper.PostQuoteAndNotify).Methods("POST")
 
 	return r
 }
