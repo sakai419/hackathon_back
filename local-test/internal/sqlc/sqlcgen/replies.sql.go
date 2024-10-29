@@ -14,25 +14,32 @@ import (
 )
 
 const createReply = `-- name: CreateReply :exec
-INSERT INTO replies (reply_id, parent_reply_id, replying_account_id)
-VALUES ($1, $2, $3)
+INSERT INTO replies (reply_id, original_tweet_id, parent_reply_id, replying_account_id)
+SELECT
+    $1 AS reply_id,
+    COALESCE(
+        (SELECT r.original_tweet_id FROM replies AS r WHERE r.reply_id = $2),
+        $2
+    ) AS original_tweet_id,
+    COALESCE(
+        (SELECT r.reply_id FROM replies AS r WHERE r.reply_id = $2),
+        NULL
+    ) AS parent_reply_id,
+    $3 AS replying_account_id
 `
 
 type CreateReplyParams struct {
 	ReplyID           int64
-	ParentReplyID     sql.NullInt64
+	OriginalTweetID   int64
 	ReplyingAccountID string
 }
 
 func (q *Queries) CreateReply(ctx context.Context, arg CreateReplyParams) error {
-	_, err := q.db.ExecContext(ctx, createReply, arg.ReplyID, arg.ParentReplyID, arg.ReplyingAccountID)
+	_, err := q.db.ExecContext(ctx, createReply, arg.ReplyID, arg.OriginalTweetID, arg.ReplyingAccountID)
 	return err
 }
 
 const getReplyThread = `-- name: GetReplyThread :many
-
-
-
 WITH RECURSIVE reply_thread AS (
     SELECT reply_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.reply_id = $1
     UNION ALL
@@ -66,30 +73,6 @@ type GetReplyThreadRow struct {
 	UpdatedAt         time.Time
 }
 
-// -- name: GetRepliesByOriginalTweetID :many
-// SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
-// FROM replies r
-// JOIN tweets t ON r.reply_id = t.id
-// JOIN accounts a ON r.replying_account_id = a.id
-// WHERE r.original_tweet_id = $1
-// ORDER BY r.created_at ASC
-// LIMIT $2 OFFSET $3;
-// -- name: GetRepliesByParentReplyID :many
-// SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
-// FROM replies r
-// JOIN tweets t ON r.reply_id = t.id
-// JOIN accounts a ON r.replying_account_id = a.id
-// WHERE r.parent_reply_id = $1
-// ORDER BY r.created_at ASC
-// LIMIT $2 OFFSET $3;
-// -- name: GetRepliesByAccountID :many
-// SELECT r.*, t.content AS reply_content, ot.content AS original_tweet_content
-// FROM replies r
-// JOIN tweets t ON r.reply_id = t.id
-// JOIN tweets ot ON r.original_tweet_id = ot.id
-// WHERE r.replying_account_id = $1
-// ORDER BY r.created_at DESC
-// LIMIT $2 OFFSET $3;
 func (q *Queries) GetReplyThread(ctx context.Context, replyID int64) ([]GetReplyThreadRow, error) {
 	rows, err := q.db.QueryContext(ctx, getReplyThread, replyID)
 	if err != nil {

@@ -60,3 +60,9 @@ type CreateTweetParams struct {
 	Media       *Media
 	HashtagIDs  []int64
 }
+
+type GetTweetLabelsParams struct {
+	Content *string
+	Code    *string
+	Media   *Media
+}

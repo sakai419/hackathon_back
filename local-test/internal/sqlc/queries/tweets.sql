@@ -4,15 +4,17 @@ INSERT INTO tweets (
 ) VALUES ($1, $2, $3, $4)
 RETURNING id;
 
--- name: CreateTweetAsReply :exec
+-- name: CreateTweetAsReply :one
 INSERT INTO tweets (
     account_id, is_reply, content, code, media
-) VALUES ($1, TRUE, $2, $3, $4);
+) VALUES ($1, TRUE, $2, $3, $4)
+RETURNING id;
 
--- name: CreateTweetAsQuote :exec
+-- name: CreateTweetAsQuote :one
 INSERT INTO tweets (
     account_id, is_quote, content, code, media
-) VALUES ($1, TRUE, $2, $3, $4);
+) VALUES ($1, TRUE, $2, $3, $4)
+RETURNING id;
 
 -- name: GetAccountIDByTweetID :one
 SELECT account_id FROM tweets WHERE id = $1;

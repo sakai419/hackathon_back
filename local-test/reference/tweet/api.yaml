@@ -95,6 +95,31 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/{tweet_id}/reply:
+        post:
+            summary: Reply to a tweet
+            operationId: ReplyTweetAndNotify
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/PostTweetRequest"
+            responses:
+                "201":
+                    description: Reply created successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         PostTweetRequest:

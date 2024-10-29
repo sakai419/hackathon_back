@@ -611,8 +611,8 @@ CREATE OR REPLACE FUNCTION increment_reply_count()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE tweets
-    SET reply_count = reply_count + 1
-    WHERE id = NEW.tweet_id;
+    SET replies_count = replies_count + 1
+    WHERE id = NEW.reply_id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -621,8 +621,8 @@ CREATE OR REPLACE FUNCTION decrement_reply_count()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE tweets
-    SET reply_count = reply_count - 1
-    WHERE id = OLD.tweet_id;
+    SET replies_count = replies_count - 1
+    WHERE id = OLD.reply_id;
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;

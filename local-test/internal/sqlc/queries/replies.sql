@@ -1,33 +1,16 @@
 -- name: CreateReply :exec
-INSERT INTO replies (reply_id, parent_reply_id, replying_account_id)
-VALUES ($1, $2, $3);
-
--- -- name: GetRepliesByOriginalTweetID :many
--- SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
--- FROM replies r
--- JOIN tweets t ON r.reply_id = t.id
--- JOIN accounts a ON r.replying_account_id = a.id
--- WHERE r.original_tweet_id = $1
--- ORDER BY r.created_at ASC
--- LIMIT $2 OFFSET $3;
-
--- -- name: GetRepliesByParentReplyID :many
--- SELECT r.*, t.content AS reply_content, a.user_name AS replier_name
--- FROM replies r
--- JOIN tweets t ON r.reply_id = t.id
--- JOIN accounts a ON r.replying_account_id = a.id
--- WHERE r.parent_reply_id = $1
--- ORDER BY r.created_at ASC
--- LIMIT $2 OFFSET $3;
-
--- -- name: GetRepliesByAccountID :many
--- SELECT r.*, t.content AS reply_content, ot.content AS original_tweet_content
--- FROM replies r
--- JOIN tweets t ON r.reply_id = t.id
--- JOIN tweets ot ON r.original_tweet_id = ot.id
--- WHERE r.replying_account_id = $1
--- ORDER BY r.created_at DESC
--- LIMIT $2 OFFSET $3;
+INSERT INTO replies (reply_id, original_tweet_id, parent_reply_id, replying_account_id)
+SELECT
+    @reply_id AS reply_id,
+    COALESCE(
+        (SELECT r.original_tweet_id FROM replies AS r WHERE r.reply_id = @original_tweet_id),
+        @original_tweet_id
+    ) AS original_tweet_id,
+    COALESCE(
+        (SELECT r.reply_id FROM replies AS r WHERE r.reply_id = @original_tweet_id),
+        NULL
+    ) AS parent_reply_id,
+    @replying_account_id AS replying_account_id;
 
 -- name: GetReplyThread :many
 WITH RECURSIVE reply_thread AS (

@@ -38,10 +38,11 @@ func (q *Queries) CreateTweet(ctx context.Context, arg CreateTweetParams) (int64
 	return id, err
 }
 
-const createTweetAsQuote = `-- name: CreateTweetAsQuote :exec
+const createTweetAsQuote = `-- name: CreateTweetAsQuote :one
 INSERT INTO tweets (
     account_id, is_quote, content, code, media
 ) VALUES ($1, TRUE, $2, $3, $4)
+RETURNING id
 `
 
 type CreateTweetAsQuoteParams struct {
@@ -51,20 +52,23 @@ type CreateTweetAsQuoteParams struct {
 	Media     pqtype.NullRawMessage
 }
 
-func (q *Queries) CreateTweetAsQuote(ctx context.Context, arg CreateTweetAsQuoteParams) error {
-	_, err := q.db.ExecContext(ctx, createTweetAsQuote,
+func (q *Queries) CreateTweetAsQuote(ctx context.Context, arg CreateTweetAsQuoteParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createTweetAsQuote,
 		arg.AccountID,
 		arg.Content,
 		arg.Code,
 		arg.Media,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
-const createTweetAsReply = `-- name: CreateTweetAsReply :exec
+const createTweetAsReply = `-- name: CreateTweetAsReply :one
 INSERT INTO tweets (
     account_id, is_reply, content, code, media
 ) VALUES ($1, TRUE, $2, $3, $4)
+RETURNING id
 `
 
 type CreateTweetAsReplyParams struct {
@@ -74,14 +78,16 @@ type CreateTweetAsReplyParams struct {
 	Media     pqtype.NullRawMessage
 }
 
-func (q *Queries) CreateTweetAsReply(ctx context.Context, arg CreateTweetAsReplyParams) error {
-	_, err := q.db.ExecContext(ctx, createTweetAsReply,
+func (q *Queries) CreateTweetAsReply(ctx context.Context, arg CreateTweetAsReplyParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createTweetAsReply,
 		arg.AccountID,
 		arg.Content,
 		arg.Code,
 		arg.Media,
 	)
-	return err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const deleteTweet = `-- name: DeleteTweet :exec

@@ -41,19 +41,24 @@ func (s *Service) PostTweet(ctx context.Context, params *model.PostTweetParams) 
 		return apperrors.NewInternalAppError("create tweet", err)
 	}
 
+	// Label tweet
 	go func(params *model.PostTweetParams) {
 		// Get tweet label
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		labels := getTweetLabels(timeoutCtx, params)
+		labels := getTweetLabels(timeoutCtx, &model.GetTweetLabelsParams{
+            Content: params.Content,
+            Code:    params.Code,
+            Media:   params.Media,
+        })
 		if err := s.repo.LabelTweet(timeoutCtx, &model.LabelTweetParams{
 			TweetID: tweetID,
 			Label1: &labels[0],
 			Label2: &labels[1],
 			Label3: &labels[2],
 		}); err != nil {
-			log.Println("error labelling tweet:", err)
+			log.Println(apperrors.NewInternalAppError("label tweet", err))
 		}
 	}(params)
 
@@ -118,6 +123,79 @@ func (s *Service) RetweetAndNotify(ctx context.Context, params *model.RetweetAnd
 	return nil
 }
 
+func (s *Service) ReplyTweetAndNotify(ctx context.Context, params *model.ReplyTweetAndNotifyParams) error {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return apperrors.NewValidateAppError(err)
+	}
+
+	// Get poster account id
+	posterAccountID, err := s.repo.GetAccountIDByTweetID(ctx, params.OriginalTweetID)
+	if err != nil {
+		return apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if blocked
+	isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: posterAccountID,
+		BlockedAccountID: params.ReplyingAccountID,
+	}); if err != nil {
+		return apperrors.NewInternalAppError("check if blocked", err)
+	} else if isBlocked {
+		return apperrors.NewForbiddenAppError("Reply request", err)
+	}
+
+	// Extract hashtags
+	var hashtagIDs []int64
+	if params.Content != nil {
+		hashtags := utils.ExtractHashtags(*params.Content)
+		if len(hashtags) > 0 {
+			ids, err := s.repo.GetHashtagIDs(ctx, hashtags)
+			if err != nil {
+				return apperrors.NewInternalAppError("get hashtag IDs", err)
+			}
+			hashtagIDs = ids
+		}
+	}
+
+	// Create reply
+	tweetID, err := s.repo.CreateReplyAndNotify(ctx, &model.CreateReplyAndNotifyParams{
+		ReplyingAccountID: params.ReplyingAccountID,
+        RepliedAccountID:  posterAccountID,
+		OriginalTweetID:   params.OriginalTweetID,
+		Content:           params.Content,
+		Code:              params.Code,
+		Media:             params.Media,
+		HashtagIDs:        hashtagIDs,
+	})
+	if err != nil {
+		return apperrors.NewInternalAppError("create reply and notify", err)
+	}
+
+	// Label tweet
+	go func(params *model.ReplyTweetAndNotifyParams) {
+		// Get tweet label
+		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		labels := getTweetLabels(timeoutCtx, &model.GetTweetLabelsParams{
+            Content: params.Content,
+            Code:    params.Code,
+            Media:   params.Media,
+        })
+        if err := s.repo.LabelTweet(timeoutCtx, &model.LabelTweetParams{
+            TweetID: tweetID,
+            Label1: &labels[0],
+            Label2: &labels[1],
+            Label3: &labels[2],
+        }); err != nil {
+            log.Println(apperrors.NewInternalAppError("label tweet", err))
+        }
+    }(params)
+
+	return nil
+}
+
 func (s *Service) UnlikeTweet(ctx context.Context, params *model.UnlikeTweetParams) error {
 	// Unlike tweet
 	if err := s.repo.UnlikeTweet(ctx, params); err != nil {
@@ -136,7 +214,7 @@ func (s *Service) Unretweet(ctx context.Context, params *model.UnretweetParams) 
 	return nil
 }
 
-func getTweetLabels(_ context.Context, _ *model.PostTweetParams) []model.Label{
+func getTweetLabels(_ context.Context, _ *model.GetTweetLabelsParams) []model.Label{
 	// Temporary function to get the label of a tweet
 	// This function should be implemented in the future
 	// For now, it returns a static label
