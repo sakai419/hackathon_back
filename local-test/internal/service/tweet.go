@@ -293,6 +293,17 @@ func (s *Service) GetLikingUserInfos(ctx context.Context, params *model.GetLikin
 		return nil, apperrors.NewValidateAppError(err)
 	}
 
+	// Get poster account id
+	posterAccountID, err := s.repo.GetAccountIDByTweetID(ctx, params.OriginalTweetID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if poster and client are same
+	if posterAccountID != params.ClientAccountID {
+		return nil, apperrors.NewForbiddenAppError("Get liking user info", nil)
+	}
+
 	// Get liking account ids
 	likingAccountIDs, err := s.repo.GetLikingAccountIDs(ctx, &model.GetLikingAccountIDsParams{
 		OriginalTweetID: params.OriginalTweetID,
@@ -318,6 +329,17 @@ func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetR
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get poster account id
+	posterAccountID, err := s.repo.GetAccountIDByTweetID(ctx, params.OriginalTweetID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if poster and client are same
+	if posterAccountID != params.ClientAccountID {
+		return nil, apperrors.NewForbiddenAppError("Get retweeting user info", nil)
 	}
 
 	// Get retweeting account ids

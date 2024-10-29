@@ -19,6 +19,7 @@ type UnretweetParams struct {
 }
 
 type GetRetweetingUserInfosParams struct {
+	ClientAccountID string
 	OriginalTweetID int64
 	Limit           int32
 	Offset          int32

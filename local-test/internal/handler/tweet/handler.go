@@ -254,8 +254,15 @@ func (h *TweetHandler) Unretweet(w http.ResponseWriter, r *http.Request, tweetID
 // Get liking user infos
 // (GET /tweets/{tweet_id}/likes)
 func (h *TweetHandler) GetLikingUserInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetLikingUserInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
 	// Get liking user infos
 	likingUserInfos, err := h.svc.GetLikingUserInfos(r.Context(), &model.GetLikingUserInfosParams{
+		ClientAccountID: clientAccountID,
 		OriginalTweetID: tweetID,
 		Limit:           params.Limit,
 		Offset:          params.Offset,
@@ -274,8 +281,15 @@ func (h *TweetHandler) GetLikingUserInfos(w http.ResponseWriter, r *http.Request
 // Get retweeting user infos
 // (GET /tweets/{tweet_id}/retweets)
 func (h *TweetHandler) GetRetweetingUserInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetRetweetingUserInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
 	// Get retweeting user infos
 	retweetingUserInfos, err := h.svc.GetRetweetingUserInfos(r.Context(), &model.GetRetweetingUserInfosParams{
+		ClientAccountID: clientAccountID,
 		OriginalTweetID: tweetID,
 		Limit:           params.Limit,
 		Offset:          params.Offset,

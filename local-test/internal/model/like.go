@@ -19,6 +19,7 @@ type UnlikeTweetParams struct {
 }
 
 type GetLikingUserInfosParams struct {
+	ClientAccountID string
 	OriginalTweetID int64
 	Limit           int32
 	Offset          int32
