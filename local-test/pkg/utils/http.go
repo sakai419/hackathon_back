@@ -79,6 +79,12 @@ func RespondError(w http.ResponseWriter, err error) {
 
 func validateRequiredFields(req interface{}) error {
     v := reflect.ValueOf(req)
+
+	// if the request is a pointer, get the value it points to
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
     if v.Kind() != reflect.Struct {
         return &apperrors.ErrInvalidRequest{
             Entity: "All fields",
@@ -90,7 +96,7 @@ func validateRequiredFields(req interface{}) error {
         field := v.Field(i)
         fieldType := v.Type().Field(i)
 
-        // ポインタ型ではない変数かつゼロ値の場合にエラーを返す
+        // Check if the field is a zero value
         if fieldType.Type.Kind() != reflect.Ptr && field.IsZero() {
             return &apperrors.ErrInvalidRequest{
                 Entity: fieldType.Name,

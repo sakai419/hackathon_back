@@ -1,6 +1,6 @@
 -- name: CreateNotification :exec
-INSERT INTO notifications (sender_account_id, recipient_account_id, type, content)
-VALUES ($1, $2, $3, $4);
+INSERT INTO notifications (sender_account_id, recipient_account_id, type, content, tweet_id)
+VALUES ($1, $2, $3, $4, $5);
 
 -- name: GetNotifications :many
 SELECT * FROM notifications

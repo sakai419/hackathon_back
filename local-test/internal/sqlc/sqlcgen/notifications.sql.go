@@ -12,8 +12,8 @@ import (
 )
 
 const createNotification = `-- name: CreateNotification :exec
-INSERT INTO notifications (sender_account_id, recipient_account_id, type, content)
-VALUES ($1, $2, $3, $4)
+INSERT INTO notifications (sender_account_id, recipient_account_id, type, content, tweet_id)
+VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateNotificationParams struct {
@@ -21,6 +21,7 @@ type CreateNotificationParams struct {
 	RecipientAccountID string
 	Type               NotificationType
 	Content            sql.NullString
+	TweetID            sql.NullInt64
 }
 
 func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotificationParams) error {
@@ -29,6 +30,7 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 		arg.RecipientAccountID,
 		arg.Type,
 		arg.Content,
+		arg.TweetID,
 	)
 	return err
 }

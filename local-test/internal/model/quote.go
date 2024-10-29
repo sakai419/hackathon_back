@@ -25,3 +25,13 @@ func (p *PostQuoteAndNotifyParams) Validate() error {
 
 	return nil
 }
+
+type CreateQuoteAndNotifyParams struct {
+	QuotingAccountID string
+	QuotedAccountID  string
+	OriginalTweetID  int64
+	Content          *string
+	Code			 *string
+	Media            *Media
+	HashtagIDs		 []int64
+}

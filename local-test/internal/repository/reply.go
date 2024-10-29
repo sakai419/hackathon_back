@@ -7,7 +7,6 @@ import (
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/apperrors"
-	"log"
 
 	"github.com/sqlc-dev/pqtype"
 )
@@ -52,7 +51,6 @@ func (r *Repository) CreateReplyAndNotify(ctx context.Context, params *model.Cre
 
 	// Create tweet hashtag
 	if len(params.HashtagIDs) > 0 {
-		// Create tweet hashtag
 		if err := q.AssociateTweetWithHashtags(ctx, sqlcgen.AssociateTweetWithHashtagsParams{
 			TweetID:    tweetID,
 			HashtagIds: params.HashtagIDs,
@@ -66,8 +64,6 @@ func (r *Repository) CreateReplyAndNotify(ctx context.Context, params *model.Cre
 			)
 		}
 	}
-
-	log.Println("tweetID", tweetID)
 
 	// Insert reply
 	if err := q.CreateReply(ctx, sqlcgen.CreateReplyParams{
@@ -84,11 +80,12 @@ func (r *Repository) CreateReplyAndNotify(ctx context.Context, params *model.Cre
 		)
 	}
 
-	// Notify original tweet poster
+	// Notify replied account
 	if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
 		SenderAccountID: sql.NullString{String: params.ReplyingAccountID, Valid: true},
 		RecipientAccountID: params.RepliedAccountID,
 		Type: sqlcgen.NotificationTypeReply,
+		TweetID: sql.NullInt64{Int64: tweetID, Valid: true},
 	}); err != nil {
 		tx.Rollback()
 		return 0, apperrors.WrapRepositoryError(
