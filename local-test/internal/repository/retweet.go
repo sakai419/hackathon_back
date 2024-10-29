@@ -53,6 +53,7 @@ func (r *Repository) CreateRetweetAndNotify(ctx context.Context, params *model.C
 		SenderAccountID: sql.NullString{String: params.RetweetingAccountID, Valid: true},
 		RecipientAccountID: params.RetweetedAccountID,
 		Type: sqlcgen.NotificationTypeRetweet,
+		TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
 	}); err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(

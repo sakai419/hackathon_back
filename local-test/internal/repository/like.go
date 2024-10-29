@@ -48,6 +48,7 @@ func (r *Repository) CreateLikeAndNotify(ctx context.Context, params *model.Crea
 		SenderAccountID: sql.NullString{String: params.LikingAccountID, Valid: true},
 		RecipientAccountID: params.LikedAccountID,
 		Type: sqlcgen.NotificationTypeLike,
+		TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
 	}); err != nil {
 		tx.Rollback()
 		return apperrors.WrapRepositoryError(
