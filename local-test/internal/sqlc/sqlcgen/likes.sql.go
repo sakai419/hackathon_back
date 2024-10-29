@@ -87,32 +87,32 @@ func (q *Queries) GetLikesByAccountID(ctx context.Context, arg GetLikesByAccount
 	return items, nil
 }
 
-const getLikesByTweetID = `-- name: GetLikesByTweetID :many
-SELECT liking_account_id, original_tweet_id, created_at FROM likes
+const getLikingAccountIDs = `-- name: GetLikingAccountIDs :many
+SELECT liking_account_id FROM likes
 WHERE original_tweet_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3
 `
 
-type GetLikesByTweetIDParams struct {
+type GetLikingAccountIDsParams struct {
 	OriginalTweetID int64
 	Limit           int32
 	Offset          int32
 }
 
-func (q *Queries) GetLikesByTweetID(ctx context.Context, arg GetLikesByTweetIDParams) ([]Like, error) {
-	rows, err := q.db.QueryContext(ctx, getLikesByTweetID, arg.OriginalTweetID, arg.Limit, arg.Offset)
+func (q *Queries) GetLikingAccountIDs(ctx context.Context, arg GetLikingAccountIDsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getLikingAccountIDs, arg.OriginalTweetID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Like
+	var items []string
 	for rows.Next() {
-		var i Like
-		if err := rows.Scan(&i.LikingAccountID, &i.OriginalTweetID, &i.CreatedAt); err != nil {
+		var liking_account_id string
+		if err := rows.Scan(&liking_account_id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, liking_account_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

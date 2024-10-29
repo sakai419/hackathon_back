@@ -287,6 +287,33 @@ func (s *Service) Unretweet(ctx context.Context, params *model.UnretweetParams) 
 	return nil
 }
 
+func (s *Service) GetLikingUserInfos(ctx context.Context, params *model.GetLikingUserInfosParams) ([]*model.UserInfoWithoutBio, error) {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get liking account ids
+	likingAccountIDs, err := s.repo.GetLikingAccountIDs(ctx, &model.GetLikingAccountIDsParams{
+		OriginalTweetID: params.OriginalTweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get liking account ids", err)
+	}
+
+	// Get user infos
+	infos, err := s.repo.GetUserInfos(ctx, likingAccountIDs)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("liking user info", "get liking user infos", err)
+	}
+
+	likingUserInfos := sortUserInfoWithoutBios(infos, likingAccountIDs)
+
+	return likingUserInfos, nil
+}
+
 func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetRetweetingUserInfosParams) ([]*model.UserInfoWithoutBio, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {

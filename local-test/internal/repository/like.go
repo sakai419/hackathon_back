@@ -107,3 +107,22 @@ func (r *Repository) UnlikeTweet(ctx context.Context, params *model.UnlikeTweetP
 
 	return nil
 }
+
+func (r *Repository) GetLikingAccountIDs(ctx context.Context, params *model.GetLikingAccountIDsParams) ([]string, error) {
+	// Get liking account ids
+	ids, err := r.q.GetLikingAccountIDs(ctx, sqlcgen.GetLikingAccountIDsParams{
+		OriginalTweetID: params.OriginalTweetID,
+		Limit          : params.Limit,
+		Offset         : params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get liking account ids",
+				Err: err,
+			},
+		)
+	}
+
+	return ids, nil
+}

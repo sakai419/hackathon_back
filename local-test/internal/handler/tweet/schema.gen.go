@@ -39,6 +39,12 @@ type UserInfoWithoutBio struct {
 // UserInfoWithoutBios defines model for UserInfoWithoutBios.
 type UserInfoWithoutBios = []UserInfoWithoutBio
 
+// GetLikingUserInfosParams defines parameters for GetLikingUserInfos.
+type GetLikingUserInfosParams struct {
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
+}
+
 // GetRetweetingUserInfosParams defines parameters for GetRetweetingUserInfos.
 type GetRetweetingUserInfosParams struct {
 	Limit  int32 `form:"limit" json:"limit"`
@@ -65,6 +71,9 @@ type ServerInterface interface {
 	// Like a tweet and notify poster
 	// (POST /tweets/{tweet_id}/like)
 	LikeTweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
+	// Get likes for a tweet
+	// (GET /tweets/{tweet_id}/likes)
+	GetLikingUserInfos(w http.ResponseWriter, r *http.Request, tweetId int64, params GetLikingUserInfosParams)
 	// Quote retweet and notify poster
 	// (POST /tweets/{tweet_id}/quote)
 	PostQuoteAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -146,6 +155,64 @@ func (siw *ServerInterfaceWrapper) LikeTweetAndNotify(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.LikeTweetAndNotify(w, r, tweetId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLikingUserInfos operation middleware
+func (siw *ServerInterfaceWrapper) GetLikingUserInfos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLikingUserInfosParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLikingUserInfos(w, r, tweetId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -431,6 +498,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.UnlikeTweet).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.LikeTweetAndNotify).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/likes", wrapper.GetLikingUserInfos).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/quote", wrapper.PostQuoteAndNotify).Methods("POST")
 
