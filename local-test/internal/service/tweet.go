@@ -363,6 +363,44 @@ func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetR
 	return retweetingUserInfos, nil
 }
 
+func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuotingUserInfosParams) ([]*model.UserInfoWithoutBio, error) {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get poster account id
+	posterAccountID, err := s.repo.GetAccountIDByTweetID(ctx, params.OriginalTweetID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if quoted and client are same
+	if posterAccountID != params.ClientAccountID {
+		return nil, apperrors.NewForbiddenAppError("Get quoting user info", nil)
+	}
+
+	// Get quoting account ids
+	quotingAccountIDs, err := s.repo.GetQuotingAccountIDs(ctx, &model.GetQuotingAccountIDsParams{
+		OriginalTweetID: params.OriginalTweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get quoting account ids", err)
+	}
+
+	// Get user infos
+	infos, err := s.repo.GetUserInfos(ctx, quotingAccountIDs)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("quoting user info", "get quoting user infos", err)
+	}
+
+	quotingUserInfos := sortUserInfoWithoutBios(infos, quotingAccountIDs)
+
+	return quotingUserInfos, nil
+}
+
 func getTweetLabels(_ context.Context, _ *model.GetTweetLabelsParams) []model.Label{
 	// Temporary function to get the label of a tweet
 	// This function should be implemented in the future

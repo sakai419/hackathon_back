@@ -305,6 +305,33 @@ func (h *TweetHandler) GetRetweetingUserInfos(w http.ResponseWriter, r *http.Req
 	utils.Respond(w, resp)
 }
 
+// Get quoting user infos
+// (GET /tweets/{tweet_id}/quotes)
+func (h *TweetHandler) GetQuotingUserInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetQuotingUserInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get quoting user infos
+	quotingUserInfos, err := h.svc.GetQuotingUserInfos(r.Context(), &model.GetQuotingUserInfosParams{
+		ClientAccountID: clientAccountID,
+		OriginalTweetID: tweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get quoting user infos", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToUserInfoWithoutBios(quotingUserInfos)
+
+	utils.Respond(w, resp)
+}
+
 // ErrorHandlerFunc is the error handler for tweet handlers
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError

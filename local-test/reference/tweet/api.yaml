@@ -219,6 +219,43 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/{tweet_id}/quotes:
+        get:
+            summary: Get quotes for a tweet
+            operationId: GetQuotingUserInfos
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Quotes fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/UserInfoWithoutBios"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         PostTweetRequest:

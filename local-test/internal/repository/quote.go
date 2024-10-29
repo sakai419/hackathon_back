@@ -109,6 +109,25 @@ func (r *Repository) CreateQuoteAndNotify(ctx context.Context, params *model.Cre
 	return tweetID, nil
 }
 
+func (r *Repository) GetQuotingAccountIDs(ctx context.Context, params *model.GetQuotingAccountIDsParams) ([]string, error) {
+	// Get quoting account ids
+	accountIDs, err := r.q.GetQuotingAccountIDs(ctx, sqlcgen.GetQuotingAccountIDsParams{
+		OriginalTweetID: params.OriginalTweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get quoting account ids",
+				Err: err,
+			},
+		)
+	}
+
+	return accountIDs, nil
+}
+
 func convertToCreateTweetAsQuoteParams(params *model.CreateQuoteAndNotifyParams) (*sqlcgen.CreateTweetAsQuoteParams, error) {
 	ret := &sqlcgen.CreateTweetAsQuoteParams{
 		AccountID: params.QuotingAccountID,
