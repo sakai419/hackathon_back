@@ -145,6 +145,43 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/{tweet_id}/retweets:
+        get:
+            summary: Get retweets for a tweet
+            operationId: GetRetweetingUserInfos
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Retweets fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/UserInfoWithoutBios"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         PostTweetRequest:
@@ -166,3 +203,24 @@ components:
             required:
                 - type
                 - url
+        UserInfoWithoutBio:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                    description: The ID of the user.
+                user_name:
+                    type: string
+                    description: The name of the user.
+                profile_image_url:
+                    type: string
+                    format: uri
+                    description: URL of the user's profile image.
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+        UserInfoWithoutBios:
+            type: array
+            items:
+                $ref: "#/components/schemas/UserInfoWithoutBio"

@@ -257,7 +257,6 @@ type UpdateAccountInfosParams struct {
 	ID       string
 }
 
-// params: user_id, user_name, id
 func (q *Queries) UpdateAccountInfos(ctx context.Context, arg UpdateAccountInfosParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, updateAccountInfos, arg.UserID, arg.UserName, arg.ID)
 }

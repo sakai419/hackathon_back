@@ -46,6 +46,7 @@ func (s *Service) GetUnreadConversationCount(ctx context.Context, AccountID stri
 
 	return count, nil
 }
+
 func (s *Service) SendMessage(ctx context.Context, params *model.SendMessageParams) error {
 	// Validate input
 	if err := params.Validate(); err != nil {
@@ -129,20 +130,31 @@ func (s *Service) MarkMessagesAsRead(ctx context.Context, params *model.MarkMess
 
 func convertToConversationResponse(conversations []*model.Conversation, opponentInfos []*model.UserInfoInternal) []*model.ConversationResponse {
 	var conversationResponses []*model.ConversationResponse
-	for i := range len(conversations) {
-		info := model.UserInfoWithoutBio{
-			UserID:          opponentInfos[i].UserID,
-			UserName:        opponentInfos[i].UserName,
-			ProfileImageURL: opponentInfos[i].ProfileImageURL,
+
+	// convert opponentInfos to map
+	opponentInfoMap := make(map[string]*model.UserInfoInternal)
+	for _, opponentInfo := range opponentInfos {
+		opponentInfoMap[opponentInfo.ID] = opponentInfo
+	}
+
+	// convert conversations to response
+	for _, conversation := range conversations {
+		if opponentInfo, exists := opponentInfoMap[conversation.OpponentID]; exists {
+			info := model.UserInfoWithoutBio{
+				UserID:          opponentInfo.UserID,
+				UserName:        opponentInfo.UserName,
+				ProfileImageURL: opponentInfo.ProfileImageURL,
+			}
+
+			conversationResponses = append(conversationResponses, &model.ConversationResponse{
+				ID:              conversation.ID,
+				OpponentInfo:    info,
+				LastMessageTime: conversation.LastMessageTime,
+				Content:         conversation.Content,
+				SenderUserID:    conversation.SenderUserID,
+				IsRead:          conversation.IsRead,
+			})
 		}
-		conversationResponses = append(conversationResponses, &model.ConversationResponse{
-			ID:              conversations[i].ID,
-			OpponentInfo:    info,
-			LastMessageTime: conversations[i].LastMessageTime,
-			Content:         conversations[i].Content,
-			SenderUserID:    conversations[i].SenderUserID,
-			IsRead:          conversations[i].IsRead,
-		})
 	}
 
 	return conversationResponses

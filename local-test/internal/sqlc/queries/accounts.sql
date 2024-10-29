@@ -14,7 +14,6 @@ WHERE a.id = ANY(@IDs::VARCHAR[]) and a.is_suspended = FALSE
 ORDER BY a.created_at DESC;
 
 -- name: UpdateAccountInfos :execresult
--- params: user_id, user_name, id
 UPDATE accounts
 SET user_id = COALESCE(NULLIF(@user_id, ''), user_id),
     user_name = COALESCE(NULLIF(@user_name, ''), user_name)

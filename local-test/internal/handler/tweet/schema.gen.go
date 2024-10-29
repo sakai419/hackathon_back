@@ -24,6 +24,27 @@ type PostTweetRequest struct {
 	Media   *Media  `json:"media,omitempty"`
 }
 
+// UserInfoWithoutBio defines model for UserInfoWithoutBio.
+type UserInfoWithoutBio struct {
+	// ProfileImageUrl URL of the user's profile image.
+	ProfileImageUrl string `json:"profile_image_url"`
+
+	// UserId The ID of the user.
+	UserId string `json:"user_id"`
+
+	// UserName The name of the user.
+	UserName string `json:"user_name"`
+}
+
+// UserInfoWithoutBios defines model for UserInfoWithoutBios.
+type UserInfoWithoutBios = []UserInfoWithoutBio
+
+// GetRetweetingUserInfosParams defines parameters for GetRetweetingUserInfos.
+type GetRetweetingUserInfosParams struct {
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
+}
+
 // PostTweetJSONRequestBody defines body for PostTweet for application/json ContentType.
 type PostTweetJSONRequestBody = PostTweetRequest
 
@@ -56,6 +77,9 @@ type ServerInterface interface {
 	// Retweet and notify poster
 	// (POST /tweets/{tweet_id}/retweet)
 	RetweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
+	// Get retweets for a tweet
+	// (GET /tweets/{tweet_id}/retweets)
+	GetRetweetingUserInfos(w http.ResponseWriter, r *http.Request, tweetId int64, params GetRetweetingUserInfosParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -231,6 +255,64 @@ func (siw *ServerInterfaceWrapper) RetweetAndNotify(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// GetRetweetingUserInfos operation middleware
+func (siw *ServerInterfaceWrapper) GetRetweetingUserInfos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRetweetingUserInfosParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRetweetingUserInfos(w, r, tweetId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -357,6 +439,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.Unretweet).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.RetweetAndNotify).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweets", wrapper.GetRetweetingUserInfos).Methods("GET")
 
 	return r
 }

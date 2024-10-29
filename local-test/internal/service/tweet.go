@@ -287,6 +287,33 @@ func (s *Service) Unretweet(ctx context.Context, params *model.UnretweetParams) 
 	return nil
 }
 
+func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetRetweetingUserInfosParams) ([]*model.UserInfoWithoutBio, error) {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get retweeting account ids
+	retweetingAccountIDs, err := s.repo.GetRetweetingAccountIDs(ctx, &model.GetRetweetingAccountIDsParams{
+		OriginalTweetID: params.OriginalTweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get retweeting account ids", err)
+	}
+
+	// Get user infos
+	infos, err := s.repo.GetUserInfos(ctx, retweetingAccountIDs)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("retweeting user info", "get retweeting user infos", err)
+	}
+
+	retweetingUserInfos := sortUserInfoWithoutBios(infos, retweetingAccountIDs)
+
+	return retweetingUserInfos, nil
+}
+
 func getTweetLabels(_ context.Context, _ *model.GetTweetLabelsParams) []model.Label{
 	// Temporary function to get the label of a tweet
 	// This function should be implemented in the future

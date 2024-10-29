@@ -197,6 +197,7 @@ func setUpTweetRoutes(r *mux.Router, repo *repository.Repository, svc *service.S
 		Middlewares: []tweet.MiddlewareFunc{
 			middleware.AuthClientAndGetInfoMiddleware(repo, client),
 		},
+		ErrorHandlerFunc: tweet.ErrorHandlerFunc,
 	}
 
 	// Register the tweet handler

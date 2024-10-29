@@ -251,6 +251,26 @@ func (h *TweetHandler) Unretweet(w http.ResponseWriter, r *http.Request, tweetID
 	utils.Respond(w, nil)
 }
 
+// Get retweeting user infos
+// (GET /tweets/{tweet_id}/retweets)
+func (h *TweetHandler) GetRetweetingUserInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetRetweetingUserInfosParams) {
+	// Get retweeting user infos
+	retweetingUserInfos, err := h.svc.GetRetweetingUserInfos(r.Context(), &model.GetRetweetingUserInfosParams{
+		OriginalTweetID: tweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get retweeting user infos", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToUserInfoWithoutBios(retweetingUserInfos)
+
+	utils.Respond(w, resp)
+}
+
 // ErrorHandlerFunc is the error handler for tweet handlers
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError
@@ -270,4 +290,17 @@ func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	utils.RespondError(w, apperrors.NewUnexpectedError(err))
+}
+
+func convertToUserInfoWithoutBios(infos []*model.UserInfoWithoutBio) []*UserInfoWithoutBio {
+	var resp []*UserInfoWithoutBio
+	for _, info := range infos {
+		resp = append(resp, &UserInfoWithoutBio{
+			UserId:   info.UserID,
+			UserName: info.UserName,
+			ProfileImageUrl: info.ProfileImageURL,
+		})
+	}
+
+	return resp
 }

@@ -38,3 +38,40 @@ type DeleteRetweetParams struct {
 func (q *Queries) DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, deleteRetweet, arg.RetweetingAccountID, arg.OriginalTweetID)
 }
+
+const getRetweetingAccountIDs = `-- name: GetRetweetingAccountIDs :many
+SELECT retweeting_account_id
+FROM retweets
+WHERE original_tweet_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetRetweetingAccountIDsParams struct {
+	OriginalTweetID int64
+	Limit           int32
+	Offset          int32
+}
+
+func (q *Queries) GetRetweetingAccountIDs(ctx context.Context, arg GetRetweetingAccountIDsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getRetweetingAccountIDs, arg.OriginalTweetID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var retweeting_account_id string
+		if err := rows.Scan(&retweeting_account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, retweeting_account_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

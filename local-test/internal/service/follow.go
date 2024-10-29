@@ -141,7 +141,7 @@ func (s *Service) GetFollowingInfos(ctx context.Context, params *model.GetFollow
 		return nil, apperrors.NewInternalAppError("get following account ids", err)
 	}
 
-	// Get user and profile info
+	// Get user info
 	infos, err := s.repo.GetUserInfos(ctx, followingAccountIDs)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("following user info", "get following user infos", err)
