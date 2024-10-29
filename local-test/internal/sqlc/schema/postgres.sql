@@ -612,7 +612,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     UPDATE tweets
     SET replies_count = replies_count + 1
-    WHERE id = NEW.reply_id;
+    WHERE id = COALESCE(NEW.parent_reply_id, NEW.original_tweet_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -622,7 +622,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     UPDATE tweets
     SET replies_count = replies_count - 1
-    WHERE id = OLD.reply_id;
+    WHERE id = COALESCE(OLD.parent_reply_id, OLD.original_tweet_id);
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
