@@ -27,6 +27,22 @@ type ConversationResponses struct {
 	Conversations *[]Conversation `json:"conversations,omitempty"`
 }
 
+// MessageRequest defines model for MessageRequest.
+type MessageRequest struct {
+	Content string `json:"content"`
+}
+
+// MessageResponse defines model for MessageResponse.
+type MessageResponse struct {
+	Content         string    `json:"content"`
+	CreatedAt       time.Time `json:"created_at"`
+	IsRead          bool      `json:"is_read"`
+	SenderAccountId string    `json:"sender_account_id"`
+}
+
+// MessageResponses defines model for MessageResponses.
+type MessageResponses = []MessageResponse
+
 // UnreadConversationCountResponse defines model for UnreadConversationCountResponse.
 type UnreadConversationCountResponse struct {
 	Count int64 `json:"count"`
@@ -45,6 +61,15 @@ type GetConversationsParams struct {
 	Offset int32 `form:"offset" json:"offset"`
 }
 
+// GetMessagesParams defines parameters for GetMessages.
+type GetMessagesParams struct {
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
+}
+
+// SendMessageJSONRequestBody defines body for SendMessage for application/json ContentType.
+type SendMessageJSONRequestBody = MessageRequest
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get conversations of a user
@@ -53,6 +78,15 @@ type ServerInterface interface {
 	// Get unread conversation count of a user
 	// (GET /conversations/unread/count)
 	GetUnreadConversationCount(w http.ResponseWriter, r *http.Request)
+	// Get messages of a user
+	// (GET /conversations/{user_id}/messages)
+	GetMessages(w http.ResponseWriter, r *http.Request, userId string, params GetMessagesParams)
+	// Send a message to a user
+	// (POST /conversations/{user_id}/messages)
+	SendMessage(w http.ResponseWriter, r *http.Request, userId string)
+	// Mark messages as read
+	// (PATCH /conversations/{user_id}/messages/read)
+	MarkMessagesAsRead(w http.ResponseWriter, r *http.Request, userId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -118,6 +152,114 @@ func (siw *ServerInterfaceWrapper) GetUnreadConversationCount(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetUnreadConversationCount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMessages operation middleware
+func (siw *ServerInterfaceWrapper) GetMessages(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMessagesParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMessages(w, r, userId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SendMessage operation middleware
+func (siw *ServerInterfaceWrapper) SendMessage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SendMessage(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MarkMessagesAsRead operation middleware
+func (siw *ServerInterfaceWrapper) MarkMessagesAsRead(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MarkMessagesAsRead(w, r, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -243,6 +385,12 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/conversations", wrapper.GetConversations).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/conversations/unread/count", wrapper.GetUnreadConversationCount).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/conversations/{user_id}/messages", wrapper.GetMessages).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/conversations/{user_id}/messages", wrapper.SendMessage).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/conversations/{user_id}/messages/read", wrapper.MarkMessagesAsRead).Methods("PATCH")
 
 	return r
 }

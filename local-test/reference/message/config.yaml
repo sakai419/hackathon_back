@@ -1,5 +1,0 @@
-package: message
-generate:
-    models: true
-    gorilla-server: true
-output: ./../../internal/handler/message/schema.gen.go
