@@ -2,7 +2,7 @@ package model
 
 import "local-test/pkg/apperrors"
 
-type ReplyTweetAndNotifyParams struct {
+type PostReplyAndNotifyParams struct {
 	ReplyingAccountID string
 	OriginalTweetID   int64
 	Content           *string
@@ -10,7 +10,7 @@ type ReplyTweetAndNotifyParams struct {
 	Media             *Media
 }
 
-func (p *ReplyTweetAndNotifyParams) Validate() error {
+func (p *PostReplyAndNotifyParams) Validate() error {
 	if p.ReplyingAccountID == "" {
 		return &apperrors.ErrInvalidInput{
 			Message: "replying account id is missing",

@@ -98,7 +98,7 @@ paths:
     /tweets/{tweet_id}/reply:
         post:
             summary: Reply to a tweet
-            operationId: ReplyTweetAndNotify
+            operationId: PostReplyAndNotify
             parameters:
                 - name: tweet_id
                   in: path

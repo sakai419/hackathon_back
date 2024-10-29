@@ -27,8 +27,8 @@ type PostTweetRequest struct {
 // PostTweetJSONRequestBody defines body for PostTweet for application/json ContentType.
 type PostTweetJSONRequestBody = PostTweetRequest
 
-// ReplyTweetAndNotifyJSONRequestBody defines body for ReplyTweetAndNotify for application/json ContentType.
-type ReplyTweetAndNotifyJSONRequestBody = PostTweetRequest
+// PostReplyAndNotifyJSONRequestBody defines body for PostReplyAndNotify for application/json ContentType.
+type PostReplyAndNotifyJSONRequestBody = PostTweetRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -43,7 +43,7 @@ type ServerInterface interface {
 	LikeTweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
 	// Reply to a tweet
 	// (POST /tweets/{tweet_id}/reply)
-	ReplyTweetAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
+	PostReplyAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
 	// Delete retweet
 	// (DELETE /tweets/{tweet_id}/retweet)
 	Unretweet(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -125,8 +125,8 @@ func (siw *ServerInterfaceWrapper) LikeTweetAndNotify(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
-// ReplyTweetAndNotify operation middleware
-func (siw *ServerInterfaceWrapper) ReplyTweetAndNotify(w http.ResponseWriter, r *http.Request) {
+// PostReplyAndNotify operation middleware
+func (siw *ServerInterfaceWrapper) PostReplyAndNotify(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -140,7 +140,7 @@ func (siw *ServerInterfaceWrapper) ReplyTweetAndNotify(w http.ResponseWriter, r 
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ReplyTweetAndNotify(w, r, tweetId)
+		siw.Handler.PostReplyAndNotify(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -319,7 +319,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.LikeTweetAndNotify).Methods("POST")
 
-	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/reply", wrapper.ReplyTweetAndNotify).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/reply", wrapper.PostReplyAndNotify).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/retweet", wrapper.Unretweet).Methods("DELETE")
 

@@ -123,7 +123,7 @@ func (s *Service) RetweetAndNotify(ctx context.Context, params *model.RetweetAnd
 	return nil
 }
 
-func (s *Service) ReplyTweetAndNotify(ctx context.Context, params *model.ReplyTweetAndNotifyParams) error {
+func (s *Service) PostReplyAndNotify(ctx context.Context, params *model.PostReplyAndNotifyParams) error {
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return apperrors.NewValidateAppError(err)
@@ -173,7 +173,7 @@ func (s *Service) ReplyTweetAndNotify(ctx context.Context, params *model.ReplyTw
 	}
 
 	// Label tweet
-	go func(params *model.ReplyTweetAndNotifyParams) {
+	go func(params *model.PostReplyAndNotifyParams) {
 		// Get tweet label
 		timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

@@ -167,7 +167,7 @@ func (h *TweetHandler) Unretweet(w http.ResponseWriter, r *http.Request, tweetID
 
 // Post reply
 // (POST /tweets/{tweet_id}/reply)
-func (h *TweetHandler) ReplyTweetAndNotify(w http.ResponseWriter, r *http.Request, tweetID int64) {
+func (h *TweetHandler) PostReplyAndNotify(w http.ResponseWriter, r *http.Request, tweetID int64) {
 	// Check if the user is suspended
 	if utils.IsClientSuspended(w, r) {
 		return
@@ -180,7 +180,7 @@ func (h *TweetHandler) ReplyTweetAndNotify(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Decode request body
-	var req ReplyTweetAndNotifyJSONRequestBody
+	var req PostReplyAndNotifyJSONRequestBody
 	if err := utils.Decode(r, &req); err != nil {
 		utils.RespondError(w, apperrors.NewDecodeError(err))
 		return
@@ -194,7 +194,7 @@ func (h *TweetHandler) ReplyTweetAndNotify(w http.ResponseWriter, r *http.Reques
 			URL:  req.Media.Url,
 		}
 	}
-	if err := h.svc.ReplyTweetAndNotify(r.Context(), &model.ReplyTweetAndNotifyParams{
+	if err := h.svc.PostReplyAndNotify(r.Context(), &model.PostReplyAndNotifyParams{
 		ReplyingAccountID: clientAccountID,
 		OriginalTweetID:   tweetID,
 		Content:           req.Content,
