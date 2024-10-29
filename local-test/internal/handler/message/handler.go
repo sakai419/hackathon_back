@@ -76,12 +76,6 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request, _ s
 		return
 	}
 
-	// Validate request
-	if err := utils.ValidateRequiredFields(req); err != nil {
-		utils.RespondError(w, apperrors.NewRequiredParamError("request body", err))
-		return
-	}
-
 	// Send message
 	err := h.svc.SendMessage(r.Context(), &model.SendMessageParams{
 		ClientAccountID: clidentAccountID,

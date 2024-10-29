@@ -3,9 +3,11 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"local-test/pkg/apperrors"
 	"log"
 	"net/http"
+	"reflect"
 )
 
 type errorResponse struct {
@@ -23,6 +25,12 @@ func Decode(r *http.Request, v interface{}) error {
     if err := json.NewDecoder(r.Body).Decode(v); err != nil {
         return &apperrors.ErrInvalidInput{Message: "failed to decode request body"}
     }
+
+	// Validate the request body
+	if err := validateRequiredFields(v); err != nil {
+		return &apperrors.ErrInvalidInput{Message: err.Error()}
+	}
+
     return nil
 }
 
@@ -67,4 +75,28 @@ func RespondError(w http.ResponseWriter, err error) {
         }
         log.Printf("Unexpected error: %v", err)
     }
+}
+
+func validateRequiredFields(req interface{}) error {
+    v := reflect.ValueOf(req)
+    if v.Kind() != reflect.Struct {
+        return &apperrors.ErrInvalidRequest{
+            Entity: "All fields",
+            Err:    errors.New("provided value is not a struct"),
+        }
+    }
+
+    for i := 0; i < v.NumField(); i++ {
+        field := v.Field(i)
+        fieldType := v.Type().Field(i)
+
+        // ポインタ型ではない変数かつゼロ値の場合にエラーを返す
+        if fieldType.Type.Kind() != reflect.Ptr && field.IsZero() {
+            return &apperrors.ErrInvalidRequest{
+                Entity: fieldType.Name,
+                Err:    fmt.Errorf("%s is a zero value", fieldType.Name),
+            }
+        }
+    }
+    return nil
 }

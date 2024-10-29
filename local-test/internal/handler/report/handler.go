@@ -46,12 +46,6 @@ func (h *ReportHandler) CreateReport(w http.ResponseWriter, r *http.Request, _ s
         return
     }
 
-    // Validate request
-    if err := utils.ValidateRequiredFields(req); err != nil {
-		utils.RespondError(w, apperrors.NewRequiredParamError("request body", err))
-		return
-	}
-
     // Create report
     if err := h.svc.CreateReport(r.Context(), &model.CreateReportParams{
 		ReporterAccountID: clientAccountID,
