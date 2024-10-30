@@ -45,3 +45,9 @@ type GetLikingAccountIDsParams struct {
 	Limit           int32
 	Offset          int32
 }
+
+type GetLikedTweetIDsByAccountIDParams struct {
+	AccountID string
+	Limit    int32
+	Offset   int32
+}

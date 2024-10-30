@@ -75,6 +75,11 @@ type GetTweetInfosByAccountIDParams struct {
 	Offset	 	    int32
 }
 
+type GetTweetInfosByIDsParams struct {
+	ClientAccountID string
+	TweetIDs        []int64
+}
+
 type TweetInfoInternal struct {
 	TweetID       int64
 	AccountID     string

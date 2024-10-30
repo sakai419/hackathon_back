@@ -401,6 +401,47 @@ func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuot
 	return quotingUserInfos, nil
 }
 
+func convertToTweetInfo(tweets []*model.TweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.TweetInfo, error) {
+	// Create map of user info
+	userInfoMap := make(map[string]*model.UserInfoInternal)
+	for _, userInfo := range userInfos {
+		userInfoMap[userInfo.ID] = userInfo
+	}
+
+	// Convert to model
+	var ret []*model.TweetInfo
+	for _, tweet := range tweets {
+		userInfo, ok := userInfoMap[tweet.AccountID]
+		if !ok {
+			return nil, apperrors.NewNotFoundAppError("user info", "convert to tweet info", nil)
+		}
+
+		info := &model.TweetInfo{
+			TweetID:       tweet.TweetID,
+			Content:       tweet.Content,
+			Code:          tweet.Code,
+			LikesCount:    tweet.LikesCount,
+			RepliesCount:  tweet.RepliesCount,
+			RetweetsCount: tweet.RetweetsCount,
+			IsReply:       tweet.IsReply,
+			IsQuote:       tweet.IsQuote,
+			IsPinned:      tweet.IsPinned,
+			HasLiked:      tweet.HasLiked,
+			HasRetweeted:  tweet.HasRetweeted,
+			Media:         tweet.Media,
+			UserInfo:      model.UserInfoWithoutBio{
+				UserID:          userInfo.UserID,
+				UserName:        userInfo.UserName,
+				ProfileImageURL: userInfo.ProfileImageURL,
+			},
+		}
+
+		ret = append(ret, info)
+	}
+
+	return ret, nil
+}
+
 func getTweetLabels(_ context.Context, _ *model.GetTweetLabelsParams) []model.Label{
 	// Temporary function to get the label of a tweet
 	// This function should be implemented in the future

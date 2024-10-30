@@ -52,6 +52,64 @@ func (h *UserHandler) GetUserTweets(w http.ResponseWriter, r *http.Request, _ st
 	utils.Respond(w, resp)
 }
 
+// Get user's likes
+// (GET /users/{user_id}/likes)
+func (h *UserHandler) GetUserLikes(w http.ResponseWriter, r *http.Request, _ string, params GetUserLikesParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	if clientAccountID != targetAccountID {
+		utils.RespondError(w, apperrors.NewForbiddenAppError("get user likes", errors.New("client account ID does not match target account ID")))
+		return
+	}
+
+	// Get likes
+	likes, err := h.svc.GetUserLikes(r.Context(), &model.GetUserLikesParams{
+		ClientAccountID: clientAccountID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get user likes", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToGetUserLikesResponse(likes)
+
+	utils.Respond(w, resp)
+}
+
+// ErrorHandlerFunc is the error handler for tweet handlers
+func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
+	var invalidParamFormatError *InvalidParamFormatError
+	var requiredParamError *RequiredParamError
+	if errors.As(err, &invalidParamFormatError) {
+		utils.RespondError(w, apperrors.NewInvalidParamFormatError(
+			invalidParamFormatError.ParamName,
+			invalidParamFormatError.Err,
+		))
+		return
+	} else if errors.As(err, &requiredParamError) {
+		utils.RespondError(w, apperrors.NewRequiredParamError(
+			requiredParamError.ParamName,
+			requiredParamError,
+		))
+		return
+	}
+
+	utils.RespondError(w, apperrors.NewUnexpectedError(err))
+}
+
 func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 	if t == nil {
 		return nil
@@ -92,27 +150,6 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 	return tweet
 }
 
-// ErrorHandlerFunc is the error handler for tweet handlers
-func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
-	var invalidParamFormatError *InvalidParamFormatError
-	var requiredParamError *RequiredParamError
-	if errors.As(err, &invalidParamFormatError) {
-		utils.RespondError(w, apperrors.NewInvalidParamFormatError(
-			invalidParamFormatError.ParamName,
-			invalidParamFormatError.Err,
-		))
-		return
-	} else if errors.As(err, &requiredParamError) {
-		utils.RespondError(w, apperrors.NewRequiredParamError(
-			requiredParamError.ParamName,
-			requiredParamError,
-		))
-		return
-	}
-
-	utils.RespondError(w, apperrors.NewUnexpectedError(err))
-}
-
 func convertToGetUserTweetsResponse(tweets []*model.GetUserTweetsResponse) []GetUserTweetsResponse {
 	resp := make([]GetUserTweetsResponse, 0, len(tweets))
 	for _, t := range tweets {
@@ -122,6 +159,14 @@ func convertToGetUserTweetsResponse(tweets []*model.GetUserTweetsResponse) []Get
 			ParentReply:       convertToTweetInfo(t.ParentReply),
 			OmittedReplyExist: t.OmittedReplyExist,
 		})
+	}
+	return resp
+}
+
+func convertToGetUserLikesResponse(likes []*model.TweetInfo) []TweetInfo {
+	resp := make([]TweetInfo, 0, len(likes))
+	for _, l := range likes {
+		resp = append(resp, *convertToTweetInfo(l))
 	}
 	return resp
 }

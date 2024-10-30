@@ -98,6 +98,56 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	return responses, nil
 }
 
+func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesParams) ([]*model.TweetInfo, error) {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get liked tweet ids by account id
+	likedTweetIDs, err := s.repo.GetLikedTweetIDsByAccountID(ctx, &model.GetLikedTweetIDsByAccountIDParams{
+		AccountID: params.ClientAccountID,
+		Limit:     params.Limit,
+		Offset:    params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get liked tweet ids by account id", err)
+	}
+
+	// Get tweet infos by tweet ids
+	tweets, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		TweetIDs:        likedTweetIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get tweet infos by tweet ids", err)
+	}
+
+	// Get account ids of all tweets
+	accountIDsMap := make(map[string]bool)
+	for _, tweet := range tweets {
+		accountIDsMap[tweet.AccountID] = true
+	}
+	accountIDs := make([]string, 0, len(accountIDsMap))
+	for accountID := range accountIDsMap {
+		accountIDs = append(accountIDs, accountID)
+	}
+
+	// Get user infos
+	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
+	}
+
+	// Convert to response
+	responses, err := convertToTweetInfo(tweets, userInfos)
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("convert to get user likes response", err)
+	}
+
+	return responses, nil
+}
+
 func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTweetInfos []*model.QuotedTweetInfoInternal, replyTweetInfos []*model.RepliedTweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.GetUserTweetsResponse, error) {
 	// Create map of user infos
 	userInfoMap := make(map[string]*model.UserInfoInternal)

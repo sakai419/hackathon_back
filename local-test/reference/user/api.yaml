@@ -39,6 +39,40 @@ paths:
                 "500":
                     description: Internal server error
 
+    /users/{user_id}/likes:
+        get:
+            summary: Get liked tweets by user
+            operationId: GetUserLikes
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Liked tweets retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         GetUserTweetsResponses:
@@ -61,6 +95,10 @@ components:
                     nullable: true
             required:
                 - Tweet
+        TweetInfos:
+            type: array
+            items:
+                $ref: "#/components/schemas/TweetInfo"
         TweetInfo:
             type: object
             properties:

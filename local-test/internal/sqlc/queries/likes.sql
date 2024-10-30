@@ -12,8 +12,8 @@ WHERE original_tweet_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
 
--- name: GetLikesByAccountID :many
-SELECT * FROM likes
+-- name: GetLikedTweetIDsByAccountID :many
+SELECT original_tweet_id FROM likes
 WHERE liking_account_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;

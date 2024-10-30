@@ -134,6 +134,40 @@ func (r *Repository) GetTweetInfosByAccountID(ctx context.Context, params *model
 	return ret, nil
 }
 
+func (r *Repository) GetTweetInfosByIDs(ctx context.Context, params *model.GetTweetInfosByIDsParams) ([]*model.TweetInfoInternal, error) {
+	// Get tweet infos by ids
+	tweetInfos, err := r.q.GetTweetInfosByIDs(ctx, sqlcgen.GetTweetInfosByIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		TweetIds:        params.TweetIDs,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get tweet infos by ids",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	var ret []*model.TweetInfoInternal
+	for _, tweetInfo := range tweetInfos {
+		info, err := convertToTweetInfoInternalFromGetTweetInfosByIDsRow(tweetInfo)
+		if err != nil {
+			return nil, apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "convert to tweet infos internal",
+					Err: err,
+				},
+			)
+		}
+
+		ret = append(ret, &info)
+	}
+
+	return ret, nil
+}
+
 func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.CreateTweetParams, error) {
 	ret := &sqlcgen.CreateTweetParams{
 		AccountID: params.AccountID,
