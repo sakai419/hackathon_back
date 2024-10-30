@@ -8,7 +8,9 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
+	"time"
 
+	"github.com/lib/pq"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -116,7 +118,7 @@ func (q *Queries) GetAccountIDByTweetID(ctx context.Context, id int64) (string, 
 }
 
 const getPinnedTweetForAccount = `-- name: GetPinnedTweetForAccount :one
-SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_reply, is_quote, media, created_at, updated_at FROM tweets
+SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_reply, is_quote, media, created_at FROM tweets
 WHERE account_id = $1 AND is_pinned = TRUE
 LIMIT 1
 `
@@ -137,7 +139,6 @@ func (q *Queries) GetPinnedTweetForAccount(ctx context.Context, accountID string
 		&i.IsQuote,
 		&i.Media,
 		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -153,28 +154,69 @@ func (q *Queries) GetTweetCountByAccountID(ctx context.Context, accountID string
 	return count, err
 }
 
-const getTweetsByAccountID = `-- name: GetTweetsByAccountID :many
-SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_reply, is_quote, media, created_at, updated_at FROM tweets
-WHERE account_id = $1
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3
+const getTweetInfosByAccountID = `-- name: GetTweetInfosByAccountID :many
+SELECT
+    t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = $3
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = $3
+) AS r ON t.id = r.original_tweet_id
+WHERE t.account_id = $4
+ORDER BY t.created_at DESC
+LIMIT $1 OFFSET $2
 `
 
-type GetTweetsByAccountIDParams struct {
-	AccountID string
-	Limit     int32
-	Offset    int32
+type GetTweetInfosByAccountIDParams struct {
+	Limit           int32
+	Offset          int32
+	ClientAccountID string
+	TargetAccountID string
 }
 
-func (q *Queries) GetTweetsByAccountID(ctx context.Context, arg GetTweetsByAccountIDParams) ([]Tweet, error) {
-	rows, err := q.db.QueryContext(ctx, getTweetsByAccountID, arg.AccountID, arg.Limit, arg.Offset)
+type GetTweetInfosByAccountIDRow struct {
+	ID            int64
+	AccountID     string
+	IsPinned      bool
+	Content       sql.NullString
+	Code          sql.NullString
+	LikesCount    int32
+	RepliesCount  int32
+	RetweetsCount int32
+	IsReply       bool
+	IsQuote       bool
+	Media         pqtype.NullRawMessage
+	CreatedAt     time.Time
+	HasLiked      bool
+	HasRetweeted  bool
+}
+
+func (q *Queries) GetTweetInfosByAccountID(ctx context.Context, arg GetTweetInfosByAccountIDParams) ([]GetTweetInfosByAccountIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTweetInfosByAccountID,
+		arg.Limit,
+		arg.Offset,
+		arg.ClientAccountID,
+		arg.TargetAccountID,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Tweet
+	var items []GetTweetInfosByAccountIDRow
 	for rows.Next() {
-		var i Tweet
+		var i GetTweetInfosByAccountIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.AccountID,
@@ -188,7 +230,91 @@ func (q *Queries) GetTweetsByAccountID(ctx context.Context, arg GetTweetsByAccou
 			&i.IsQuote,
 			&i.Media,
 			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.HasLiked,
+			&i.HasRetweeted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTweetInfosByIDs = `-- name: GetTweetInfosByIDs :many
+SELECT
+    t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = $1
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = $1
+) AS r ON t.id = r.original_tweet_id
+WHERE t.id = ANY($2::BIGINT[])
+`
+
+type GetTweetInfosByIDsParams struct {
+	ClientAccountID string
+	TweetIds        []int64
+}
+
+type GetTweetInfosByIDsRow struct {
+	ID            int64
+	AccountID     string
+	IsPinned      bool
+	Content       sql.NullString
+	Code          sql.NullString
+	LikesCount    int32
+	RepliesCount  int32
+	RetweetsCount int32
+	IsReply       bool
+	IsQuote       bool
+	Media         pqtype.NullRawMessage
+	CreatedAt     time.Time
+	HasLiked      bool
+	HasRetweeted  bool
+}
+
+func (q *Queries) GetTweetInfosByIDs(ctx context.Context, arg GetTweetInfosByIDsParams) ([]GetTweetInfosByIDsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTweetInfosByIDs, arg.ClientAccountID, pq.Array(arg.TweetIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTweetInfosByIDsRow
+	for rows.Next() {
+		var i GetTweetInfosByIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.IsPinned,
+			&i.Content,
+			&i.Code,
+			&i.LikesCount,
+			&i.RepliesCount,
+			&i.RetweetsCount,
+			&i.IsReply,
+			&i.IsQuote,
+			&i.Media,
+			&i.CreatedAt,
+			&i.HasLiked,
+			&i.HasRetweeted,
 		); err != nil {
 			return nil, err
 		}
@@ -204,7 +330,7 @@ func (q *Queries) GetTweetsByAccountID(ctx context.Context, arg GetTweetsByAccou
 }
 
 const searchTweets = `-- name: SearchTweets :many
-SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_reply, is_quote, media, created_at, updated_at FROM tweets
+SELECT id, account_id, is_pinned, content, code, likes_count, replies_count, retweets_count, is_reply, is_quote, media, created_at FROM tweets
 WHERE content LIKE $1 OR code LIKE $2
 ORDER BY created_at DESC
 LIMIT $3 OFFSET $4
@@ -244,7 +370,6 @@ func (q *Queries) SearchTweets(ctx context.Context, arg SearchTweetsParams) ([]T
 			&i.IsQuote,
 			&i.Media,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -288,39 +413,5 @@ type UnpinTweetParams struct {
 
 func (q *Queries) UnpinTweet(ctx context.Context, arg UnpinTweetParams) error {
 	_, err := q.db.ExecContext(ctx, unpinTweet, arg.ID, arg.AccountID)
-	return err
-}
-
-const updateTweetCode = `-- name: UpdateTweetCode :exec
-UPDATE tweets
-SET code = $1
-WHERE id = $2 AND account_id = $3
-`
-
-type UpdateTweetCodeParams struct {
-	Code      sql.NullString
-	ID        int64
-	AccountID string
-}
-
-func (q *Queries) UpdateTweetCode(ctx context.Context, arg UpdateTweetCodeParams) error {
-	_, err := q.db.ExecContext(ctx, updateTweetCode, arg.Code, arg.ID, arg.AccountID)
-	return err
-}
-
-const updateTweetContent = `-- name: UpdateTweetContent :exec
-UPDATE tweets
-SET content = $1
-WHERE id = $2 AND account_id = $3
-`
-
-type UpdateTweetContentParams struct {
-	Content   sql.NullString
-	ID        int64
-	AccountID string
-}
-
-func (q *Queries) UpdateTweetContent(ctx context.Context, arg UpdateTweetContentParams) error {
-	_, err := q.db.ExecContext(ctx, updateTweetContent, arg.Content, arg.ID, arg.AccountID)
 	return err
 }

@@ -139,7 +139,7 @@ func (q *Queries) GetMostUsedHashtags(ctx context.Context, arg GetMostUsedHashta
 }
 
 const getRecentTweetsWithHashtag = `-- name: GetRecentTweetsWithHashtag :many
-SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at, t.updated_at, h.tag
+SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at, h.tag
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
 JOIN hashtags h ON th.hashtag_id = h.id
@@ -167,7 +167,6 @@ type GetRecentTweetsWithHashtagRow struct {
 	IsQuote       bool
 	Media         pqtype.NullRawMessage
 	CreatedAt     time.Time
-	UpdatedAt     time.Time
 	Tag           string
 }
 
@@ -193,7 +192,6 @@ func (q *Queries) GetRecentTweetsWithHashtag(ctx context.Context, arg GetRecentT
 			&i.IsQuote,
 			&i.Media,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 			&i.Tag,
 		); err != nil {
 			return nil, err
@@ -223,7 +221,7 @@ func (q *Queries) GetTweetCountByHashtagID(ctx context.Context, hashtagID int64)
 }
 
 const getTweetsByHashtagID = `-- name: GetTweetsByHashtagID :many
-SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at, t.updated_at
+SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at
 FROM tweets t
 JOIN tweet_hashtags th ON t.id = th.tweet_id
 WHERE th.hashtag_id = $1
@@ -258,7 +256,6 @@ func (q *Queries) GetTweetsByHashtagID(ctx context.Context, arg GetTweetsByHasht
 			&i.IsQuote,
 			&i.Media,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

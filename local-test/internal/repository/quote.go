@@ -128,6 +128,61 @@ func (r *Repository) GetQuotingAccountIDs(ctx context.Context, params *model.Get
 	return accountIDs, nil
 }
 
+func (r *Repository) GetQuotedTweetInfos(ctx context.Context, params *model.GetQuotedTweetInfosParams) ([]*model.QuotedTweetInfoInternal, error) {
+	// Get quote relations
+	quoteRelations, err := r.q.GetQuoteRelations(ctx, params.QuotingTweetIDs)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get quoted tweet ids",
+				Err: err,
+			},
+		)
+	}
+
+	// Extract quoted tweet ids
+	quotedTweetIDs := make([]int64, 0, len(quoteRelations))
+	for _, relation := range quoteRelations {
+		quotedTweetIDs = append(quotedTweetIDs, relation.OriginalTweetID)
+	}
+
+	// Get quoted tweets originals
+	originalTweets, err := r.q.GetTweetInfosByIDs(ctx, sqlcgen.GetTweetInfosByIDsParams{
+		TweetIds:		 quotedTweetIDs,
+		ClientAccountID: params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get quoted tweet originals",
+				Err: err,
+			},
+		)
+	}
+
+	// Check if all quoted tweets are found
+	if len(quotedTweetIDs) != len(originalTweets) {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "tweet ids",
+			},
+		)
+	}
+
+	// Convert to quoted tweet infos
+	ret, err := convertToQuotedTweetInfos(quoteRelations, originalTweets)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to quoted tweet infos",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
 func convertToCreateTweetAsQuoteParams(params *model.CreateQuoteAndNotifyParams) (*sqlcgen.CreateTweetAsQuoteParams, error) {
 	ret := &sqlcgen.CreateTweetAsQuoteParams{
 		AccountID: params.QuotingAccountID,
@@ -153,6 +208,64 @@ func convertToCreateTweetAsQuoteParams(params *model.CreateQuoteAndNotifyParams)
 			RawMessage: jsonb,
 			Valid: true,
 		}
+	}
+
+	return ret, nil
+}
+
+func convertToQuotedTweetInfos(quoteRelations []sqlcgen.GetQuoteRelationsRow, originalTweets []sqlcgen.GetTweetInfosByIDsRow) ([]*model.QuotedTweetInfoInternal, error) {
+	// Create map for original tweets
+	originalTweetMap := make(map[int64]sqlcgen.GetTweetInfosByIDsRow, len(originalTweets))
+	for _, tweet := range originalTweets {
+		originalTweetMap[tweet.ID] = tweet
+	}
+
+	// Create quoted tweet infos
+	ret := make([]*model.QuotedTweetInfoInternal, 0, len(quoteRelations))
+	for _, relation := range quoteRelations {
+		originalTweet, ok := originalTweetMap[relation.OriginalTweetID]
+		if !ok {
+			return nil, &apperrors.ErrRecordNotFound{
+				Condition: "original tweet",
+			}
+		}
+
+		tweet := model.TweetInfoInternal{
+			TweetID:       originalTweet.ID,
+			AccountID:     originalTweet.AccountID,
+			LikesCount:    originalTweet.LikesCount,
+			RetweetsCount: originalTweet.RetweetsCount,
+			RepliesCount:  originalTweet.RepliesCount,
+			IsQuote:       originalTweet.IsQuote,
+			IsReply: 	   originalTweet.IsReply,
+			IsPinned: 	   originalTweet.IsPinned,
+			HasLiked:      originalTweet.HasLiked,
+			HasRetweeted:  originalTweet.HasRetweeted,
+			CreatedAt:     originalTweet.CreatedAt,
+		}
+
+		if originalTweet.Content.Valid {
+			tweet.Content = &originalTweet.Content.String
+		}
+
+		if originalTweet.Code.Valid {
+			tweet.Code = &originalTweet.Code.String
+		}
+
+		if originalTweet.Media.Valid {
+			var media model.Media
+			if err := json.Unmarshal(originalTweet.Media.RawMessage, &media); err != nil {
+				return nil, &apperrors.ErrInvalidInput{
+					Message: "failed to unmarshal media",
+				}
+			}
+			tweet.Media = &media
+		}
+
+		ret = append(ret, &model.QuotedTweetInfoInternal{
+			QuotedTweet: tweet,
+			QuotingTweetID: relation.QuoteID,
+		})
 	}
 
 	return ret, nil

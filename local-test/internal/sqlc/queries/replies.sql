@@ -12,14 +12,10 @@ SELECT
     ) AS parent_reply_id,
     @replying_account_id AS replying_account_id;
 
--- name: GetReplyThread :many
-WITH RECURSIVE reply_thread AS (
-    SELECT * FROM replies r0 WHERE r0.reply_id = $1
-    UNION ALL
-    SELECT r.* FROM replies r
-    JOIN reply_thread rt ON r.parent_reply_id = rt.reply_id
-)
-SELECT rt.*, t.*
-FROM reply_thread rt
-JOIN tweets t ON rt.tweet_id = t.id
-ORDER BY rt.created_at ASC;
+-- name: GetReplyRelations :many
+SELECT reply_id, original_tweet_id, parent_reply_id
+FROM replies
+WHERE reply_id = ANY(@tweet_ids::BIGINT[]);
+
+-- name: CheckParentReplyExist :one
+SELECT EXISTS(SELECT 1 FROM replies WHERE reply_id = $1 AND parent_reply_id IS NOT NULL);

@@ -12,6 +12,7 @@ import (
 	"local-test/internal/handler/report"
 	"local-test/internal/handler/setting"
 	"local-test/internal/handler/tweet"
+	"local-test/internal/handler/user"
 	"local-test/internal/middleware"
 	"local-test/internal/repository"
 	"local-test/internal/service"
@@ -204,6 +205,25 @@ func setUpTweetRoutes(r *mux.Router, repo *repository.Repository, svc *service.S
 	tweet.HandlerWithOptions(h, opts)
 }
 
+func setUpUserRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the user handler
+	h := user.NewUserHandler(svc)
+
+	// Create options for the user handler
+	opts := user.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []user.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
+		},
+		ErrorHandlerFunc: user.ErrorHandlerFunc,
+	}
+
+	// Register the user handler
+	user.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -231,6 +251,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpBlockRoutes(apiV1, repo, svc, client)
 	setUpProfileRoutes(apiV1, repo, svc, client)
 	setUpTweetRoutes(apiV1, repo, svc, client)
+	setUpUserRoutes(apiV1, repo, svc, client)
 
 	return r
 }

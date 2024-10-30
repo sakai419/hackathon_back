@@ -8,3 +8,8 @@ FROM quotes
 WHERE original_tweet_id = $1
 ORDER BY created_at DESC
 LIMIT $2 OFFSET $3;
+
+-- name: GetQuoteRelations :many
+SELECT quote_id, original_tweet_id
+FROM quotes
+WHERE quote_id = ANY(@tweet_ids::BIGINT[]);

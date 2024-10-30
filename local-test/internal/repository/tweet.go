@@ -103,6 +103,37 @@ func (r *Repository) GetAccountIDByTweetID(ctx context.Context, tweetID int64) (
 	return accountID, nil
 }
 
+func (r *Repository) GetTweetInfosByAccountID(ctx context.Context, params *model.GetTweetInfosByAccountIDParams) ([]*model.TweetInfoInternal, error) {
+	// Get tweet infos by account id
+	tweetInfos, err := r.q.GetTweetInfosByAccountID(ctx, sqlcgen.GetTweetInfosByAccountIDParams{
+		ClientAccountID: params.ClientAccountID,
+		TargetAccountID: params.TargetAccountID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get tweet infos by account id",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
 func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.CreateTweetParams, error) {
 	ret := &sqlcgen.CreateTweetParams{
 		AccountID: params.AccountID,
@@ -131,4 +162,79 @@ func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.Creat
 	}
 
 	return ret, nil
+}
+
+func convertToTweetInfoInternal(row []sqlcgen.GetTweetInfosByAccountIDRow) ([]*model.TweetInfoInternal, error) {
+	infos := make([]*model.TweetInfoInternal, 0, len(row))
+	for _, r := range row {
+		info := model.TweetInfoInternal{
+			TweetID:       r.ID,
+			AccountID:     r.AccountID,
+			LikesCount:    r.LikesCount,
+			RetweetsCount: r.RetweetsCount,
+			RepliesCount:  r.RepliesCount,
+			IsQuote:       r.IsQuote,
+			IsReply:       r.IsReply,
+			IsPinned:      r.IsPinned,
+			HasLiked:      r.HasLiked,
+			HasRetweeted:  r.HasRetweeted,
+			CreatedAt:     r.CreatedAt,
+		}
+
+		if r.Content.Valid {
+			info.Content = &r.Content.String
+		}
+
+		if r.Code.Valid {
+			info.Code = &r.Code.String
+		}
+
+		if r.Media.Valid {
+			var media model.Media
+			if err := json.Unmarshal(r.Media.RawMessage, &media); err != nil {
+				return nil, &apperrors.ErrInvalidInput{
+					Message: "failed to unmarshal media",
+				}
+			}
+		}
+
+		infos = append(infos, &info)
+	}
+
+	return infos, nil
+}
+
+func convertToTweetInfoInternalFromGetTweetInfosByIDsRow(row sqlcgen.GetTweetInfosByIDsRow) (model.TweetInfoInternal, error) {
+	info := model.TweetInfoInternal{
+		TweetID:       row.ID,
+		AccountID:     row.AccountID,
+		LikesCount:    row.LikesCount,
+		RetweetsCount: row.RetweetsCount,
+		RepliesCount:  row.RepliesCount,
+		IsQuote:       row.IsQuote,
+		IsReply:       row.IsReply,
+		IsPinned:      row.IsPinned,
+		HasLiked:      row.HasLiked,
+		HasRetweeted:  row.HasRetweeted,
+		CreatedAt:     row.CreatedAt,
+	}
+
+	if row.Content.Valid {
+		info.Content = &row.Content.String
+	}
+
+	if row.Code.Valid {
+		info.Code = &row.Code.String
+	}
+
+	if row.Media.Valid {
+		var media model.Media
+		if err := json.Unmarshal(row.Media.RawMessage, &media); err != nil {
+			return model.TweetInfoInternal{}, &apperrors.ErrInvalidInput{
+				Message: "failed to unmarshal media",
+			}
+		}
+	}
+
+	return info, nil
 }

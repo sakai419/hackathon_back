@@ -521,7 +521,6 @@ type Tweet struct {
 	IsQuote       bool
 	Media         pqtype.NullRawMessage
 	CreatedAt     time.Time
-	UpdatedAt     time.Time
 }
 
 type TweetHashtag struct {

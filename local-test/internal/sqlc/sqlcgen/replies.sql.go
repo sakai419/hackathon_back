@@ -8,10 +8,20 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
-	"time"
 
-	"github.com/sqlc-dev/pqtype"
+	"github.com/lib/pq"
 )
+
+const checkParentReplyExist = `-- name: CheckParentReplyExist :one
+SELECT EXISTS(SELECT 1 FROM replies WHERE reply_id = $1 AND parent_reply_id IS NOT NULL)
+`
+
+func (q *Queries) CheckParentReplyExist(ctx context.Context, replyID int64) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkParentReplyExist, replyID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
 
 const createReply = `-- name: CreateReply :exec
 INSERT INTO replies (reply_id, original_tweet_id, parent_reply_id, replying_account_id)
@@ -39,69 +49,28 @@ func (q *Queries) CreateReply(ctx context.Context, arg CreateReplyParams) error 
 	return err
 }
 
-const getReplyThread = `-- name: GetReplyThread :many
-WITH RECURSIVE reply_thread AS (
-    SELECT reply_id, original_tweet_id, parent_reply_id, replying_account_id, created_at FROM replies r0 WHERE r0.reply_id = $1
-    UNION ALL
-    SELECT r.reply_id, r.original_tweet_id, r.parent_reply_id, r.replying_account_id, r.created_at FROM replies r
-    JOIN reply_thread rt ON r.parent_reply_id = rt.reply_id
-)
-SELECT rt.reply_id, rt.original_tweet_id, rt.parent_reply_id, rt.replying_account_id, rt.created_at, t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at, t.updated_at
-FROM reply_thread rt
-JOIN tweets t ON rt.tweet_id = t.id
-ORDER BY rt.created_at ASC
+const getReplyRelations = `-- name: GetReplyRelations :many
+SELECT reply_id, original_tweet_id, parent_reply_id
+FROM replies
+WHERE reply_id = ANY($1::BIGINT[])
 `
 
-type GetReplyThreadRow struct {
-	ReplyID           int64
-	OriginalTweetID   int64
-	ParentReplyID     sql.NullInt64
-	ReplyingAccountID string
-	CreatedAt         time.Time
-	ID                int64
-	AccountID         string
-	IsPinned          bool
-	Content           sql.NullString
-	Code              sql.NullString
-	LikesCount        int32
-	RepliesCount      int32
-	RetweetsCount     int32
-	IsReply           bool
-	IsQuote           bool
-	Media             pqtype.NullRawMessage
-	CreatedAt_2       time.Time
-	UpdatedAt         time.Time
+type GetReplyRelationsRow struct {
+	ReplyID         int64
+	OriginalTweetID int64
+	ParentReplyID   sql.NullInt64
 }
 
-func (q *Queries) GetReplyThread(ctx context.Context, replyID int64) ([]GetReplyThreadRow, error) {
-	rows, err := q.db.QueryContext(ctx, getReplyThread, replyID)
+func (q *Queries) GetReplyRelations(ctx context.Context, tweetIds []int64) ([]GetReplyRelationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getReplyRelations, pq.Array(tweetIds))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetReplyThreadRow
+	var items []GetReplyRelationsRow
 	for rows.Next() {
-		var i GetReplyThreadRow
-		if err := rows.Scan(
-			&i.ReplyID,
-			&i.OriginalTweetID,
-			&i.ParentReplyID,
-			&i.ReplyingAccountID,
-			&i.CreatedAt,
-			&i.ID,
-			&i.AccountID,
-			&i.IsPinned,
-			&i.Content,
-			&i.Code,
-			&i.LikesCount,
-			&i.RepliesCount,
-			&i.RetweetsCount,
-			&i.IsReply,
-			&i.IsQuote,
-			&i.Media,
-			&i.CreatedAt_2,
-			&i.UpdatedAt,
-		); err != nil {
+		var i GetReplyRelationsRow
+		if err := rows.Scan(&i.ReplyID, &i.OriginalTweetID, &i.ParentReplyID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

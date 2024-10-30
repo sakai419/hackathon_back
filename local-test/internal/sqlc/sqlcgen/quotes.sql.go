@@ -7,6 +7,8 @@ package sqlcgen
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
 const createQuote = `-- name: CreateQuote :exec
@@ -23,6 +25,40 @@ type CreateQuoteParams struct {
 func (q *Queries) CreateQuote(ctx context.Context, arg CreateQuoteParams) error {
 	_, err := q.db.ExecContext(ctx, createQuote, arg.QuoteID, arg.QuotingAccountID, arg.OriginalTweetID)
 	return err
+}
+
+const getQuoteRelations = `-- name: GetQuoteRelations :many
+SELECT quote_id, original_tweet_id
+FROM quotes
+WHERE quote_id = ANY($1::BIGINT[])
+`
+
+type GetQuoteRelationsRow struct {
+	QuoteID         int64
+	OriginalTweetID int64
+}
+
+func (q *Queries) GetQuoteRelations(ctx context.Context, tweetIds []int64) ([]GetQuoteRelationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getQuoteRelations, pq.Array(tweetIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetQuoteRelationsRow
+	for rows.Next() {
+		var i GetQuoteRelationsRow
+		if err := rows.Scan(&i.QuoteID, &i.OriginalTweetID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getQuotingAccountIDs = `-- name: GetQuotingAccountIDs :many

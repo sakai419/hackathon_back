@@ -1,0 +1,139 @@
+openapi: 3.0.0
+info:
+    title: User Management API
+    version: 1.0.0
+    description: API for managing users
+
+paths:
+    /users/{user_id}/tweets:
+        get:
+            summary: Get tweets by user
+            operationId: GetUserTweets
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Tweets retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/GetUserTweetsResponses"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        GetUserTweetsResponses:
+            type: array
+            items:
+                $ref: "#/components/schemas/GetUserTweetsResponse"
+        GetUserTweetsResponse:
+            type: object
+            properties:
+                Tweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                OriginalTweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                ParentReply:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                OmittedReplyExist:
+                    type: boolean
+                    nullable: true
+            required:
+                - Tweet
+        TweetInfo:
+            type: object
+            properties:
+                TweetID:
+                    type: integer
+                    format: int64
+                UserInfo:
+                    $ref: "#/components/schemas/UserInfoWithoutBio"
+                Content:
+                    type: string
+                    nullable: true
+                Code:
+                    type: string
+                    nullable: true
+                Media:
+                    $ref: "#/components/schemas/Media"
+                    nullable: true
+                LikesCount:
+                    type: integer
+                    format: int32
+                RetweetsCount:
+                    type: integer
+                    format: int32
+                RepliesCount:
+                    type: integer
+                    format: int32
+                IsQuote:
+                    type: boolean
+                IsReply:
+                    type: boolean
+                IsPinned:
+                    type: boolean
+                HasLiked:
+                    type: boolean
+                HasRetweeted:
+                    type: boolean
+                CreatedAt:
+                    type: string
+                    format: date-time
+            required:
+                - TweetID
+                - UserInfo
+                - LikesCount
+                - RetweetsCount
+                - RepliesCount
+                - IsQuote
+                - IsReply
+                - IsPinned
+                - HasLiked
+                - HasRetweeted
+                - CreatedAt
+        UserInfoWithoutBio:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                username:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+            required:
+                - user_id
+                - username
+                - profile_image_url
+        Media:
+            type: object
+            properties:
+                url:
+                    type: string
+                    format: uri
+                type:
+                    type: string
+            required:
+                - url
+                - type

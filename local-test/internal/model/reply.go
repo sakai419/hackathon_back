@@ -35,3 +35,15 @@ type CreateReplyAndNotifyParams struct {
 	Media             *Media
 	HashtagIDs		  []int64
 }
+
+type GetRepliedTweetInfosParams struct {
+	ClientAccountID  string
+	ReplyingTweetIDs []int64
+}
+
+type RepliedTweetInfoInternal struct {
+	OriginalTweet     TweetInfoInternal
+	ParentReplyTweet  *TweetInfoInternal
+	ReplyingTweetID   int64
+	OmittedReplyExist *bool
+}

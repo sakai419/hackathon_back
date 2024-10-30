@@ -68,14 +68,43 @@ type GetTweetLabelsParams struct {
 	Media   *Media
 }
 
-type TweetInfo struct {
-	ID            int64
-	PosterInfo    *UserInfoWithoutBio
+type GetTweetInfosByAccountIDParams struct {
+	ClientAccountID string
+	TargetAccountID string
+	Limit	  	    int32
+	Offset	 	    int32
+}
+
+type TweetInfoInternal struct {
+	TweetID       int64
+	AccountID     string
 	Content       *string
 	Code          *string
 	Media         *Media
-	LikesCount    int64
-	RetweetsCount int64
-	RepliesCount  int64
-	CreatedAt	  time.Time
+	LikesCount    int32
+	RetweetsCount int32
+	RepliesCount  int32
+	IsQuote	      bool
+	IsReply	      bool
+	IsPinned	  bool
+	HasLiked	  bool
+	HasRetweeted  bool
+	CreatedAt     time.Time
+}
+
+type TweetInfo struct {
+	TweetID       int64
+	UserInfo	  UserInfoWithoutBio
+	Content       *string
+	Code          *string
+	Media         *Media
+	LikesCount    int32
+	RetweetsCount int32
+	RepliesCount  int32
+	IsQuote	      bool
+	IsReply	      bool
+	IsPinned	  bool
+	HasLiked	  bool
+	HasRetweeted  bool
+	CreatedAt     time.Time
 }

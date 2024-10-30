@@ -63,3 +63,13 @@ type GetQuotingAccountIDsParams struct {
 	Limit           int32
 	Offset          int32
 }
+
+type GetQuotedTweetInfosParams struct {
+	ClientAccountID string
+	QuotingTweetIDs []int64
+}
+
+type QuotedTweetInfoInternal struct {
+	QuotedTweet    TweetInfoInternal
+	QuotingTweetID int64
+}

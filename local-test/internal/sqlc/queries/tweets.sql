@@ -19,21 +19,51 @@ RETURNING id;
 -- name: GetAccountIDByTweetID :one
 SELECT account_id FROM tweets WHERE id = $1;
 
--- name: GetTweetsByAccountID :many
-SELECT * FROM tweets
-WHERE account_id = $1
-ORDER BY created_at DESC
-LIMIT $2 OFFSET $3;
+-- name: GetTweetInfosByAccountID :many
+SELECT
+    t.*,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = @client_account_id
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = @client_account_id
+) AS r ON t.id = r.original_tweet_id
+WHERE t.account_id = @target_account_id
+ORDER BY t.created_at DESC
+LIMIT $1 OFFSET $2;
 
--- name: UpdateTweetContent :exec
-UPDATE tweets
-SET content = $1
-WHERE id = $2 AND account_id = $3;
-
--- name: UpdateTweetCode :exec
-UPDATE tweets
-SET code = $1
-WHERE id = $2 AND account_id = $3;
+-- name: GetTweetInfosByIDs :many
+SELECT
+    t.*,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = @client_account_id
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = @client_account_id
+) AS r ON t.id = r.original_tweet_id
+WHERE t.id = ANY(@Tweet_ids::BIGINT[]);
 
 -- name: DeleteTweet :exec
 DELETE FROM tweets WHERE id = $1 AND account_id = $2;
