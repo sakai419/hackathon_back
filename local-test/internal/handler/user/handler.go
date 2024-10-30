@@ -34,6 +34,11 @@ func (h *UserHandler) GetUserTweets(w http.ResponseWriter, r *http.Request, _ st
 		return
 	}
 
+	// Check if target account ID is suspended
+	if utils.IsTargetSuspended(w, r) {
+		utils.RespondError(w, apperrors.NewForbiddenAppError("get user tweets", errors.New("target account is suspended")))
+	}
+
 	// Get tweets
 	tweets, err := h.svc.GetUserTweets(r.Context(), &model.GetUserTweetsParams{
 		ClientAccountID: clientAccountID,
