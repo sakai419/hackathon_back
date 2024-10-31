@@ -158,7 +158,7 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 		TweetID:       t.TweetID,
 		UserInfo:      UserInfoWithoutBio{
 			UserId:          t.UserInfo.UserID,
-			Username:        t.UserInfo.UserName,
+			UserName:        t.UserInfo.UserName,
 			ProfileImageUrl: t.UserInfo.ProfileImageURL,
 		},
 		LikesCount:    t.LikesCount,

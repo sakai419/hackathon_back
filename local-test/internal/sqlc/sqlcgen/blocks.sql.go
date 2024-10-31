@@ -8,6 +8,8 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
+
+	"github.com/lib/pq"
 )
 
 const checkBlockExists = `-- name: CheckBlockExists :one
@@ -97,6 +99,41 @@ func (q *Queries) GetBlockedAccountIDs(ctx context.Context, arg GetBlockedAccoun
 			return nil, err
 		}
 		items = append(items, blocked_account_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getBlockerAccountIDs = `-- name: GetBlockerAccountIDs :many
+SELECT blocker_account_id
+FROM blocks
+WHERE blocked_account_id = $1
+AND blocker_account_id = ANY($2::VARCHAR[])
+`
+
+type GetBlockerAccountIDsParams struct {
+	ClientAccountID string
+	Ids             []string
+}
+
+func (q *Queries) GetBlockerAccountIDs(ctx context.Context, arg GetBlockerAccountIDsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getBlockerAccountIDs, arg.ClientAccountID, pq.Array(arg.Ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var blocker_account_id string
+		if err := rows.Scan(&blocker_account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, blocker_account_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

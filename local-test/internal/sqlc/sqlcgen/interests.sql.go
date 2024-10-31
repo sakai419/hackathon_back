@@ -7,7 +7,6 @@ package sqlcgen
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createInterestsWithDefaultValues = `-- name: CreateInterestsWithDefaultValues :exec
@@ -30,13 +29,13 @@ func (q *Queries) DeleteInterests(ctx context.Context, accountID string) error {
 	return err
 }
 
-const getInterestsByAccountID = `-- name: GetInterestsByAccountID :one
+const getInterestScores = `-- name: GetInterestScores :one
 SELECT account_id, news_score, politics_score, economics_score, health_score, sports_score, entertainment_score, art_score, cooking_score, travel_score, fashion_score, beauty_score, pets_score, parenting_score, education_score, environment_score, climate_score, space_score, mental_health_score, fitness_score, reading_score, history_score, philosophy_score, religion_score, culture_score, volunteering_score, social_issues_score, law_score, taxes_score, investment_score, real_estate_score, diy_score, gardening_score, interior_design_score, automotive_score, gaming_score, anime_manga_score, creative_works_score, photography_video_score, media_score, marketing_score, branding_score, entrepreneurship_score, remote_work_score, data_science_score, iot_score, robotics_engineering_score, biotechnology_score, nanotechnology_score, energy_technology_score, archaeology_score, psychology_score, sociology_score, anthropology_score, geography_score, geology_score, meteorology_score, disaster_emergency_management_score, urban_planning_score, architecture_score, agriculture_score, nutrition_science_score, sleep_science_score, productivity_score, leadership_score, international_relations_score, future_predictions_score, events_score, community_score, trends_score, lifestyle_score, software_development_score, programming_languages_score, web_development_score, mobile_app_development_score, debugging_techniques_score, algorithms_mathematics_score, database_design_score, cloud_computing_score, server_management_score, network_security_score, cryptography_score, artificial_intelligence_score, machine_learning_score, deep_learning_score, computer_vision_score, natural_language_processing_score, blockchain_technology_score, quantum_computing_score, edge_computing_score, microservices_architecture_score, devops_score, container_technology_score, ci_cd_score, test_automation_score, ux_ui_design_score, agile_development_methodologies_score, open_source_score, version_control_score, api_design_score, performance_optimization_score FROM interests
 WHERE account_id = $1
 `
 
-func (q *Queries) GetInterestsByAccountID(ctx context.Context, accountID string) (Interest, error) {
-	row := q.db.QueryRowContext(ctx, getInterestsByAccountID, accountID)
+func (q *Queries) GetInterestScores(ctx context.Context, accountID string) (Interest, error) {
+	row := q.db.QueryRowContext(ctx, getInterestScores, accountID)
 	var i Interest
 	err := row.Scan(
 		&i.AccountID,
@@ -251,106 +250,106 @@ WHERE account_id = $101
 `
 
 type UpdateInterestsScoreParams struct {
-	NewsScore                          sql.NullInt16
-	PoliticsScore                      sql.NullInt16
-	EconomicsScore                     sql.NullInt16
-	HealthScore                        sql.NullInt16
-	SportsScore                        sql.NullInt16
-	EntertainmentScore                 sql.NullInt16
-	ArtScore                           sql.NullInt16
-	CookingScore                       sql.NullInt16
+	NewsScore                          int16
+	PoliticsScore                      int16
+	EconomicsScore                     int16
+	HealthScore                        int16
+	SportsScore                        int16
+	EntertainmentScore                 int16
+	ArtScore                           int16
+	CookingScore                       int16
 	Coalescale                         interface{}
-	FashionScore                       sql.NullInt16
-	BeautyScore                        sql.NullInt16
-	PetsScore                          sql.NullInt16
-	ParentingScore                     sql.NullInt16
-	EducationScore                     sql.NullInt16
-	EnvironmentScore                   sql.NullInt16
-	ClimateScore                       sql.NullInt16
-	SpaceScore                         sql.NullInt16
-	MentalHealthScore                  sql.NullInt16
-	FitnessScore                       sql.NullInt16
-	ReadingScore                       sql.NullInt16
-	HistoryScore                       sql.NullInt16
-	PhilosophyScore                    sql.NullInt16
-	ReligionScore                      sql.NullInt16
-	CultureScore                       sql.NullInt16
-	VolunteeringScore                  sql.NullInt16
-	SocialIssuesScore                  sql.NullInt16
-	LawScore                           sql.NullInt16
-	TaxesScore                         sql.NullInt16
-	InvestmentScore                    sql.NullInt16
-	RealEstateScore                    sql.NullInt16
-	DiyScore                           sql.NullInt16
-	GardeningScore                     sql.NullInt16
-	InteriorDesignScore                sql.NullInt16
-	AutomotiveScore                    sql.NullInt16
-	GamingScore                        sql.NullInt16
-	AnimeMangaScore                    sql.NullInt16
-	CreativeWorksScore                 sql.NullInt16
-	PhotographyVideoScore              sql.NullInt16
-	MediaScore                         sql.NullInt16
-	MarketingScore                     sql.NullInt16
-	BrandingScore                      sql.NullInt16
-	EntrepreneurshipScore              sql.NullInt16
-	RemoteWorkScore                    sql.NullInt16
-	DataScienceScore                   sql.NullInt16
-	IotScore                           sql.NullInt16
-	RoboticsEngineeringScore           sql.NullInt16
-	BiotechnologyScore                 sql.NullInt16
-	NanotechnologyScore                sql.NullInt16
-	EnergyTechnologyScore              sql.NullInt16
-	ArchaeologyScore                   sql.NullInt16
-	PsychologyScore                    sql.NullInt16
-	SociologyScore                     sql.NullInt16
-	AnthropologyScore                  sql.NullInt16
-	GeographyScore                     sql.NullInt16
-	GeologyScore                       sql.NullInt16
-	MeteorologyScore                   sql.NullInt16
-	DisasterEmergencyManagementScore   sql.NullInt16
-	UrbanPlanningScore                 sql.NullInt16
-	ArchitectureScore                  sql.NullInt16
-	AgricultureScore                   sql.NullInt16
-	NutritionScienceScore              sql.NullInt16
-	SleepScienceScore                  sql.NullInt16
-	ProductivityScore                  sql.NullInt16
-	LeadershipScore                    sql.NullInt16
-	InternationalRelationsScore        sql.NullInt16
-	FuturePredictionsScore             sql.NullInt16
-	EventsScore                        sql.NullInt16
-	CommunityScore                     sql.NullInt16
-	TrendsScore                        sql.NullInt16
-	LifestyleScore                     sql.NullInt16
-	SoftwareDevelopmentScore           sql.NullInt16
-	ProgrammingLanguagesScore          sql.NullInt16
-	WebDevelopmentScore                sql.NullInt16
-	MobileAppDevelopmentScore          sql.NullInt16
-	DebuggingTechniquesScore           sql.NullInt16
-	AlgorithmsMathematicsScore         sql.NullInt16
-	DatabaseDesignScore                sql.NullInt16
-	CloudComputingScore                sql.NullInt16
-	ServerManagementScore              sql.NullInt16
-	NetworkSecurityScore               sql.NullInt16
-	CryptographyScore                  sql.NullInt16
-	ArtificialIntelligenceScore        sql.NullInt16
-	MachineLearningScore               sql.NullInt16
-	DeepLearningScore                  sql.NullInt16
-	ComputerVisionScore                sql.NullInt16
-	NaturalLanguageProcessingScore     sql.NullInt16
-	BlockchainTechnologyScore          sql.NullInt16
-	QuantumComputingScore              sql.NullInt16
-	EdgeComputingScore                 sql.NullInt16
-	MicroservicesArchitectureScore     sql.NullInt16
-	DevopsScore                        sql.NullInt16
-	ContainerTechnologyScore           sql.NullInt16
-	CiCdScore                          sql.NullInt16
-	TestAutomationScore                sql.NullInt16
-	UxUiDesignScore                    sql.NullInt16
-	AgileDevelopmentMethodologiesScore sql.NullInt16
-	OpenSourceScore                    sql.NullInt16
-	VersionControlScore                sql.NullInt16
-	ApiDesignScore                     sql.NullInt16
-	PerformanceOptimizationScore       sql.NullInt16
+	FashionScore                       int16
+	BeautyScore                        int16
+	PetsScore                          int16
+	ParentingScore                     int16
+	EducationScore                     int16
+	EnvironmentScore                   int16
+	ClimateScore                       int16
+	SpaceScore                         int16
+	MentalHealthScore                  int16
+	FitnessScore                       int16
+	ReadingScore                       int16
+	HistoryScore                       int16
+	PhilosophyScore                    int16
+	ReligionScore                      int16
+	CultureScore                       int16
+	VolunteeringScore                  int16
+	SocialIssuesScore                  int16
+	LawScore                           int16
+	TaxesScore                         int16
+	InvestmentScore                    int16
+	RealEstateScore                    int16
+	DiyScore                           int16
+	GardeningScore                     int16
+	InteriorDesignScore                int16
+	AutomotiveScore                    int16
+	GamingScore                        int16
+	AnimeMangaScore                    int16
+	CreativeWorksScore                 int16
+	PhotographyVideoScore              int16
+	MediaScore                         int16
+	MarketingScore                     int16
+	BrandingScore                      int16
+	EntrepreneurshipScore              int16
+	RemoteWorkScore                    int16
+	DataScienceScore                   int16
+	IotScore                           int16
+	RoboticsEngineeringScore           int16
+	BiotechnologyScore                 int16
+	NanotechnologyScore                int16
+	EnergyTechnologyScore              int16
+	ArchaeologyScore                   int16
+	PsychologyScore                    int16
+	SociologyScore                     int16
+	AnthropologyScore                  int16
+	GeographyScore                     int16
+	GeologyScore                       int16
+	MeteorologyScore                   int16
+	DisasterEmergencyManagementScore   int16
+	UrbanPlanningScore                 int16
+	ArchitectureScore                  int16
+	AgricultureScore                   int16
+	NutritionScienceScore              int16
+	SleepScienceScore                  int16
+	ProductivityScore                  int16
+	LeadershipScore                    int16
+	InternationalRelationsScore        int16
+	FuturePredictionsScore             int16
+	EventsScore                        int16
+	CommunityScore                     int16
+	TrendsScore                        int16
+	LifestyleScore                     int16
+	SoftwareDevelopmentScore           int16
+	ProgrammingLanguagesScore          int16
+	WebDevelopmentScore                int16
+	MobileAppDevelopmentScore          int16
+	DebuggingTechniquesScore           int16
+	AlgorithmsMathematicsScore         int16
+	DatabaseDesignScore                int16
+	CloudComputingScore                int16
+	ServerManagementScore              int16
+	NetworkSecurityScore               int16
+	CryptographyScore                  int16
+	ArtificialIntelligenceScore        int16
+	MachineLearningScore               int16
+	DeepLearningScore                  int16
+	ComputerVisionScore                int16
+	NaturalLanguageProcessingScore     int16
+	BlockchainTechnologyScore          int16
+	QuantumComputingScore              int16
+	EdgeComputingScore                 int16
+	MicroservicesArchitectureScore     int16
+	DevopsScore                        int16
+	ContainerTechnologyScore           int16
+	CiCdScore                          int16
+	TestAutomationScore                int16
+	UxUiDesignScore                    int16
+	AgileDevelopmentMethodologiesScore int16
+	OpenSourceScore                    int16
+	VersionControlScore                int16
+	ApiDesignScore                     int16
+	PerformanceOptimizationScore       int16
 	AccountID                          string
 }
 

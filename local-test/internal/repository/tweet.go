@@ -103,6 +103,32 @@ func (r *Repository) GetAccountIDByTweetID(ctx context.Context, tweetID int64) (
 	return accountID, nil
 }
 
+func (r *Repository) GetRecentTweetMetadatas(ctx context.Context, params *model.GetRecentTweetMetadatasParams) ([]*model.TweetMetadata, error) {
+	// Get recent tweet metadatas
+	tweetMetadatas, err := r.q.GetRecentTweetMetadatas(ctx, sqlcgen.GetRecentTweetMetadatasParams{
+		Limit: params.Limit,
+		Offset: params.Offset,
+		ClientAccountID: params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get recent tweet metadatas",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	var ret []*model.TweetMetadata
+	for _, tweetMetadata := range tweetMetadatas {
+		metadata := convertToTweetMetadata(tweetMetadata)
+		ret = append(ret, metadata)
+	}
+
+	return ret, nil
+}
+
 func (r *Repository) GetTweetInfosByAccountID(ctx context.Context, params *model.GetTweetInfosByAccountIDParams) ([]*model.TweetInfoInternal, error) {
 	// Get tweet infos by account id
 	tweetInfos, err := r.q.GetTweetInfosByAccountID(ctx, sqlcgen.GetTweetInfosByAccountIDParams{
@@ -196,6 +222,33 @@ func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.Creat
 	}
 
 	return ret, nil
+}
+
+func convertToTweetMetadata(row sqlcgen.GetRecentTweetMetadatasRow) (*model.TweetMetadata) {
+	metadata := model.TweetMetadata{
+		TweetID:       row.ID,
+		AccountID:     row.AccountID,
+		LikesCount:    row.LikesCount,
+		RetweetsCount: row.RetweetsCount,
+		RepliesCount:  row.RepliesCount,
+	}
+
+	if row.Label1.Valid {
+		label1 := model.Label(row.Label1.TweetLabel)
+		metadata.Label1 = &label1
+	}
+
+	if row.Label2.Valid {
+		label2 := model.Label(row.Label2.TweetLabel)
+		metadata.Label2 = &label2
+	}
+
+	if row.Label3.Valid {
+		label3 := model.Label(row.Label3.TweetLabel)
+		metadata.Label3 = &label3
+	}
+
+	return &metadata
 }
 
 func convertToTweetInfoInternal(row []sqlcgen.GetTweetInfosByAccountIDRow) ([]*model.TweetInfoInternal, error) {

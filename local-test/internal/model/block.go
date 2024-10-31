@@ -61,6 +61,11 @@ func (p *GetBlockedInfosParams) Validate() error {
 	return nil
 }
 
+type GetBlockerAccountIDsParams struct {
+	ClientAccountID string
+	IDs             []string
+}
+
 type IsBlockedParams struct {
 	BlockerAccountID string
 	BlockedAccountID string

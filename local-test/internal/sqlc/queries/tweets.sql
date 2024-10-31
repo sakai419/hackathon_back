@@ -19,6 +19,24 @@ RETURNING id;
 -- name: GetAccountIDByTweetID :one
 SELECT account_id FROM tweets WHERE id = $1;
 
+-- name: GetRecentTweetMetadatas :many
+SELECT
+    t.id,
+    t.account_id,
+    t.likes_count,
+    t.retweets_count,
+    t.replies_count,
+    l.label1,
+    l.label2,
+    l.label3
+FROM tweets AS t
+INNER JOIN labels AS l ON t.id = l.tweet_id
+INNER JOIN settings AS s ON t.account_id = s.account_id
+INNER JOIN accounts AS a ON t.account_id = a.id
+WHERE s.is_private = FALSE AND a.is_suspended = FALSE AND a.id != @client_account_id
+ORDER BY t.created_at DESC
+LIMIT $1 OFFSET $2;
+
 -- name: GetTweetInfosByAccountID :many
 SELECT
     t.*,

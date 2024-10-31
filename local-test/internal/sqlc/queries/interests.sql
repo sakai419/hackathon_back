@@ -1,4 +1,4 @@
--- name: GetInterestsByAccountID :one
+-- name: GetInterestScores :one
 SELECT * FROM interests
 WHERE account_id = $1;
 

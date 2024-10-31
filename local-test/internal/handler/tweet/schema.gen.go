@@ -6,10 +6,22 @@ package tweet
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/oapi-codegen/runtime"
 )
+
+// GetTimelineTweetInfo defines model for GetTimelineTweetInfo.
+type GetTimelineTweetInfo struct {
+	OmittedReplyExist *bool      `json:"OmittedReplyExist"`
+	OriginalTweet     *TweetInfo `json:"OriginalTweet,omitempty"`
+	ParentReply       *TweetInfo `json:"ParentReply,omitempty"`
+	Tweet             TweetInfo  `json:"Tweet"`
+}
+
+// GetTimelineTweetInfos defines model for GetTimelineTweetInfos.
+type GetTimelineTweetInfos = []GetTimelineTweetInfo
 
 // Media defines model for Media.
 type Media struct {
@@ -22,6 +34,24 @@ type PostTweetRequest struct {
 	Code    *string `json:"code,omitempty"`
 	Content *string `json:"content,omitempty"`
 	Media   *Media  `json:"media,omitempty"`
+}
+
+// TweetInfo defines model for TweetInfo.
+type TweetInfo struct {
+	Code          *string            `json:"Code"`
+	Content       *string            `json:"Content"`
+	CreatedAt     time.Time          `json:"CreatedAt"`
+	HasLiked      bool               `json:"HasLiked"`
+	HasRetweeted  bool               `json:"HasRetweeted"`
+	IsPinned      bool               `json:"IsPinned"`
+	IsQuote       bool               `json:"IsQuote"`
+	IsReply       bool               `json:"IsReply"`
+	LikesCount    int32              `json:"LikesCount"`
+	Media         *Media             `json:"Media,omitempty"`
+	RepliesCount  int32              `json:"RepliesCount"`
+	RetweetsCount int32              `json:"RetweetsCount"`
+	TweetID       int64              `json:"TweetID"`
+	UserInfo      UserInfoWithoutBio `json:"UserInfo"`
 }
 
 // UserInfoWithoutBio defines model for UserInfoWithoutBio.
@@ -38,6 +68,12 @@ type UserInfoWithoutBio struct {
 
 // UserInfoWithoutBios defines model for UserInfoWithoutBios.
 type UserInfoWithoutBios = []UserInfoWithoutBio
+
+// GetTimelineTweetInfosParams defines parameters for GetTimelineTweetInfos.
+type GetTimelineTweetInfosParams struct {
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
+}
 
 // GetLikingUserInfosParams defines parameters for GetLikingUserInfos.
 type GetLikingUserInfosParams struct {
@@ -71,6 +107,9 @@ type ServerInterface interface {
 	// Create a tweet
 	// (POST /tweets)
 	PostTweet(w http.ResponseWriter, r *http.Request)
+	// Get timeline for user
+	// (GET /tweets/timeline)
+	GetTimelineTweetInfos(w http.ResponseWriter, r *http.Request, params GetTimelineTweetInfosParams)
 	// Unlike a tweet
 	// (DELETE /tweets/{tweet_id}/like)
 	UnlikeTweet(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -114,6 +153,55 @@ func (siw *ServerInterfaceWrapper) PostTweet(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostTweet(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTimelineTweetInfos operation middleware
+func (siw *ServerInterfaceWrapper) GetTimelineTweetInfos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTimelineTweetInfosParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTimelineTweetInfos(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -561,6 +649,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/tweets", wrapper.PostTweet).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/tweets/timeline", wrapper.GetTimelineTweetInfos).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.UnlikeTweet).Methods("DELETE")
 

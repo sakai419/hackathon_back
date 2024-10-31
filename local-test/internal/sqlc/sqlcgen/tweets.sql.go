@@ -170,6 +170,74 @@ func (q *Queries) GetPinnedTweetForAccount(ctx context.Context, accountID string
 	return i, err
 }
 
+const getRecentTweetMetadatas = `-- name: GetRecentTweetMetadatas :many
+SELECT
+    t.id,
+    t.account_id,
+    t.likes_count,
+    t.retweets_count,
+    t.replies_count,
+    l.label1,
+    l.label2,
+    l.label3
+FROM tweets AS t
+INNER JOIN labels AS l ON t.id = l.tweet_id
+INNER JOIN settings AS s ON t.account_id = s.account_id
+INNER JOIN accounts AS a ON t.account_id = a.id
+WHERE s.is_private = FALSE AND a.is_suspended = FALSE AND a.id != $3
+ORDER BY t.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetRecentTweetMetadatasParams struct {
+	Limit           int32
+	Offset          int32
+	ClientAccountID string
+}
+
+type GetRecentTweetMetadatasRow struct {
+	ID            int64
+	AccountID     string
+	LikesCount    int32
+	RetweetsCount int32
+	RepliesCount  int32
+	Label1        NullTweetLabel
+	Label2        NullTweetLabel
+	Label3        NullTweetLabel
+}
+
+func (q *Queries) GetRecentTweetMetadatas(ctx context.Context, arg GetRecentTweetMetadatasParams) ([]GetRecentTweetMetadatasRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentTweetMetadatas, arg.Limit, arg.Offset, arg.ClientAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecentTweetMetadatasRow
+	for rows.Next() {
+		var i GetRecentTweetMetadatasRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.LikesCount,
+			&i.RetweetsCount,
+			&i.RepliesCount,
+			&i.Label1,
+			&i.Label2,
+			&i.Label3,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTweetCountByAccountID = `-- name: GetTweetCountByAccountID :one
 SELECT COUNT(*) FROM tweets WHERE account_id = $1
 `

@@ -176,6 +176,24 @@ func (r *Repository) GetBlockCount(ctx context.Context, accountID string) (int64
 	return count, nil
 }
 
+func (r *Repository) GetBlockerAccountIDs(ctx context.Context, params *model.GetBlockerAccountIDsParams) ([]string, error) {
+	// Get blocker account IDs
+	blockerAccountIDs, err := r.q.GetBlockerAccountIDs(ctx, sqlcgen.GetBlockerAccountIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		Ids:             params.IDs,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get blocker account IDs",
+				Err: err,
+			},
+		)
+	}
+
+	return blockerAccountIDs, nil
+}
+
 func (r *Repository) IsBlocked(ctx context.Context, params *model.IsBlockedParams) (bool, error) {
 	// Get block
 	is_blocked, err := r.q.CheckBlockExists(ctx, sqlcgen.CheckBlockExistsParams{

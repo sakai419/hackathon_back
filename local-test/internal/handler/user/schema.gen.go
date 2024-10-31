@@ -54,7 +54,7 @@ type TweetInfos = []TweetInfo
 type UserInfoWithoutBio struct {
 	ProfileImageUrl string `json:"profile_image_url"`
 	UserId          string `json:"user_id"`
-	Username        string `json:"username"`
+	UserName        string `json:"user_name"`
 }
 
 // GetUserLikesParams defines parameters for GetUserLikes.

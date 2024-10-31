@@ -332,6 +332,32 @@ func (h *TweetHandler) GetQuotingUserInfos(w http.ResponseWriter, r *http.Reques
 	utils.Respond(w, resp)
 }
 
+// Get timeline tweets
+// (GET /tweets/timeline)
+func (h *TweetHandler) GetTimelineTweetInfos(w http.ResponseWriter, r *http.Request, params GetTimelineTweetInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get timeline tweets
+	timelineTweets, err := h.svc.GetTimelineTweetInfos(r.Context(), &model.GetTimelineTweetInfosParams{
+		ClientAccountID: clientAccountID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get timeline tweets", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToGetTimelineTweetInfosResponse(timelineTweets)
+
+	utils.Respond(w, resp)
+}
+
 // ErrorHandlerFunc is the error handler for tweet handlers
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError
@@ -363,5 +389,58 @@ func convertToUserInfoWithoutBios(infos []*model.UserInfoWithoutBio) []*UserInfo
 		})
 	}
 
+	return resp
+}
+
+func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
+	if t == nil {
+		return nil
+	}
+	tweet := &TweetInfo{
+		TweetID:       t.TweetID,
+		UserInfo:      UserInfoWithoutBio{
+			UserId:          t.UserInfo.UserID,
+			UserName:        t.UserInfo.UserName,
+			ProfileImageUrl: t.UserInfo.ProfileImageURL,
+		},
+		LikesCount:    t.LikesCount,
+		RetweetsCount: t.RetweetsCount,
+		RepliesCount:  t.RepliesCount,
+		IsQuote:      t.IsQuote,
+		IsReply:      t.IsReply,
+		IsPinned:     t.IsPinned,
+		HasLiked:     t.HasLiked,
+		HasRetweeted: t.HasRetweeted,
+		CreatedAt:    t.CreatedAt,
+	}
+
+	if t.Content != nil {
+		tweet.Content = t.Content
+	}
+
+	if t.Code != nil {
+		tweet.Code = t.Code
+	}
+
+	if t.Media != nil {
+		tweet.Media = &Media{
+			Type: t.Media.Type,
+			Url:  t.Media.URL,
+		}
+	}
+
+	return tweet
+}
+
+func convertToGetTimelineTweetInfosResponse(tweets []*model.GetTimelineTweetInfosResponse) []GetTimelineTweetInfo {
+	resp := make([]GetTimelineTweetInfo, 0, len(tweets))
+	for _, tweet := range tweets {
+		resp = append(resp, GetTimelineTweetInfo{
+			Tweet:             *convertToTweetInfo(&tweet.Tweet),
+			OriginalTweet:     convertToTweetInfo(tweet.OriginalTweet),
+			ParentReply:       convertToTweetInfo(tweet.ParentReply),
+			OmittedReplyExist: tweet.OmittedReplyExist,
+		})
+	}
 	return resp
 }
