@@ -93,6 +93,7 @@ func (q *Queries) CreateTweetAsReply(ctx context.Context, arg CreateTweetAsReply
 }
 
 const deleteTweet = `-- name: DeleteTweet :exec
+
 DELETE FROM tweets WHERE id = $1 AND account_id = $2
 `
 
@@ -101,6 +102,32 @@ type DeleteTweetParams struct {
 	AccountID string
 }
 
+// SELECT
+//
+//	t.*,
+//	COALESCE(l.has_liked, FALSE) AS has_liked,
+//	COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+//
+// FROM tweets AS t
+// LEFT JOIN (
+//
+//	SELECT
+//	    original_tweet_id,
+//	    TRUE AS has_liked
+//	FROM likes
+//	WHERE liking_account_id = 'geAY09opyUMogQW2MBlRLaYKnMH2'
+//
+// ) AS l ON t.id = l.original_tweet_id
+// LEFT JOIN (
+//
+//	SELECT
+//	    original_tweet_id,
+//	    TRUE AS has_retweeted
+//	FROM retweets
+//	WHERE retweeting_account_id = 'geAY09opyUMogQW2MBlRLaYKnMH2'
+//
+// ) AS r ON t.id = r.original_tweet_id
+// WHERE t.id = 1;
 func (q *Queries) DeleteTweet(ctx context.Context, arg DeleteTweetParams) error {
 	_, err := q.db.ExecContext(ctx, deleteTweet, arg.ID, arg.AccountID)
 	return err

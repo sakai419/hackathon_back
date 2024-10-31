@@ -132,3 +132,22 @@ func (r *Repository) GetRetweetingAccountIDs(ctx context.Context, params *model.
 
 	return retweetingAccounts, nil
 }
+
+func (r *Repository) GetRetweetedTweetIDsByAccountID(ctx context.Context, params *model.GetRetweetedTweetIDsByAccountIDParams) ([]int64, error) {
+	// Get retweeted tweet ids
+	retweetedTweetIDs, err := r.q.GetRetweetedTweetIDsByAccountID(ctx, sqlcgen.GetRetweetedTweetIDsByAccountIDParams{
+		RetweetingAccountID: params.RetweetingAccountID,
+		Limit:               params.Limit,
+		Offset:              params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get retweeted tweet ids",
+				Err: err,
+			},
+		)
+	}
+
+	return retweetedTweetIDs, nil
+}

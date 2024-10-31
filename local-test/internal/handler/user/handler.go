@@ -72,14 +72,10 @@ func (h *UserHandler) GetUserLikes(w http.ResponseWriter, r *http.Request, _ str
 		return
 	}
 
-	if clientAccountID != targetAccountID {
-		utils.RespondError(w, apperrors.NewForbiddenAppError("get user likes", errors.New("client account ID does not match target account ID")))
-		return
-	}
-
 	// Get likes
 	likes, err := h.svc.GetUserLikes(r.Context(), &model.GetUserLikesParams{
 		ClientAccountID: clientAccountID,
+		TargetAccountID: targetAccountID,
 		Limit:           params.Limit,
 		Offset:          params.Offset,
 	})
@@ -90,6 +86,45 @@ func (h *UserHandler) GetUserLikes(w http.ResponseWriter, r *http.Request, _ str
 
 	// Convert to response
 	resp := convertToGetUserLikesResponse(likes)
+
+	utils.Respond(w, resp)
+}
+
+// Get user's retweets
+// (GET /users/{user_id}/retweets)
+func (h *UserHandler) GetUserRetweets(w http.ResponseWriter, r *http.Request, _ string, params GetUserRetweetsParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Check if target account ID is suspended
+	if utils.IsTargetSuspended(w, r) {
+		utils.RespondError(w, apperrors.NewForbiddenAppError("get user retweets", errors.New("target account is suspended")))
+		return
+	}
+
+	// Get retweets
+	retweets, err := h.svc.GetUserRetweets(r.Context(), &model.GetUserRetweetsParams{
+		ClientAccountID: clientAccountID,
+		TargetAccountID: targetAccountID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get user retweets", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToGetUserRetweetsResponse(retweets)
 
 	utils.Respond(w, resp)
 }
@@ -172,6 +207,14 @@ func convertToGetUserLikesResponse(likes []*model.TweetInfo) []TweetInfo {
 	resp := make([]TweetInfo, 0, len(likes))
 	for _, l := range likes {
 		resp = append(resp, *convertToTweetInfo(l))
+	}
+	return resp
+}
+
+func convertToGetUserRetweetsResponse(retweets []*model.TweetInfo) []TweetInfo {
+	resp := make([]TweetInfo, 0, len(retweets))
+	for _, r := range retweets {
+		resp = append(resp, *convertToTweetInfo(r))
 	}
 	return resp
 }

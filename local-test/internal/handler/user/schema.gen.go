@@ -63,6 +63,12 @@ type GetUserLikesParams struct {
 	Offset int32 `form:"offset" json:"offset"`
 }
 
+// GetUserRetweetsParams defines parameters for GetUserRetweets.
+type GetUserRetweetsParams struct {
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
+}
+
 // GetUserTweetsParams defines parameters for GetUserTweets.
 type GetUserTweetsParams struct {
 	Limit  int32 `form:"limit" json:"limit"`
@@ -74,6 +80,9 @@ type ServerInterface interface {
 	// Get liked tweets by user
 	// (GET /users/{user_id}/likes)
 	GetUserLikes(w http.ResponseWriter, r *http.Request, userId string, params GetUserLikesParams)
+	// Get retweeted tweets by user
+	// (GET /users/{user_id}/retweets)
+	GetUserRetweets(w http.ResponseWriter, r *http.Request, userId string, params GetUserRetweetsParams)
 	// Get tweets by user
 	// (GET /users/{user_id}/tweets)
 	GetUserTweets(w http.ResponseWriter, r *http.Request, userId string, params GetUserTweetsParams)
@@ -137,6 +146,64 @@ func (siw *ServerInterfaceWrapper) GetUserLikes(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetUserLikes(w, r, userId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUserRetweets operation middleware
+func (siw *ServerInterfaceWrapper) GetUserRetweets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUserRetweetsParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserRetweets(w, r, userId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -318,6 +385,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/users/{user_id}/likes", wrapper.GetUserLikes).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/users/{user_id}/retweets", wrapper.GetUserRetweets).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/users/{user_id}/tweets", wrapper.GetUserTweets).Methods("GET")
 

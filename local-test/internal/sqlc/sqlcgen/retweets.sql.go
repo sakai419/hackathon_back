@@ -39,6 +39,43 @@ func (q *Queries) DeleteRetweet(ctx context.Context, arg DeleteRetweetParams) (s
 	return q.db.ExecContext(ctx, deleteRetweet, arg.RetweetingAccountID, arg.OriginalTweetID)
 }
 
+const getRetweetedTweetIDsByAccountID = `-- name: GetRetweetedTweetIDsByAccountID :many
+SELECT original_tweet_id
+FROM retweets
+WHERE retweeting_account_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetRetweetedTweetIDsByAccountIDParams struct {
+	RetweetingAccountID string
+	Limit               int32
+	Offset              int32
+}
+
+func (q *Queries) GetRetweetedTweetIDsByAccountID(ctx context.Context, arg GetRetweetedTweetIDsByAccountIDParams) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getRetweetedTweetIDsByAccountID, arg.RetweetingAccountID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var original_tweet_id int64
+		if err := rows.Scan(&original_tweet_id); err != nil {
+			return nil, err
+		}
+		items = append(items, original_tweet_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRetweetingAccountIDs = `-- name: GetRetweetingAccountIDs :many
 SELECT retweeting_account_id
 FROM retweets

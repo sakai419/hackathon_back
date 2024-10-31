@@ -45,3 +45,9 @@ type GetRetweetingAccountIDsParams struct {
 	Limit           int32
 	Offset          int32
 }
+
+type GetRetweetedTweetIDsByAccountIDParams struct {
+	RetweetingAccountID string
+	Limit               int32
+	Offset              int32
+}

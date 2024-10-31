@@ -34,11 +34,35 @@ type GetUserTweetsResponse struct {
 
 type GetUserLikesParams struct {
 	ClientAccountID string
+	TargetAccountID string
 	Limit           int32
 	Offset          int32
 }
 
 func (p *GetUserLikesParams) Validate() error {
+	if p.Limit <= 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "limit must be greater than 0",
+		}
+	}
+
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "offset must be greater than or equal to 0",
+		}
+	}
+
+	return nil
+}
+
+type GetUserRetweetsParams struct {
+	ClientAccountID string
+	TargetAccountID string
+	Limit           int32
+	Offset          int32
+}
+
+func (p *GetUserRetweetsParams) Validate() error {
 	if p.Limit <= 0 {
 		return &apperrors.ErrInvalidInput{
 			Message: "limit must be greater than 0",

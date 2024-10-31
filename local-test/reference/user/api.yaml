@@ -73,6 +73,40 @@ paths:
                 "500":
                     description: Internal server error
 
+    /users/{user_id}/retweets:
+        get:
+            summary: Get retweeted tweets by user
+            operationId: GetUserRetweets
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Retweeted tweets retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         GetUserTweetsResponses:
