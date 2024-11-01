@@ -20,7 +20,7 @@ type NotificationResponse struct {
 	SenderInfo         *UserInfo
 	Type               string
 	Content            *string
-	TweetID            *int64
+	RelatedTweet       *TweetInfo
 	IsRead             bool
 	CreatedAt          time.Time
 }

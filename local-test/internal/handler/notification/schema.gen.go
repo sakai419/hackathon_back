@@ -17,19 +17,43 @@ type Count struct {
 	Count int64 `json:"count"`
 }
 
+// Media defines model for Media.
+type Media struct {
+	Type string `json:"type"`
+	Url  string `json:"url"`
+}
+
 // Notification defines model for Notification.
 type Notification struct {
-	Content    *string   `json:"content,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
-	Id         int64     `json:"id"`
-	IsRead     bool      `json:"is_read"`
-	SenderInfo *UserInfo `json:"sender_info,omitempty"`
-	TweetId    *int64    `json:"tweet_id,omitempty"`
-	Type       string    `json:"type"`
+	Content      *string    `json:"content,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
+	Id           int64      `json:"id"`
+	IsRead       bool       `json:"is_read"`
+	RelatedTweet *TweetInfo `json:"related_tweet,omitempty"`
+	SenderInfo   *UserInfo  `json:"sender_info,omitempty"`
+	Type         string     `json:"type"`
 }
 
 // Notifications defines model for Notifications.
 type Notifications = []Notification
+
+// TweetInfo defines model for TweetInfo.
+type TweetInfo struct {
+	Code          *string            `json:"Code"`
+	Content       *string            `json:"Content"`
+	CreatedAt     time.Time          `json:"CreatedAt"`
+	HasLiked      bool               `json:"HasLiked"`
+	HasRetweeted  bool               `json:"HasRetweeted"`
+	IsPinned      bool               `json:"IsPinned"`
+	IsQuote       bool               `json:"IsQuote"`
+	IsReply       bool               `json:"IsReply"`
+	LikesCount    int32              `json:"LikesCount"`
+	Media         *Media             `json:"Media,omitempty"`
+	RepliesCount  int32              `json:"RepliesCount"`
+	RetweetsCount int32              `json:"RetweetsCount"`
+	TweetID       int64              `json:"TweetID"`
+	UserInfo      UserInfoWithoutBio `json:"UserInfo"`
+}
 
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
@@ -37,6 +61,18 @@ type UserInfo struct {
 	ProfileImageUrl string `json:"profile_image_url"`
 	UserId          string `json:"user_id"`
 	UserName        string `json:"user_name"`
+}
+
+// UserInfoWithoutBio defines model for UserInfoWithoutBio.
+type UserInfoWithoutBio struct {
+	// ProfileImageUrl URL of the user's profile image.
+	ProfileImageUrl string `json:"profile_image_url"`
+
+	// UserId The ID of the user.
+	UserId string `json:"user_id"`
+
+	// UserName The name of the user.
+	UserName string `json:"user_name"`
 }
 
 // GetNotificationsParams defines parameters for GetNotifications.

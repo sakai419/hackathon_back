@@ -6,14 +6,14 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificationsParams) ([]*model.NotificationResponse, error) {
+func (s *Service) GetNotifications(ctx context.Context, params *model.GetNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Validate input
-	if err := arg.Validate(); err != nil {
+	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
 	}
 
 	// Get notifications
-	notifications, err := s.repo.GetNotifications(ctx, arg)
+	notifications, err := s.repo.GetNotifications(ctx, params)
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("get notifications", err)
 	}
@@ -25,24 +25,39 @@ func (s *Service) GetNotifications(ctx context.Context, arg *model.GetNotificati
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
 
+	// Get Tweet infos
+	tweetIDs := extractTweetIDs(notifications)
+	tweetInfos, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
+		TweetIDs: tweetIDs,
+		ClientAccountID: params.RecipientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet info", "get tweet infos", err)
+	}
+
+	// Get client user info
+	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.RecipientAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("client user info", "get client user info", err)
+	}
+
 	// Convert to response
-	notificationsResponse := convertToNotificationResponse(notifications, senderInfos)
+	notificationsResponse := convertToNotificationResponse(notifications, senderInfos, tweetInfos, clientUserInfo)
 
 	return notificationsResponse, nil
 }
 
-func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnreadNotificationsParams) ([]*model.NotificationResponse, error) {
+func (s *Service) GetUnreadNotifications(ctx context.Context, params *model.GetUnreadNotificationsParams) ([]*model.NotificationResponse, error) {
 	// Validate input
-	if err := arg.Validate(); err != nil {
+	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
 	}
 
 	// Get unread notifications
-	notifications, err := s.repo.GetUnreadNotifications(ctx, arg)
+	notifications, err := s.repo.GetUnreadNotifications(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-
 
 	// Get sender info
     senderAccountIDs := convertToSenderAccountIDs(notifications)
@@ -51,8 +66,24 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, arg *model.GetUnre
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
 
+	// Get Tweet infos
+	tweetIDs := extractTweetIDs(notifications)
+	tweetInfos, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
+		TweetIDs: tweetIDs,
+		ClientAccountID: params.RecipientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet info", "get tweet infos", err)
+	}
+
+	// Get client user info
+	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.RecipientAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("client user info", "get client user info", err)
+	}
+
 	// Convert to response
-	notificationsResponse := convertToNotificationResponse(notifications, senderInfos)
+	notificationsResponse := convertToNotificationResponse(notifications, senderInfos, tweetInfos, clientUserInfo)
 
 	return notificationsResponse, nil
 }
@@ -67,9 +98,9 @@ func (s *Service) GetUnreadNotificationCount(ctx context.Context, recipientAccou
 	return count, nil
 }
 
-func (s *Service) MarkNotificationAsRead(ctx context.Context, arg *model.MarkNotificationAsReadParams) error {
+func (s *Service) MarkNotificationAsRead(ctx context.Context, params *model.MarkNotificationAsReadParams) error {
 	// Mark notification as read
-	if err := s.repo.MarkNotificationAsRead(ctx, arg); err != nil {
+	if err := s.repo.MarkNotificationAsRead(ctx, params); err != nil {
 		return apperrors.NewInternalAppError("mark notification as read", err)
 	}
 
@@ -100,11 +131,32 @@ func convertToSenderAccountIDs(notifications []*model.Notification) []string {
 	return senderAccountIDs
 }
 
-func convertToNotificationResponse(notifications []*model.Notification, senderInfos []*model.UserInfoInternal) []*model.NotificationResponse {
+func extractTweetIDs(notifications []*model.Notification) []int64 {
+	tweetIDMap := make(map[int64]bool)
+	tweetIDs := make([]int64, 0)
+	for _, notification := range notifications {
+		if notification.TweetID != nil {
+			if !tweetIDMap[*notification.TweetID] {
+				tweetIDMap[*notification.TweetID] = true
+				tweetIDs = append(tweetIDs, *notification.TweetID)
+			}
+		}
+	}
+
+	return tweetIDs
+}
+
+func convertToNotificationResponse(notifications []*model.Notification, senderInfos []*model.UserInfoInternal, tweetInfos []*model.TweetInfoInternal, clientUserInfo *model.UserInfoInternal) []*model.NotificationResponse {
 	// Create user info map
 	userInfoMap := make(map[string]*model.UserInfoInternal)
 	for _, userInfo := range senderInfos {
 		userInfoMap[userInfo.ID] = userInfo
+	}
+
+	// Create tweet info map
+	tweetInfoMap := make(map[int64]*model.TweetInfoInternal)
+	for _, tweetInfo := range tweetInfos {
+		tweetInfoMap[tweetInfo.TweetID] = tweetInfo
 	}
 
 	// Convert to response
@@ -114,7 +166,6 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 			ID:        notification.ID,
 			Type:      notification.Type,
 			Content:   notification.Content,
-			TweetID:   notification.TweetID,
 			IsRead:    notification.IsRead,
 			CreatedAt: notification.CreatedAt,
 		}
@@ -130,6 +181,33 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 				}
 			}
 		}
+
+		if notification.TweetID != nil {
+			tweetInfo, ok := tweetInfoMap[*notification.TweetID]
+			if ok {
+				item.RelatedTweet = &model.TweetInfo{
+					TweetID:       tweetInfo.TweetID,
+					UserInfo:      model.UserInfoWithoutBio{
+						UserID:          clientUserInfo.UserID,
+						UserName: 	     clientUserInfo.UserName,
+						ProfileImageURL: clientUserInfo.ProfileImageURL,
+					},
+					Content:       tweetInfo.Content,
+					Code:          tweetInfo.Code,
+					Media:         tweetInfo.Media,
+					LikesCount:    tweetInfo.LikesCount,
+					RetweetsCount: tweetInfo.RetweetsCount,
+					RepliesCount:  tweetInfo.RepliesCount,
+					IsQuote:       tweetInfo.IsQuote,
+					IsReply:       tweetInfo.IsReply,
+					IsPinned:      tweetInfo.IsPinned,
+					HasLiked:      tweetInfo.HasLiked,
+					HasRetweeted:  tweetInfo.HasRetweeted,
+					CreatedAt:     tweetInfo.CreatedAt,
+				}
+			}
+		}
+
 
 		items = append(items, item)
 	}

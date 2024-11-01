@@ -180,8 +180,40 @@ func (r *Repository) GetAccountIDByUserID(ctx context.Context, userId string) (s
 	return AccountID, nil
 }
 
+func (r *Repository) GetUserInfo(ctx context.Context, id string) (*model.UserInfoInternal, error) {
+	// Get user info
+	res, err := r.q.GetUserInfo(ctx, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperrors.WrapRepositoryError(
+				&apperrors.ErrRecordNotFound{
+					Condition: "account id",
+				},
+			)
+		}
+
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get user info",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	userInfo := &model.UserInfoInternal{
+		ID: res.ID,
+		UserID: res.UserID,
+		UserName: res.UserName,
+		Bio: res.Bio.String,
+		ProfileImageURL: res.ProfileImageUrl.String,
+	}
+
+	return userInfo, nil
+}
+
 func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.UserInfoInternal, error) {
-	// Get user and profile info
+	// Get user infos
 	res, err := r.q.GetUserInfos(ctx, ids)
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(

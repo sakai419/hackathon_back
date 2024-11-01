@@ -150,16 +150,48 @@ func convertToNotificationResponse(notifications []*model.NotificationResponse) 
 	for i, notification := range notifications {
 		res[i] = Notification{
 			Id:        notification.ID,
-			SenderInfo: &UserInfo{
+			Type:      notification.Type,
+			Content:   notification.Content,
+			IsRead:    notification.IsRead,
+			CreatedAt: notification.CreatedAt,
+		}
+
+		if notification.SenderInfo != nil {
+			res[i].SenderInfo = &UserInfo{
 				UserId:          notification.SenderInfo.UserID,
 				UserName:        notification.SenderInfo.UserName,
 				ProfileImageUrl: notification.SenderInfo.ProfileImageURL,
-			},
-			Type:      notification.Type,
-			Content:   notification.Content,
-			TweetId:   notification.TweetID,
-			IsRead:    notification.IsRead,
-			CreatedAt: notification.CreatedAt,
+				Bio: 		     notification.SenderInfo.Bio,
+			}
+		}
+
+		if notification.RelatedTweet != nil {
+			res[i].RelatedTweet = &TweetInfo{
+				TweetID: notification.RelatedTweet.TweetID,
+				UserInfo: UserInfoWithoutBio{
+					UserId:          notification.RelatedTweet.UserInfo.UserID,
+					UserName:        notification.RelatedTweet.UserInfo.UserName,
+					ProfileImageUrl: notification.RelatedTweet.UserInfo.ProfileImageURL,
+				},
+				Content:       notification.RelatedTweet.Content,
+				Code:          notification.RelatedTweet.Code,
+				LikesCount:    notification.RelatedTweet.LikesCount,
+				RetweetsCount: notification.RelatedTweet.RetweetsCount,
+				RepliesCount:  notification.RelatedTweet.RepliesCount,
+				IsQuote:       notification.RelatedTweet.IsQuote,
+				IsReply:       notification.RelatedTweet.IsReply,
+				IsPinned:      notification.RelatedTweet.IsPinned,
+				HasLiked:      notification.RelatedTweet.HasLiked,
+				HasRetweeted:  notification.RelatedTweet.HasRetweeted,
+				CreatedAt:     notification.RelatedTweet.CreatedAt,
+			}
+
+			if notification.RelatedTweet.Media != nil {
+				res[i].RelatedTweet.Media = &Media{
+					Url:  notification.RelatedTweet.Media.URL,
+					Type: notification.RelatedTweet.Media.Type,
+				}
+			}
 		}
 	}
 	return res

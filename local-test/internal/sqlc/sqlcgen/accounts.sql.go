@@ -69,6 +69,34 @@ func (q *Queries) GetAccountInfo(ctx context.Context, id string) (GetAccountInfo
 	return i, err
 }
 
+const getUserInfo = `-- name: GetUserInfo :one
+SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
+FROM accounts a
+JOIN profiles p ON a.id = p.account_id
+WHERE a.id = $1
+`
+
+type GetUserInfoRow struct {
+	ID              string
+	UserID          string
+	UserName        string
+	Bio             sql.NullString
+	ProfileImageUrl sql.NullString
+}
+
+func (q *Queries) GetUserInfo(ctx context.Context, id string) (GetUserInfoRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserInfo, id)
+	var i GetUserInfoRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.UserName,
+		&i.Bio,
+		&i.ProfileImageUrl,
+	)
+	return i, err
+}
+
 const getUserInfos = `-- name: GetUserInfos :many
 SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a

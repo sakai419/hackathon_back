@@ -6,6 +6,12 @@ VALUES ($1, $2, $3);
 SELECT id FROM accounts
 WHERE user_id = $1;
 
+-- name: GetUserInfo :one
+SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
+FROM accounts a
+JOIN profiles p ON a.id = p.account_id
+WHERE a.id = $1;
+
 -- name: GetUserInfos :many
 SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
 FROM accounts a
