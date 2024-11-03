@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"local-test/internal/model"
 	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
@@ -415,40 +416,6 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 		return nil, apperrors.NewInternalAppError("get recent tweet metadatas", err)
 	}
 
-	// Extract account ids
-	var accountIDMap = make(map[string]bool)
-	for _, metadata := range tweetMetadatas {
-		accountIDMap[metadata.AccountID] = true
-	}
-	var accountIDs []string
-	for accountID := range accountIDMap {
-		accountIDs = append(accountIDs, accountID)
-	}
-
-	// Get blocker account ids
-	blockerAccountIDs, err := s.repo.GetBlockerAccountIDs(ctx, &model.GetBlockerAccountIDsParams{
-		ClientAccountID: params.ClientAccountID,
-		IDs:             accountIDs,
-	})
-	if err != nil {
-		return nil, apperrors.NewNotFoundAppError("blocking account ids", "get blocker account ids", err)
-	}
-
-	// Filter out blocked accounts
-	var filteredMetadatas []*model.TweetMetadata
-	for _, metadata := range tweetMetadatas {
-		blocked := false
-		for _, blockerAccountID := range blockerAccountIDs {
-			if metadata.AccountID == blockerAccountID {
-				blocked = true
-				break
-			}
-		}
-		if !blocked {
-			filteredMetadatas = append(filteredMetadatas, metadata)
-		}
-	}
-
 	// Get client interest scores
 	interestScores, err := s.repo.GetInterestScores(ctx, params.ClientAccountID)
     if err != nil {
@@ -457,13 +424,13 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 
 	// Calculate tweet scores with labels
 	tweetScoresWithLabel := make(map[int64]int64)
-	for _, metadata := range filteredMetadatas {
+	for _, metadata := range tweetMetadatas {
 		tweetScoresWithLabel[metadata.TweetID] = max(calculateTweetScore(metadata, interestScores), 1)
 	}
 
 	// Calcluate tweet scores with engagement
 	tweetScoresWithEngagement := make(map[int64]int64)
-	for _, metadata := range filteredMetadatas {
+	for _, metadata := range tweetMetadatas {
 		tweetScoresWithEngagement[metadata.TweetID] = max(int64(30 * metadata.LikesCount + 20 * metadata.RetweetsCount + metadata.RepliesCount), 1)
 	}
 
@@ -523,6 +490,19 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("replied tweet infos", "get replied tweet infos", err)
+	}
+
+	// Get account ids of all tweets
+	accountIDs := make([]string, 0, len(tweets))
+	for _, tweet := range tweets {
+		accountIDs = append(accountIDs, tweet.AccountID)
+	}
+	for _, quotingTweetInfo := range quotingTweetInfos {
+		accountIDs = append(accountIDs, quotingTweetInfo.QuotedTweet.AccountID)
+	}
+	for _, replyTweetInfo := range replyTweetInfos {
+		accountIDs = append(accountIDs, replyTweetInfo.OriginalTweet.AccountID)
+		accountIDs = append(accountIDs, replyTweetInfo.ParentReplyTweet.AccountID)
 	}
 
 	// Get user infos
@@ -671,7 +651,7 @@ func convertToGetTimelineTweetInfosResponse(tweets []*model.TweetInfoInternal, q
 		// Get user info
 		userInfo, ok := userInfoMap[tweet.AccountID]
 		if !ok {
-			return nil, apperrors.NewInternalAppError("user info not found", nil)
+			return nil, errors.New("user info not found")
 		}
 
 		tweetInfo := model.TweetInfo{
@@ -704,7 +684,7 @@ func convertToGetTimelineTweetInfosResponse(tweets []*model.TweetInfoInternal, q
 		if ok {
 			userInfo, ok := userInfoMap[quotedTweetInfo.QuotedTweet.AccountID]
 			if !ok {
-				return nil, apperrors.NewInternalAppError("user info not found", nil)
+				return nil, errors.New("user info not found")
 			}
 
 			quotedTweet := &model.TweetInfo{
@@ -736,7 +716,7 @@ func convertToGetTimelineTweetInfosResponse(tweets []*model.TweetInfoInternal, q
 			if replyTweetInfo.ParentReplyTweet != nil {
 				userInfo, ok := userInfoMap[replyTweetInfo.ParentReplyTweet.AccountID]
 				if !ok {
-					return nil, apperrors.NewInternalAppError("user info not found", nil)
+					return nil, errors.New("user info not found")
 				}
 
 				parentReplyTweet := &model.TweetInfo{
@@ -765,7 +745,7 @@ func convertToGetTimelineTweetInfosResponse(tweets []*model.TweetInfoInternal, q
 
 			userInfo, ok := userInfoMap[replyTweetInfo.OriginalTweet.AccountID]
 			if !ok {
-				return nil, apperrors.NewInternalAppError("user info not found", nil)
+				return nil, errors.New("user info not found")
 			}
 
 			originalTweet := &model.TweetInfo{
