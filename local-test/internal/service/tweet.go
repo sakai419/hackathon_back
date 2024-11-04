@@ -614,6 +614,7 @@ func convertToTweetInfos(tweetIDs []int64, tweets []*model.TweetInfoInternal, us
 				UserName:        userInfo.UserName,
 				ProfileImageURL: userInfo.ProfileImageURL,
 			},
+			CreatedAt:    tweet.CreatedAt,
 		}
 
 		ret = append(ret, info)
