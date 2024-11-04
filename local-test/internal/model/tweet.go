@@ -114,6 +114,28 @@ type TweetInfo struct {
 	CreatedAt     time.Time
 }
 
+type GetReplyTweetInfosParams struct {
+	ClientAccountID string
+	ParentTweetID   int64
+	Limit           int32
+	Offset          int32
+}
+
+func (p *GetReplyTweetInfosParams) Validate() error {
+	if p.Limit < 1 {
+		return &apperrors.ErrInvalidInput{
+			Message: "limit must be greater than or equal to 1",
+		}
+	}
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "offset must be greater than or equal to 0",
+		}
+	}
+
+	return nil
+}
+
 type GetTimelineTweetInfosParams struct {
 	ClientAccountID string
 	Limit           int32

@@ -109,6 +109,25 @@ func (r *Repository) CreateReplyAndNotify(ctx context.Context, params *model.Cre
 	return tweetID, nil
 }
 
+func (r *Repository) GetReplyIDs(ctx context.Context, params *model.GetReplyIDsParams) ([]int64, error) {
+	// Get reply ids
+	replyIDs, err := r.q.GetReplyIDs(ctx, sqlcgen.GetReplyIDsParams{
+		OriginalTweetID: params.OriginalTweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get reply ids",
+				Err: err,
+			},
+		)
+	}
+
+	return replyIDs, nil
+}
+
 func (r *Repository) GetRepliedTweetInfos(ctx context.Context, params *model.GetRepliedTweetInfosParams) ([]*model.RepliedTweetInfoInternal, error) {
 	// Get reply relations
 	replyRelations, err := r.q.GetReplyRelations(ctx, params.ReplyingTweetIDs)

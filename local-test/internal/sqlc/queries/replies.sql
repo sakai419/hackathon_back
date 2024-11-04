@@ -17,5 +17,14 @@ SELECT reply_id, original_tweet_id, parent_reply_id
 FROM replies
 WHERE reply_id = ANY(@tweet_ids::BIGINT[]);
 
+-- name: GetReplyIDs :many
+SELECT reply_id
+FROM replies
+WHERE
+original_tweet_id = $1 AND parent_reply_id IS NULL
+OR parent_reply_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
+
 -- name: CheckParentReplyExist :one
 SELECT EXISTS(SELECT 1 FROM replies WHERE reply_id = $1 AND parent_reply_id IS NOT NULL);

@@ -332,6 +332,37 @@ func (h *TweetHandler) GetQuotingUserInfos(w http.ResponseWriter, r *http.Reques
 	utils.Respond(w, resp)
 }
 
+// Get replies for a tweet
+// (GET /tweets/{tweet_id}/replies)
+func (h *TweetHandler) GetReplyTweetInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetReplyTweetInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get replies
+	replyTweets, err := h.svc.GetReplyTweetInfos(r.Context(), &model.GetReplyTweetInfosParams{
+		ClientAccountID: clientAccountID,
+		ParentTweetID:   tweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get replies", err))
+		return
+	}
+
+	// Convert to response
+	var resp []*TweetInfo
+	for _, replyTweet := range replyTweets {
+		info := convertToTweetInfo(replyTweet)
+		resp = append(resp, info)
+	}
+
+	utils.Respond(w, resp)
+}
+
 // Get timeline tweets
 // (GET /tweets/timeline)
 func (h *TweetHandler) GetTimelineTweetInfos(w http.ResponseWriter, r *http.Request, params GetTimelineTweetInfosParams) {

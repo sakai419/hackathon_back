@@ -139,16 +139,6 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 		accountIDs = append(accountIDs, accountID)
 	}
 
-	// sort tweets by tweet ids
-	tweetIDToTweetMap := make(map[int64]*model.TweetInfoInternal)
-	for _, tweet := range tweets {
-		tweetIDToTweetMap[tweet.TweetID] = tweet
-	}
-	sortedTweets := make([]*model.TweetInfoInternal, 0, len(likedTweetIDs))
-	for _, tweetID := range likedTweetIDs {
-		sortedTweets = append(sortedTweets, tweetIDToTweetMap[tweetID])
-	}
-
 	// Get user infos
 	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
 	if err != nil {
@@ -156,7 +146,7 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 	}
 
 	// Convert to response
-	responses, err := convertToTweetInfo(sortedTweets, userInfos)
+	responses, err := convertToTweetInfos(likedTweetIDs, tweets, userInfos)
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("convert to get user likes response", err)
 	}
@@ -190,7 +180,7 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 		return nil, apperrors.NewInternalAppError("get retweeted tweet ids by account id", err)
 	}
 
-	// Get tweet infos by tweet ids
+	// Get tweet infos by tweet IDs
 	tweets, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
 		ClientAccountID: params.ClientAccountID,
 		TweetIDs:        retweetedTweetIDs,
@@ -209,16 +199,6 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 		accountIDs = append(accountIDs, accountID)
 	}
 
-	// sort tweets by tweet ids
-	tweetIDToTweetMap := make(map[int64]*model.TweetInfoInternal)
-	for _, tweet := range tweets {
-		tweetIDToTweetMap[tweet.TweetID] = tweet
-	}
-	sortedTweets := make([]*model.TweetInfoInternal, 0, len(retweetedTweetIDs))
-	for _, tweetID := range retweetedTweetIDs {
-		sortedTweets = append(sortedTweets, tweetIDToTweetMap[tweetID])
-	}
-
 	// Get user infos
 	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
 	if err != nil {
@@ -226,7 +206,7 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 	}
 
 	// Convert to response
-	responses, err := convertToTweetInfo(sortedTweets, userInfos)
+	responses, err := convertToTweetInfos(retweetedTweetIDs, tweets, userInfos)
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("convert to get user retweets response", err)
 	}

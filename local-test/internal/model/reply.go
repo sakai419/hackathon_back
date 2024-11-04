@@ -36,6 +36,12 @@ type CreateReplyAndNotifyParams struct {
 	HashtagIDs		  []int64
 }
 
+type GetReplyIDsParams struct {
+	OriginalTweetID int64
+	Limit           int32
+	Offset		    int32
+}
+
 type GetRepliedTweetInfosParams struct {
 	ClientAccountID  string
 	ReplyingTweetIDs []int64

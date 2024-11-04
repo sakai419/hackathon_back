@@ -49,6 +49,45 @@ func (q *Queries) CreateReply(ctx context.Context, arg CreateReplyParams) error 
 	return err
 }
 
+const getReplyIDs = `-- name: GetReplyIDs :many
+SELECT reply_id
+FROM replies
+WHERE
+original_tweet_id = $1 AND parent_reply_id IS NULL
+OR parent_reply_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetReplyIDsParams struct {
+	OriginalTweetID int64
+	Limit           int32
+	Offset          int32
+}
+
+func (q *Queries) GetReplyIDs(ctx context.Context, arg GetReplyIDsParams) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getReplyIDs, arg.OriginalTweetID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var reply_id int64
+		if err := rows.Scan(&reply_id); err != nil {
+			return nil, err
+		}
+		items = append(items, reply_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getReplyRelations = `-- name: GetReplyRelations :many
 SELECT reply_id, original_tweet_id, parent_reply_id
 FROM replies

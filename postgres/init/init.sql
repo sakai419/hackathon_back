@@ -443,7 +443,7 @@ CREATE TABLE tweets (
 
 CREATE INDEX idx_tweets_account_id ON tweets(account_id);
 CREATE INDEX idx_tweets_created_at ON tweets(created_at);
-CREATE INDEX idx_tweets_type ON tweets(is_retweet, is_reply, is_quote);
+CREATE INDEX idx_tweets_type ON tweets(is_reply, is_quote);
 
 ---Define foreign keys---
 
@@ -612,8 +612,8 @@ CREATE OR REPLACE FUNCTION increment_reply_count()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE tweets
-    SET reply_count = reply_count + 1
-    WHERE id = NEW.tweet_id;
+    SET replies_count = replies_count + 1
+    WHERE id = NEW.original_tweet_id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -622,8 +622,8 @@ CREATE OR REPLACE FUNCTION decrement_reply_count()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE tweets
-    SET reply_count = reply_count - 1
-    WHERE id = OLD.tweet_id;
+    SET replies_count = replies_count - 1
+    WHERE id = OLD.original_tweet_id;
     RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;

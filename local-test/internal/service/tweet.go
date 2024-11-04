@@ -405,6 +405,56 @@ func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuot
 	return quotingUserInfos, nil
 }
 
+func (s *Service) GetReplyTweetInfos(ctx context.Context, params *model.GetReplyTweetInfosParams) ([]*model.TweetInfo, error) {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get reply tweet ids
+	replyTweetIDs, err := s.repo.GetReplyIDs(ctx, &model.GetReplyIDsParams{
+		OriginalTweetID: params.ParentTweetID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get reply ids", err)
+	}
+
+	// Get tweet infos by tweet IDs
+	tweets, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		TweetIDs:        replyTweetIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get tweet infos by ids", err)
+	}
+
+	// Get account IDs of all tweets
+	accountIDsMap := make(map[string]bool)
+	for _, tweet := range tweets {
+		accountIDsMap[tweet.AccountID] = true
+	}
+	accountIDs := make([]string, 0, len(accountIDsMap))
+	for accountID := range accountIDsMap {
+		accountIDs = append(accountIDs, accountID)
+	}
+
+	// Get user infos
+	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("user info", "get user infos", err)
+	}
+
+	// Convert to response
+	responses, err := convertToTweetInfos(replyTweetIDs, tweets, userInfos)
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("convert to tweet info", err)
+	}
+
+	return responses, nil
+}
+
 func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTimelineTweetInfosParams) ([]*model.GetTimelineTweetInfosResponse, error) {
 	// Get recent tweet metadatas
 	tweetMetadatas, err := s.repo.GetRecentTweetMetadatas(ctx, &model.GetRecentTweetMetadatasParams{
@@ -520,16 +570,27 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	return responses, nil
 }
 
-func convertToTweetInfo(tweets []*model.TweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.TweetInfo, error) {
+func convertToTweetInfos(tweetIDs []int64, tweets []*model.TweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.TweetInfo, error) {
 	// Create map of user info
 	userInfoMap := make(map[string]*model.UserInfoInternal)
 	for _, userInfo := range userInfos {
 		userInfoMap[userInfo.ID] = userInfo
 	}
 
+	// Create map of tweet info
+	tweetInfoMap := make(map[int64]*model.TweetInfoInternal)
+	for _, tweet := range tweets {
+		tweetInfoMap[tweet.TweetID] = tweet
+	}
+
 	// Convert to model
 	var ret []*model.TweetInfo
-	for _, tweet := range tweets {
+	for _, id := range tweetIDs {
+		tweet, ok := tweetInfoMap[id]
+		if !ok {
+			return nil, apperrors.NewNotFoundAppError("tweet info", "convert to tweet info", nil)
+		}
+
 		userInfo, ok := userInfoMap[tweet.AccountID]
 		if !ok {
 			return nil, apperrors.NewNotFoundAppError("user info", "convert to tweet info", nil)
