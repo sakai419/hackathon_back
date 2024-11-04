@@ -170,6 +170,11 @@ type GetRecentTweetMetadatasParams struct {
 	ClientAccountID string
 }
 
+type DeleteTweetParams struct {
+	TweetID         int64
+	ClientAccountID string
+}
+
 type TweetMetadata struct {
 	TweetID       int64
 	AccountID     string

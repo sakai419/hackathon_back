@@ -524,7 +524,7 @@ ALTER TABLE replies
     ADD CONSTRAINT fk_replies_original_tweet_id FOREIGN KEY (original_tweet_id)
         REFERENCES tweets(id) ON DELETE CASCADE,
     ADD CONSTRAINT fk_replies_parent_reply_id FOREIGN KEY (parent_reply_id)
-        REFERENCES replies(reply_id) ON DELETE SET NULL,
+        REFERENCES replies(reply_id) ON DELETE CASCADE,
     ADD CONSTRAINT fk_replies_replying_account_id FOREIGN KEY (replying_account_id)
         REFERENCES accounts(id) ON DELETE CASCADE;
 

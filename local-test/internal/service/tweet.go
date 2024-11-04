@@ -570,6 +570,26 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	return responses, nil
 }
 
+func (s *Service) DeleteTweet(ctx context.Context, params *model.DeleteTweetParams) error {
+	// Get account id of tweet
+	accountID, err := s.repo.GetAccountIDByTweetID(ctx, params.TweetID)
+	if err != nil {
+		return apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if client is authorized
+	if accountID != params.ClientAccountID {
+		return apperrors.NewForbiddenAppError("Delete tweet", nil)
+	}
+
+	// Delete tweet
+	if err := s.repo.DeleteTweet(ctx, params.TweetID); err != nil {
+		return apperrors.NewNotFoundAppError("tweet", "delete tweet", err)
+	}
+
+	return nil
+}
+
 func convertToTweetInfos(tweetIDs []int64, tweets []*model.TweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.TweetInfo, error) {
 	// Create map of user info
 	userInfoMap := make(map[string]*model.UserInfoInternal)

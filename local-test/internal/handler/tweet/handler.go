@@ -389,6 +389,32 @@ func (h *TweetHandler) GetTimelineTweetInfos(w http.ResponseWriter, r *http.Requ
 	utils.Respond(w, resp)
 }
 
+// Delete tweet
+// (DELETE /tweets/{tweet_id})
+func (h *TweetHandler) DeleteTweet(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Delete tweet
+	if err := h.svc.DeleteTweet(r.Context(), &model.DeleteTweetParams{
+		ClientAccountID: clientAccountID,
+		TweetID:   tweetID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("delete tweet", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}
+
 // ErrorHandlerFunc is the error handler for tweet handlers
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError

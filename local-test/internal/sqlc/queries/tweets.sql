@@ -83,29 +83,8 @@ LEFT JOIN (
 ) AS r ON t.id = r.original_tweet_id
 WHERE t.id = ANY(@tweet_ids::BIGINT[]);
 
--- SELECT
---     t.*,
---     COALESCE(l.has_liked, FALSE) AS has_liked,
---     COALESCE(r.has_retweeted, FALSE) AS has_retweeted
--- FROM tweets AS t
--- LEFT JOIN (
---     SELECT
---         original_tweet_id,
---         TRUE AS has_liked
---     FROM likes
---     WHERE liking_account_id = 'geAY09opyUMogQW2MBlRLaYKnMH2'
--- ) AS l ON t.id = l.original_tweet_id
--- LEFT JOIN (
---     SELECT
---         original_tweet_id,
---         TRUE AS has_retweeted
---     FROM retweets
---     WHERE retweeting_account_id = 'geAY09opyUMogQW2MBlRLaYKnMH2'
--- ) AS r ON t.id = r.original_tweet_id
--- WHERE t.id = 1;
-
--- name: DeleteTweet :exec
-DELETE FROM tweets WHERE id = $1 AND account_id = $2;
+-- name: DeleteTweet :execresult
+DELETE FROM tweets WHERE id = $1;
 
 -- name: GetPinnedTweetForAccount :one
 SELECT * FROM tweets

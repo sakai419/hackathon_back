@@ -194,6 +194,39 @@ func (r *Repository) GetTweetInfosByIDs(ctx context.Context, params *model.GetTw
 	return ret, nil
 }
 
+func (r *Repository) DeleteTweet(ctx context.Context, tweetID int64) error {
+	// Delete tweet
+	res, err := r.q.DeleteTweet(ctx, tweetID)
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "delete tweet",
+				Err: err,
+			},
+		)
+	}
+
+	// Check if tweet deleted
+	num, err := res.RowsAffected()
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get rows affected",
+				Err: err,
+			},
+		)
+	}
+	if num == 0 {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "tweet id",
+			},
+		)
+	}
+
+	return nil
+}
+
 func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.CreateTweetParams, error) {
 	ret := &sqlcgen.CreateTweetParams{
 		AccountID: params.AccountID,

@@ -116,6 +116,9 @@ type ServerInterface interface {
 	// Get timeline for user
 	// (GET /tweets/timeline)
 	GetTimelineTweetInfos(w http.ResponseWriter, r *http.Request, params GetTimelineTweetInfosParams)
+	// Delete a tweet
+	// (DELETE /tweets/{tweet_id})
+	DeleteTweet(w http.ResponseWriter, r *http.Request, tweetId int64)
 	// Unlike a tweet
 	// (DELETE /tweets/{tweet_id}/like)
 	UnlikeTweet(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -211,6 +214,31 @@ func (siw *ServerInterfaceWrapper) GetTimelineTweetInfos(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetTimelineTweetInfos(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTweet operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTweet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTweet(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -718,6 +746,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/tweets", wrapper.PostTweet).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/tweets/timeline", wrapper.GetTimelineTweetInfos).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}", wrapper.DeleteTweet).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.UnlikeTweet).Methods("DELETE")
 
