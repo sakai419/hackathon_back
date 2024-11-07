@@ -12,7 +12,7 @@ import (
 
 // SidebarInfo defines model for SidebarInfo.
 type SidebarInfo struct {
-	UnreadMessageCount      int64              `json:"UnreadMessageCount"`
+	UnreadConversationCount int64              `json:"UnreadConversationCount"`
 	UnreadNotificationCount int64              `json:"UnreadNotificationCount"`
 	UserInfo                UserInfoWithoutBio `json:"UserInfo"`
 }

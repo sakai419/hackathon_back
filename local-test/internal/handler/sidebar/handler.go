@@ -33,5 +33,15 @@ func (h *SidebarHandler) GetSidebarInfo(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	utils.Respond(w, sidebarInfo)
+	utils.Respond(w, SidebarInfo{
+		UserInfo: UserInfoWithoutBio{
+			UserId:          sidebarInfo.UserInfo.UserID,
+			UserName:        sidebarInfo.UserInfo.UserName,
+			ProfileImageURL: sidebarInfo.UserInfo.ProfileImageURL,
+			IsPrivate:       sidebarInfo.UserInfo.IsPrivate,
+			IsAdmin:         sidebarInfo.UserInfo.IsAdmin,
+		},
+		UnreadConversationCount: sidebarInfo.UnreadConversationCount,
+		UnreadNotificationCount: sidebarInfo.UnreadNotificationCount,
+	})
 }

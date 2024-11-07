@@ -28,7 +28,7 @@ components:
             properties:
                 UserInfo:
                     $ref: "#/components/schemas/UserInfoWithoutBio"
-                UnreadMessageCount:
+                UnreadConversationCount:
                     type: integer
                     format: int64
                 UnreadNotificationCount:
@@ -36,7 +36,7 @@ components:
                     format: int64
             required:
                 - UserInfo
-                - UnreadMessageCount
+                - UnreadConversationCount
                 - UnreadNotificationCount
         UserInfoWithoutBio:
             type: object

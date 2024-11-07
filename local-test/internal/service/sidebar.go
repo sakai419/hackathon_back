@@ -32,7 +32,7 @@ func (s *Service) GetSidebarInfo(ctx context.Context, clientAccountID string) (*
 func convertToSidebarInfo(userInfo *model.UserInfoInternal, unreadConversationCount int64, unReadNotificationCount int64) *model.SidebarInfo {
 	ret := &model.SidebarInfo{
 		UnreadConversationCount: unreadConversationCount,
-		UnReadNotificationCount: unReadNotificationCount,
+		UnreadNotificationCount: unReadNotificationCount,
 	}
 
 	ret.UserInfo = model.UserInfoWithoutBio{
