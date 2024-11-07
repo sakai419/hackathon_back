@@ -126,6 +126,8 @@ components:
                 - user_name
                 - bio
                 - profile_image_url
+                - is_private
+                - is_admin
             properties:
                 user_id:
                     type: string
@@ -136,6 +138,10 @@ components:
                 profile_image_url:
                     type: string
                     format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
         Notifications:
             type: array
             items:
@@ -169,54 +175,54 @@ components:
         TweetInfo:
             type: object
             properties:
-                TweetID:
+                tweet_id:
                     type: integer
                     format: int64
-                UserInfo:
+                user_info:
                     $ref: "#/components/schemas/UserInfoWithoutBio"
-                Content:
+                content:
                     type: string
                     nullable: true
-                Code:
+                code:
                     type: string
                     nullable: true
-                Media:
+                media:
                     $ref: "#/components/schemas/Media"
                     nullable: true
-                LikesCount:
+                likes_count:
                     type: integer
                     format: int32
-                RetweetsCount:
+                retweets_count:
                     type: integer
                     format: int32
-                RepliesCount:
+                replies_count:
                     type: integer
                     format: int32
-                IsQuote:
+                is_quote:
                     type: boolean
-                IsReply:
+                is_reply:
                     type: boolean
-                IsPinned:
+                is_pinned:
                     type: boolean
-                HasLiked:
+                has_liked:
                     type: boolean
-                HasRetweeted:
+                has_retweeted:
                     type: boolean
-                CreatedAt:
+                created_at:
                     type: string
                     format: date-time
             required:
-                - TweetID
-                - UserInfo
-                - LikesCount
-                - RetweetsCount
-                - RepliesCount
-                - IsQuote
-                - IsReply
-                - IsPinned
-                - HasLiked
-                - HasRetweeted
-                - CreatedAt
+                - tweet_id
+                - user_info
+                - likes_count
+                - retweets_count
+                - replies_count
+                - is_quote
+                - is_reply
+                - is_pinned
+                - has_liked
+                - has_retweeted
+                - created_at
         Media:
             type: object
             properties:
@@ -232,15 +238,18 @@ components:
             properties:
                 user_id:
                     type: string
-                    description: The ID of the user.
                 user_name:
                     type: string
-                    description: The name of the user.
                 profile_image_url:
                     type: string
                     format: uri
-                    description: URL of the user's profile image.
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
             required:
                 - user_id
                 - user_name
                 - profile_image_url
+                - is_private
+                - is_admin

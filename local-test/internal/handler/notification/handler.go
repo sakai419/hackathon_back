@@ -162,16 +162,20 @@ func convertToNotificationResponse(notifications []*model.NotificationResponse) 
 				UserName:        notification.SenderInfo.UserName,
 				ProfileImageUrl: notification.SenderInfo.ProfileImageURL,
 				Bio: 		     notification.SenderInfo.Bio,
+				IsPrivate: 	     notification.SenderInfo.IsPrivate,
+				IsAdmin: 	     notification.SenderInfo.IsAdmin,
 			}
 		}
 
 		if notification.RelatedTweet != nil {
 			res[i].RelatedTweet = &TweetInfo{
-				TweetID: notification.RelatedTweet.TweetID,
+				TweetId: notification.RelatedTweet.TweetID,
 				UserInfo: UserInfoWithoutBio{
 					UserId:          notification.RelatedTweet.UserInfo.UserID,
 					UserName:        notification.RelatedTweet.UserInfo.UserName,
 					ProfileImageUrl: notification.RelatedTweet.UserInfo.ProfileImageURL,
+					IsPrivate: 	     notification.RelatedTweet.UserInfo.IsPrivate,
+					IsAdmin: 	     notification.RelatedTweet.UserInfo.IsAdmin,
 				},
 				Content:       notification.RelatedTweet.Content,
 				Code:          notification.RelatedTweet.Code,
