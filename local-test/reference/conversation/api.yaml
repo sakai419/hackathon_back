@@ -198,11 +198,18 @@ components:
             properties:
                 user_id:
                     type: string
-                username:
+                user_name:
                     type: string
                 profile_image_url:
                     type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
             required:
                 - user_id
-                - username
+                - user_name
                 - profile_image_url
+                - is_private
+                - is_admin

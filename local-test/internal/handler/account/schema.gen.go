@@ -16,12 +16,6 @@ type CreateAccountRequest struct {
 	UserName string `json:"user_name"`
 }
 
-// CreateAccountResponse defines model for CreateAccountResponse.
-type CreateAccountResponse struct {
-	// Id The ID of the created account
-	Id string `json:"id"`
-}
-
 // CreateAccountJSONRequestBody defines body for CreateAccount for application/json ContentType.
 type CreateAccountJSONRequestBody = CreateAccountRequest
 

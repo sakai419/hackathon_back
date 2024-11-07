@@ -200,8 +200,10 @@ func convertToConversationResponse(conversations []*model.ConversationResponse) 
 			Id: 			c.ID,
 			OpponentInfo: 	UserInfoWithoutBio{
 				UserId: 		 c.OpponentInfo.UserID,
-				Username: 		 c.OpponentInfo.UserName,
+				UserName: 		 c.OpponentInfo.UserName,
 				ProfileImageUrl: c.OpponentInfo.ProfileImageURL,
+				IsPrivate: 		 c.OpponentInfo.IsPrivate,
+				IsAdmin: 		 c.OpponentInfo.IsAdmin,
 			},
 			LastMessageTime: c.LastMessageTime,
 			Content: 		 c.Content,

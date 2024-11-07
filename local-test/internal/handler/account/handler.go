@@ -44,7 +44,7 @@ func (h *AccountHandler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.Respond(w, CreateAccountResponse{Id: clientAccountID})
+	utils.Respond(w, nil)
 }
 
 // Delete my account
