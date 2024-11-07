@@ -12,18 +12,18 @@ import (
 
 // SidebarInfo defines model for SidebarInfo.
 type SidebarInfo struct {
-	UnreadConversationCount int64              `json:"UnreadConversationCount"`
-	UnreadNotificationCount int64              `json:"UnreadNotificationCount"`
-	UserInfo                UserInfoWithoutBio `json:"UserInfo"`
+	UnreadConversationCount int64              `json:"unread_conversation_count"`
+	UnreadNotificationCount int64              `json:"unread_notification_count"`
+	UserInfo                UserInfoWithoutBio `json:"user_info"`
 }
 
 // UserInfoWithoutBio defines model for UserInfoWithoutBio.
 type UserInfoWithoutBio struct {
-	IsAdmin         bool   `json:"IsAdmin"`
-	IsPrivate       bool   `json:"IsPrivate"`
-	ProfileImageURL string `json:"ProfileImageURL"`
-	UserId          string `json:"UserId"`
-	UserName        string `json:"UserName"`
+	IsAdmin         bool   `json:"is_admin"`
+	IsPrivate       bool   `json:"is_private"`
+	ProfileImageUrl string `json:"profile_image_url"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
 }
 
 // ServerInterface represents all server handlers.

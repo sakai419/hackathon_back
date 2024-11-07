@@ -37,7 +37,7 @@ func (h *SidebarHandler) GetSidebarInfo(w http.ResponseWriter, r *http.Request) 
 		UserInfo: UserInfoWithoutBio{
 			UserId:          sidebarInfo.UserInfo.UserID,
 			UserName:        sidebarInfo.UserInfo.UserName,
-			ProfileImageURL: sidebarInfo.UserInfo.ProfileImageURL,
+			ProfileImageUrl: sidebarInfo.UserInfo.ProfileImageURL,
 			IsPrivate:       sidebarInfo.UserInfo.IsPrivate,
 			IsAdmin:         sidebarInfo.UserInfo.IsAdmin,
 		},

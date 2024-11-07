@@ -26,35 +26,35 @@ components:
         SidebarInfo:
             type: object
             properties:
-                UserInfo:
+                user_info:
                     $ref: "#/components/schemas/UserInfoWithoutBio"
-                UnreadConversationCount:
+                unread_conversation_count:
                     type: integer
                     format: int64
-                UnreadNotificationCount:
+                unread_notification_count:
                     type: integer
                     format: int64
             required:
-                - UserInfo
-                - UnreadConversationCount
-                - UnreadNotificationCount
+                - user_info
+                - unread_conversation_count
+                - unread_notification_count
         UserInfoWithoutBio:
             type: object
             properties:
-                UserId:
+                user_id:
                     type: string
-                UserName:
+                user_name:
                     type: string
-                ProfileImageURL:
+                profile_image_url:
                     type: string
                     format: uri
-                IsPrivate:
+                is_private:
                     type: boolean
-                IsAdmin:
+                is_admin:
                     type: boolean
             required:
-                - UserId
-                - UserName
-                - ProfileImageURL
-                - IsPrivate
-                - IsAdmin
+                - user_id
+                - user_name
+                - profile_image_url
+                - is_private
+                - is_admin
