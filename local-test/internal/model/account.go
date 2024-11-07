@@ -4,7 +4,6 @@ import (
 	"local-test/pkg/apperrors"
 )
 
-// CreateAccount
 type CreateAccountParams struct {
 	ID       string
 	UserID   string
