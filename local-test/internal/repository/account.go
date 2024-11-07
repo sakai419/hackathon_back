@@ -207,6 +207,8 @@ func (r *Repository) GetUserInfo(ctx context.Context, id string) (*model.UserInf
 		UserName: res.UserName,
 		Bio: res.Bio.String,
 		ProfileImageURL: res.ProfileImageUrl.String,
+		IsPrivate: res.IsPrivate.Bool,
+		IsAdmin: res.IsAdmin,
 	}
 
 	return userInfo, nil

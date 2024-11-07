@@ -4,6 +4,7 @@ import (
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
+	"log"
 	"net/http"
 )
 
@@ -32,6 +33,8 @@ func (h *SidebarHandler) GetSidebarInfo(w http.ResponseWriter, r *http.Request) 
 		utils.RespondError(w, apperrors.NewHandlerError("get sidebar info", err))
 		return
 	}
+
+	log.Println("Sidebar info:", sidebarInfo)
 
 	utils.Respond(w, SidebarInfo{
 		UserInfo: UserInfoWithoutBio{
