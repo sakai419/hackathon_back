@@ -303,6 +303,8 @@ func convertToUserInfos(followerInfos []*model.UserInfo) []UserInfo {
 			ProfileImageUrl: followerInfo.ProfileImageURL,
 			UserId: followerInfo.UserID,
 			UserName: followerInfo.UserName,
+			IsPrivate: followerInfo.IsPrivate,
+			IsAdmin: followerInfo.IsAdmin,
 		})
 	}
 	return resp

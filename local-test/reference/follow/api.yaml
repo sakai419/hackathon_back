@@ -206,22 +206,24 @@ components:
             properties:
                 user_id:
                     type: string
-                    description: The ID of the user.
                 user_name:
                     type: string
-                    description: The name of the user.
                 bio:
                     type: string
-                    description: The bio of the user.
                 profile_image_url:
                     type: string
                     format: uri
-                    description: URL of the user's profile image.
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
             required:
                 - user_id
                 - user_name
                 - bio
                 - profile_image_url
+                - is_private
+                - is_admin
         UserInfos:
             type: array
             items:
@@ -232,7 +234,6 @@ components:
                 count:
                     type: integer
                     format: int64
-                    description: The count of notifications.
             required:
                 - count
         FollowCounts:
@@ -241,11 +242,9 @@ components:
                 followers_count:
                     type: integer
                     format: int64
-                    description: The count of followers.
                 following_count:
                     type: integer
                     format: int64
-                    description: The count of following.
             required:
                 - followers_count
                 - following_count

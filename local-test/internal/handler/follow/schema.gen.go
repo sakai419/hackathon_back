@@ -13,32 +13,23 @@ import (
 
 // Count defines model for Count.
 type Count struct {
-	// Count The count of notifications.
 	Count int64 `json:"count"`
 }
 
 // FollowCounts defines model for FollowCounts.
 type FollowCounts struct {
-	// FollowersCount The count of followers.
 	FollowersCount int64 `json:"followers_count"`
-
-	// FollowingCount The count of following.
 	FollowingCount int64 `json:"following_count"`
 }
 
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
-	// Bio The bio of the user.
-	Bio string `json:"bio"`
-
-	// ProfileImageUrl URL of the user's profile image.
+	Bio             string `json:"bio"`
+	IsAdmin         bool   `json:"is_admin"`
+	IsPrivate       bool   `json:"is_private"`
 	ProfileImageUrl string `json:"profile_image_url"`
-
-	// UserId The ID of the user.
-	UserId string `json:"user_id"`
-
-	// UserName The name of the user.
-	UserName string `json:"user_name"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
 }
 
 // UserInfos defines model for UserInfos.
