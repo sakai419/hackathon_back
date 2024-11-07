@@ -11,6 +11,7 @@ import (
 	"local-test/internal/handler/profile"
 	"local-test/internal/handler/report"
 	"local-test/internal/handler/setting"
+	"local-test/internal/handler/sidebar"
 	"local-test/internal/handler/tweet"
 	"local-test/internal/handler/user"
 	"local-test/internal/middleware"
@@ -197,6 +198,7 @@ func setUpTweetRoutes(r *mux.Router, repo *repository.Repository, svc *service.S
 		BaseRouter: r,
 		Middlewares: []tweet.MiddlewareFunc{
 			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: tweet.ErrorHandlerFunc,
 	}
@@ -222,6 +224,23 @@ func setUpUserRoutes(r *mux.Router, repo *repository.Repository, svc *service.Se
 
 	// Register the user handler
 	user.HandlerWithOptions(h, opts)
+}
+
+func setUpSidebarRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the sidebar handler
+	h := sidebar.NewSidebarHandler(svc)
+
+	// Create options for the sidebar handler
+	opts := sidebar.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []sidebar.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+		},
+	}
+
+	// Register the sidebar handler
+	sidebar.HandlerWithOptions(h, opts)
 }
 
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
@@ -252,6 +271,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpProfileRoutes(apiV1, repo, svc, client)
 	setUpTweetRoutes(apiV1, repo, svc, client)
 	setUpUserRoutes(apiV1, repo, svc, client)
+	setUpSidebarRoutes(apiV1, repo, svc, client)
 
 	return r
 }

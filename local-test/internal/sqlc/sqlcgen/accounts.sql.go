@@ -70,9 +70,10 @@ func (q *Queries) GetAccountInfo(ctx context.Context, id string) (GetAccountInfo
 }
 
 const getUserInfo = `-- name: GetUserInfo :one
-SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
+SELECT a.id, a.user_id, a.user_name, a.is_admin, p.bio, p.profile_image_url, s.is_private
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
+JOIN settings s ON a.id = s.account_id
 WHERE a.id = $1
 `
 
@@ -80,8 +81,10 @@ type GetUserInfoRow struct {
 	ID              string
 	UserID          string
 	UserName        string
+	IsAdmin         bool
 	Bio             sql.NullString
 	ProfileImageUrl sql.NullString
+	IsPrivate       sql.NullBool
 }
 
 func (q *Queries) GetUserInfo(ctx context.Context, id string) (GetUserInfoRow, error) {
@@ -91,8 +94,10 @@ func (q *Queries) GetUserInfo(ctx context.Context, id string) (GetUserInfoRow, e
 		&i.ID,
 		&i.UserID,
 		&i.UserName,
+		&i.IsAdmin,
 		&i.Bio,
 		&i.ProfileImageUrl,
+		&i.IsPrivate,
 	)
 	return i, err
 }

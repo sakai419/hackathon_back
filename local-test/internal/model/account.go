@@ -36,6 +36,8 @@ type UserInfoInternal struct {
 	UserName        string
 	Bio	            string
 	ProfileImageURL string
+	IsPrivate       bool
+	IsAdmin		    bool
 }
 
 type UserInfo struct {
@@ -43,12 +45,16 @@ type UserInfo struct {
 	UserName        string
 	Bio	            string
 	ProfileImageURL string
+	IsPrivate       bool
+	IsAdmin		    bool
 }
 
 type UserInfoWithoutBio struct {
 	UserID          string
 	UserName        string
 	ProfileImageURL string
+	IsPrivate       bool
+	IsAdmin		    bool
 }
 
 type AccountInfo struct {
