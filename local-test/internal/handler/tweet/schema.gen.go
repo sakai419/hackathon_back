@@ -14,10 +14,10 @@ import (
 
 // GetTimelineTweetInfo defines model for GetTimelineTweetInfo.
 type GetTimelineTweetInfo struct {
-	OmittedReplyExist *bool      `json:"OmittedReplyExist"`
-	OriginalTweet     *TweetInfo `json:"OriginalTweet,omitempty"`
-	ParentReply       *TweetInfo `json:"ParentReply,omitempty"`
-	Tweet             TweetInfo  `json:"Tweet"`
+	OmittedReplyExist *bool      `json:"omitted_reply_exist"`
+	OriginalTweet     *TweetInfo `json:"original_tweet,omitempty"`
+	ParentReply       *TweetInfo `json:"parent_reply,omitempty"`
+	Tweet             TweetInfo  `json:"tweet"`
 }
 
 // GetTimelineTweetInfos defines model for GetTimelineTweetInfos.
@@ -38,32 +38,29 @@ type PostTweetRequest struct {
 
 // TweetInfo defines model for TweetInfo.
 type TweetInfo struct {
-	Code          *string            `json:"Code"`
-	Content       *string            `json:"Content"`
-	CreatedAt     time.Time          `json:"CreatedAt"`
-	HasLiked      bool               `json:"HasLiked"`
-	HasRetweeted  bool               `json:"HasRetweeted"`
-	IsPinned      bool               `json:"IsPinned"`
-	IsQuote       bool               `json:"IsQuote"`
-	IsReply       bool               `json:"IsReply"`
-	LikesCount    int32              `json:"LikesCount"`
-	Media         *Media             `json:"Media,omitempty"`
-	RepliesCount  int32              `json:"RepliesCount"`
-	RetweetsCount int32              `json:"RetweetsCount"`
-	TweetID       int64              `json:"TweetID"`
-	UserInfo      UserInfoWithoutBio `json:"UserInfo"`
+	Code          *string            `json:"code"`
+	Content       *string            `json:"content"`
+	CreatedAt     time.Time          `json:"created_at"`
+	HasLiked      bool               `json:"has_liked"`
+	HasRetweeted  bool               `json:"has_retweeted"`
+	IsPinned      bool               `json:"is_pinned"`
+	IsQuote       bool               `json:"is_quote"`
+	IsReply       bool               `json:"is_reply"`
+	LikesCount    int32              `json:"likes_count"`
+	Media         *Media             `json:"media,omitempty"`
+	RepliesCount  int32              `json:"replies_count"`
+	RetweetsCount int32              `json:"retweets_count"`
+	TweetId       int64              `json:"tweet_id"`
+	UserInfo      UserInfoWithoutBio `json:"user_info"`
 }
 
 // UserInfoWithoutBio defines model for UserInfoWithoutBio.
 type UserInfoWithoutBio struct {
-	// ProfileImageUrl URL of the user's profile image.
+	IsAdmin         bool   `json:"is_admin"`
+	IsPrivate       bool   `json:"is_private"`
 	ProfileImageUrl string `json:"profile_image_url"`
-
-	// UserId The ID of the user.
-	UserId string `json:"user_id"`
-
-	// UserName The name of the user.
-	UserName string `json:"user_name"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
 }
 
 // UserInfoWithoutBios defines model for UserInfoWithoutBios.

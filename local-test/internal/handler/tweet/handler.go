@@ -443,6 +443,8 @@ func convertToUserInfoWithoutBios(infos []*model.UserInfoWithoutBio) []*UserInfo
 			UserId:   info.UserID,
 			UserName: info.UserName,
 			ProfileImageUrl: info.ProfileImageURL,
+			IsPrivate: info.IsPrivate,
+			IsAdmin:   info.IsAdmin,
 		})
 	}
 
@@ -454,11 +456,13 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 		return nil
 	}
 	tweet := &TweetInfo{
-		TweetID:       t.TweetID,
+		TweetId:       t.TweetID,
 		UserInfo:      UserInfoWithoutBio{
 			UserId:          t.UserInfo.UserID,
 			UserName:        t.UserInfo.UserName,
 			ProfileImageUrl: t.UserInfo.ProfileImageURL,
+			IsPrivate:       t.UserInfo.IsPrivate,
+			IsAdmin:         t.UserInfo.IsAdmin,
 		},
 		LikesCount:    t.LikesCount,
 		RetweetsCount: t.RetweetsCount,
