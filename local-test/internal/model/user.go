@@ -1,6 +1,9 @@
 package model
 
-import "local-test/pkg/apperrors"
+import (
+	"local-test/pkg/apperrors"
+	"time"
+)
 
 type GetUserTweetsParams struct {
 	TargetAccountID string
@@ -76,4 +79,19 @@ func (p *GetUserRetweetsParams) Validate() error {
 	}
 
 	return nil
+}
+
+type GetUserProfileParams struct {
+	ClientAccountID string
+	TargetAccountID string
+}
+
+type UserProfile struct {
+	UserInfo       UserInfo
+	BannerImageURL string
+	TweetCount     int64
+	FollowerCount  int64
+	FollowingCount int64
+	IsFollowed     bool
+	CreatedAt	   time.Time
 }

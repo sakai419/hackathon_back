@@ -49,8 +49,14 @@ SELECT
     COUNT(CASE WHEN follower_account_id = $1 AND status = 'accepted' THEN 1 END) AS following_count
 FROM follows;
 
-
 -- name: GetFollowRequestCount :one
 SELECT COUNT(*)
 FROM follows
 WHERE following_account_id = $1 AND status = 'pending';
+
+-- name: CheckIsFollowed :one
+SELECT EXISTS(
+    SELECT 1
+    FROM follows
+    WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'accepted'
+);

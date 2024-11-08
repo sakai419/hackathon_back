@@ -134,3 +134,8 @@ type FollowCounts struct {
 	FollowersCount int64
 	FollowingCount int64
 }
+
+type CheckIsFollowedParams struct {
+	FollowerAccountID  string
+	FollowingAccountID  string
+}

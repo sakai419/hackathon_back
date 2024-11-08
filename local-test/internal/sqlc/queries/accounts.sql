@@ -7,16 +7,17 @@ SELECT id FROM accounts
 WHERE user_id = $1;
 
 -- name: GetUserInfo :one
-SELECT a.id, a.user_id, a.user_name, a.is_admin, p.bio, p.profile_image_url, s.is_private
+SELECT a.id, a.user_id, a.user_name, a.is_admin, a.created_at, p.bio, p.profile_image_url, p.banner_image_url, s.is_private
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
 JOIN settings s ON a.id = s.account_id
 WHERE a.id = $1;
 
 -- name: GetUserInfos :many
-SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
+SELECT a.id, a.user_id, a.user_name, a.is_admin, a.created_at, p.bio, p.profile_image_url, p.banner_image_url, s.is_private
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
+JOIN settings s ON a.id = s.account_id
 WHERE a.id = ANY(@IDs::VARCHAR[]) and a.is_suspended = FALSE
 ORDER BY a.created_at DESC;
 

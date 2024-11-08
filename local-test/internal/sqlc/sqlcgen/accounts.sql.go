@@ -8,6 +8,7 @@ package sqlcgen
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -70,7 +71,7 @@ func (q *Queries) GetAccountInfo(ctx context.Context, id string) (GetAccountInfo
 }
 
 const getUserInfo = `-- name: GetUserInfo :one
-SELECT a.id, a.user_id, a.user_name, a.is_admin, p.bio, p.profile_image_url, s.is_private
+SELECT a.id, a.user_id, a.user_name, a.is_admin, a.created_at, p.bio, p.profile_image_url, p.banner_image_url, s.is_private
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
 JOIN settings s ON a.id = s.account_id
@@ -82,8 +83,10 @@ type GetUserInfoRow struct {
 	UserID          string
 	UserName        string
 	IsAdmin         bool
+	CreatedAt       time.Time
 	Bio             sql.NullString
 	ProfileImageUrl sql.NullString
+	BannerImageUrl  sql.NullString
 	IsPrivate       sql.NullBool
 }
 
@@ -95,17 +98,20 @@ func (q *Queries) GetUserInfo(ctx context.Context, id string) (GetUserInfoRow, e
 		&i.UserID,
 		&i.UserName,
 		&i.IsAdmin,
+		&i.CreatedAt,
 		&i.Bio,
 		&i.ProfileImageUrl,
+		&i.BannerImageUrl,
 		&i.IsPrivate,
 	)
 	return i, err
 }
 
 const getUserInfos = `-- name: GetUserInfos :many
-SELECT a.id, a.user_id, a.user_name, p.bio, p.profile_image_url
+SELECT a.id, a.user_id, a.user_name, a.is_admin, a.created_at, p.bio, p.profile_image_url, p.banner_image_url, s.is_private
 FROM accounts a
 JOIN profiles p ON a.id = p.account_id
+JOIN settings s ON a.id = s.account_id
 WHERE a.id = ANY($1::VARCHAR[]) and a.is_suspended = FALSE
 ORDER BY a.created_at DESC
 `
@@ -114,8 +120,12 @@ type GetUserInfosRow struct {
 	ID              string
 	UserID          string
 	UserName        string
+	IsAdmin         bool
+	CreatedAt       time.Time
 	Bio             sql.NullString
 	ProfileImageUrl sql.NullString
+	BannerImageUrl  sql.NullString
+	IsPrivate       sql.NullBool
 }
 
 func (q *Queries) GetUserInfos(ctx context.Context, ids []string) ([]GetUserInfosRow, error) {
@@ -131,8 +141,12 @@ func (q *Queries) GetUserInfos(ctx context.Context, ids []string) ([]GetUserInfo
 			&i.ID,
 			&i.UserID,
 			&i.UserName,
+			&i.IsAdmin,
+			&i.CreatedAt,
 			&i.Bio,
 			&i.ProfileImageUrl,
+			&i.BannerImageUrl,
+			&i.IsPrivate,
 		); err != nil {
 			return nil, err
 		}

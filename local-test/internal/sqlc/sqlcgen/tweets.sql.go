@@ -206,7 +206,8 @@ func (q *Queries) GetRecentTweetMetadatas(ctx context.Context, arg GetRecentTwee
 }
 
 const getTweetCountByAccountID = `-- name: GetTweetCountByAccountID :one
-SELECT COUNT(*) FROM tweets WHERE account_id = $1
+SELECT COUNT(*) FROM tweets
+WHERE account_id = $1
 `
 
 func (q *Queries) GetTweetCountByAccountID(ctx context.Context, accountID string) (int64, error) {

@@ -19,6 +19,52 @@ func NewUserHandler(svc *service.Service) ServerInterface {
 	}
 }
 
+// Get user profile
+// (GET /users/{user_id})
+func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request, _ string) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get user profile
+	profile, err := h.svc.GetUserProfile(r.Context(), &model.GetUserProfileParams{
+		TargetAccountID: targetAccountID,
+		ClientAccountID: clientAccountID,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get user profile", err))
+		return
+	}
+
+	// Convert to response
+	resp := UserProfile{
+		UserInfo: UserInfo{
+			UserId:          profile.UserInfo.UserID,
+			UserName:        profile.UserInfo.UserName,
+			Bio:             profile.UserInfo.Bio,
+			ProfileImageUrl: profile.UserInfo.ProfileImageURL,
+			IsPrivate:       profile.UserInfo.IsPrivate,
+			IsAdmin:         profile.UserInfo.IsAdmin,
+		},
+		BannerImageUrl: profile.BannerImageURL,
+		TweetCount:     profile.TweetCount,
+		FollowerCount:  profile.FollowerCount,
+		FollowingCount: profile.FollowingCount,
+		IsFollowed:     profile.IsFollowed,
+		CreatedAt: 	    profile.CreatedAt,
+	}
+
+	utils.Respond(w, resp)
+}
+
 // Get user's tweets
 // (GET /users/{user_id}/tweets)
 func (h *UserHandler) GetUserTweets(w http.ResponseWriter, r *http.Request, _ string, params GetUserTweetsParams) {

@@ -26,6 +26,26 @@ func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowReque
 	return q.db.ExecContext(ctx, acceptFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
+const checkIsFollowed = `-- name: CheckIsFollowed :one
+SELECT EXISTS(
+    SELECT 1
+    FROM follows
+    WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'accepted'
+)
+`
+
+type CheckIsFollowedParams struct {
+	FollowerAccountID  string
+	FollowingAccountID string
+}
+
+func (q *Queries) CheckIsFollowed(ctx context.Context, arg CheckIsFollowedParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkIsFollowed, arg.FollowerAccountID, arg.FollowingAccountID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createFollow = `-- name: CreateFollow :exec
 INSERT INTO follows (follower_account_id, following_account_id, status)
 VALUES ($1, $2, 'accepted')

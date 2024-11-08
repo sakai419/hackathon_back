@@ -83,6 +83,10 @@ LEFT JOIN (
 ) AS r ON t.id = r.original_tweet_id
 WHERE t.id = ANY(@tweet_ids::BIGINT[]);
 
+-- name: GetTweetCountByAccountID :one
+SELECT COUNT(*) FROM tweets
+WHERE account_id = $1;
+
 -- name: DeleteTweet :execresult
 DELETE FROM tweets WHERE id = $1;
 
@@ -106,6 +110,3 @@ SELECT * FROM tweets
 WHERE content LIKE $1 OR code LIKE $2
 ORDER BY created_at DESC
 LIMIT $3 OFFSET $4;
-
--- name: GetTweetCountByAccountID :one
-SELECT COUNT(*) FROM tweets WHERE account_id = $1;

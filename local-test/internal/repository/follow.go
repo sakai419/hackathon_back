@@ -364,3 +364,21 @@ func (r *Repository) GetFollowRequestCount(ctx context.Context, accountID string
 
 	return count, nil
 }
+
+func (r *Repository) CheckIsFollowed(ctx context.Context, params *model.CheckIsFollowedParams) (bool, error) {
+	// Get is followed
+	isFollowed, err := r.q.CheckIsFollowed(ctx, sqlcgen.CheckIsFollowedParams{
+		FollowerAccountID: params.FollowerAccountID,
+		FollowingAccountID: params.FollowingAccountID,
+	})
+	if err != nil {
+		return false, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get is followed",
+				Err: err,
+			},
+		)
+	}
+
+	return isFollowed, nil
+}

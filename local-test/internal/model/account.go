@@ -2,6 +2,7 @@ package model
 
 import (
 	"local-test/pkg/apperrors"
+	"time"
 )
 
 type CreateAccountParams struct {
@@ -35,8 +36,10 @@ type UserInfoInternal struct {
 	UserName        string
 	Bio	            string
 	ProfileImageURL string
+	BannerImageURL  string
 	IsPrivate       bool
 	IsAdmin		    bool
+	CreatedAt	    time.Time
 }
 
 type UserInfo struct {

@@ -194,6 +194,21 @@ func (r *Repository) GetTweetInfosByIDs(ctx context.Context, params *model.GetTw
 	return ret, nil
 }
 
+func (r *Repository) GetTweetCountByAccountID(ctx context.Context, accountID string) (int64, error) {
+	// Get tweet count by account id
+	count, err := r.q.GetTweetCountByAccountID(ctx, accountID)
+	if err != nil {
+		return 0, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get tweet count by account id",
+				Err: err,
+			},
+		)
+	}
+
+	return count, nil
+}
+
 func (r *Repository) DeleteTweet(ctx context.Context, tweetID int64) error {
 	// Delete tweet
 	res, err := r.q.DeleteTweet(ctx, tweetID)

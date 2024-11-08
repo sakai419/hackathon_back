@@ -207,8 +207,10 @@ func (r *Repository) GetUserInfo(ctx context.Context, id string) (*model.UserInf
 		UserName: res.UserName,
 		Bio: res.Bio.String,
 		ProfileImageURL: res.ProfileImageUrl.String,
+		BannerImageURL: res.BannerImageUrl.String,
 		IsPrivate: res.IsPrivate.Bool,
 		IsAdmin: res.IsAdmin,
+		CreatedAt: res.CreatedAt,
 	}
 
 	return userInfo, nil
@@ -244,6 +246,10 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.U
 			UserName: r.UserName,
 			Bio: r.Bio.String,
 			ProfileImageURL: r.ProfileImageUrl.String,
+			BannerImageURL: r.BannerImageUrl.String,
+			IsPrivate: r.IsPrivate.Bool,
+			IsAdmin: r.IsAdmin,
+			CreatedAt: r.CreatedAt,
 		}
 		userAndProfileInfos = append(userAndProfileInfos, userAndProfileInfo)
 	}

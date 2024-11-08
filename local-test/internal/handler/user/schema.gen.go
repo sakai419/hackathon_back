@@ -50,6 +50,16 @@ type TweetInfo struct {
 // TweetInfos defines model for TweetInfos.
 type TweetInfos = []TweetInfo
 
+// UserInfo defines model for UserInfo.
+type UserInfo struct {
+	Bio             string `json:"bio"`
+	IsAdmin         bool   `json:"is_admin"`
+	IsPrivate       bool   `json:"is_private"`
+	ProfileImageUrl string `json:"profile_image_url"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
+}
+
 // UserInfoWithoutBio defines model for UserInfoWithoutBio.
 type UserInfoWithoutBio struct {
 	IsAdmin         bool   `json:"is_admin"`
@@ -57,6 +67,17 @@ type UserInfoWithoutBio struct {
 	ProfileImageUrl string `json:"profile_image_url"`
 	UserId          string `json:"user_id"`
 	UserName        string `json:"user_name"`
+}
+
+// UserProfile defines model for UserProfile.
+type UserProfile struct {
+	BannerImageUrl string    `json:"banner_image_url"`
+	CreatedAt      time.Time `json:"created_at"`
+	FollowerCount  int64     `json:"follower_count"`
+	FollowingCount int64     `json:"following_count"`
+	IsFollowed     bool      `json:"is_followed"`
+	TweetCount     int64     `json:"tweet_count"`
+	UserInfo       UserInfo  `json:"user_info"`
 }
 
 // GetUserLikesParams defines parameters for GetUserLikes.
@@ -79,6 +100,9 @@ type GetUserTweetsParams struct {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get user profile
+	// (GET /users/{user_id})
+	GetUserProfile(w http.ResponseWriter, r *http.Request, userId string)
 	// Get liked tweets by user
 	// (GET /users/{user_id}/likes)
 	GetUserLikes(w http.ResponseWriter, r *http.Request, userId string, params GetUserLikesParams)
@@ -98,6 +122,31 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetUserProfile operation middleware
+func (siw *ServerInterfaceWrapper) GetUserProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUserProfile(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetUserLikes operation middleware
 func (siw *ServerInterfaceWrapper) GetUserLikes(w http.ResponseWriter, r *http.Request) {
@@ -385,6 +434,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		HandlerMiddlewares: options.Middlewares,
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
+
+	r.HandleFunc(options.BaseURL+"/users/{user_id}", wrapper.GetUserProfile).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/users/{user_id}/likes", wrapper.GetUserLikes).Methods("GET")
 

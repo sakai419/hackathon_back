@@ -7,6 +7,40 @@ import (
 	"local-test/pkg/apperrors"
 )
 
+func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfileParams) (*model.UserProfile, error) {
+	// Get user infos
+	userInfo, err := s.repo.GetUserInfo(ctx, params.TargetAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
+	}
+
+	// Get is followed
+	isFollowed, err := s.repo.CheckIsFollowed(ctx, &model.CheckIsFollowedParams{
+		FollowerAccountID: params.ClientAccountID,
+		FollowingAccountID: params.TargetAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("check if followed", err)
+	}
+
+	// Get tweet count
+	tweetCount, err := s.repo.GetTweetCountByAccountID(ctx, params.TargetAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet count", "get tweet count by account id", err)
+	}
+
+	// Get follower and following count
+	followCounts, err := s.repo.GetFollowCounts(ctx, params.TargetAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("follow counts", "get follow counts", err)
+	}
+
+	// Convert to response
+	resp := convertToUserProfile(userInfo, tweetCount, followCounts, isFollowed)
+
+	return resp, nil
+}
+
 func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweetsParams) ([]*model.GetUserTweetsResponse, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
@@ -364,4 +398,23 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 	}
 
 	return responses, nil
+}
+
+func convertToUserProfile(userInfo *model.UserInfoInternal, tweetCount int64, followCounts *model.FollowCounts, isFollowed bool) *model.UserProfile {
+	return &model.UserProfile{
+		UserInfo:    model.UserInfo{
+			UserID:          userInfo.UserID,
+			UserName:        userInfo.UserName,
+			Bio:             userInfo.Bio,
+			ProfileImageURL: userInfo.ProfileImageURL,
+			IsPrivate:       userInfo.IsPrivate,
+			IsAdmin:         userInfo.IsAdmin,
+		},
+		BannerImageURL: userInfo.BannerImageURL,
+		TweetCount:     tweetCount,
+		FollowerCount:  followCounts.FollowersCount,
+		FollowingCount: followCounts.FollowingCount,
+		IsFollowed:     isFollowed,
+		CreatedAt: 	    userInfo.CreatedAt,
+	}
 }

@@ -5,6 +5,28 @@ info:
     description: API for managing users
 
 paths:
+    /users/{user_id}:
+        get:
+            summary: Get user profile
+            operationId: GetUserProfile
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User profile retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserProfile"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
     /users/{user_id}/tweets:
         get:
             summary: Get tweets by user
@@ -184,6 +206,59 @@ components:
                 - has_liked
                 - has_retweeted
                 - created_at
+        UserProfile:
+            type: object
+            properties:
+                user_info:
+                    $ref: "#/components/schemas/UserInfo"
+                banner_image_url:
+                    type: string
+                    format: uri
+                tweet_count:
+                    type: integer
+                    format: int64
+                following_count:
+                    type: integer
+                    format: int64
+                follower_count:
+                    type: integer
+                    format: int64
+                is_followed:
+                    type: boolean
+                created_at:
+                    type: string
+                    format: date-time
+            required:
+                - user_info
+                - banner_image_url
+                - tweet_count
+                - following_count
+                - follower_count
+                - is_followed
+                - created_at
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                bio:
+                    type: string
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - bio
+                - is_private
+                - is_admin
         UserInfoWithoutBio:
             type: object
             properties:
