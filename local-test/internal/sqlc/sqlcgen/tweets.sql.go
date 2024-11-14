@@ -14,6 +14,20 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+const checkPinnedTweetExists = `-- name: CheckPinnedTweetExists :one
+SELECT EXISTS (
+    SELECT 1 FROM tweets
+    WHERE account_id = $1 AND is_pinned = TRUE
+)
+`
+
+func (q *Queries) CheckPinnedTweetExists(ctx context.Context, accountID string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkPinnedTweetExists, accountID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createTweet = `-- name: CreateTweet :one
 INSERT INTO tweets (
     account_id, content, code, media
@@ -447,7 +461,7 @@ func (q *Queries) SearchTweets(ctx context.Context, arg SearchTweetsParams) ([]T
 	return items, nil
 }
 
-const setTweetAsPinned = `-- name: SetTweetAsPinned :exec
+const setTweetAsPinned = `-- name: SetTweetAsPinned :execresult
 UPDATE tweets
 SET is_pinned = TRUE
 WHERE id = $1 AND account_id = $2
@@ -458,9 +472,8 @@ type SetTweetAsPinnedParams struct {
 	AccountID string
 }
 
-func (q *Queries) SetTweetAsPinned(ctx context.Context, arg SetTweetAsPinnedParams) error {
-	_, err := q.db.ExecContext(ctx, setTweetAsPinned, arg.ID, arg.AccountID)
-	return err
+func (q *Queries) SetTweetAsPinned(ctx context.Context, arg SetTweetAsPinnedParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, setTweetAsPinned, arg.ID, arg.AccountID)
 }
 
 const unpinTweet = `-- name: UnpinTweet :exec

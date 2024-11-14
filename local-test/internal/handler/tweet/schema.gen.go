@@ -125,6 +125,9 @@ type ServerInterface interface {
 	// Get likes for a tweet
 	// (GET /tweets/{tweet_id}/likes)
 	GetLikingUserInfos(w http.ResponseWriter, r *http.Request, tweetId int64, params GetLikingUserInfosParams)
+	// Pin a tweet
+	// (PATCH /tweets/{tweet_id}/pin)
+	SetTweetAsPinned(w http.ResponseWriter, r *http.Request, tweetId int64)
 	// Quote retweet and notify poster
 	// (POST /tweets/{tweet_id}/quote)
 	PostQuoteAndNotify(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -344,6 +347,31 @@ func (siw *ServerInterfaceWrapper) GetLikingUserInfos(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetLikingUserInfos(w, r, tweetId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetTweetAsPinned operation middleware
+func (siw *ServerInterfaceWrapper) SetTweetAsPinned(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetTweetAsPinned(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -751,6 +779,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.LikeTweetAndNotify).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/likes", wrapper.GetLikingUserInfos).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/pin", wrapper.SetTweetAsPinned).Methods("PATCH")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/quote", wrapper.PostQuoteAndNotify).Methods("POST")
 

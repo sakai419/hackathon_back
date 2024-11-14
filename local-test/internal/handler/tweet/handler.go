@@ -251,6 +251,32 @@ func (h *TweetHandler) Unretweet(w http.ResponseWriter, r *http.Request, tweetID
 	utils.Respond(w, nil)
 }
 
+// Set tweet as pinned
+// (POST /tweets/{tweet_id}/pin)
+func (h *TweetHandler) SetTweetAsPinned(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Set tweet as pinned
+	if err := h.svc.SetTweetAsPinned(r.Context(), &model.SetTweetAsPinnedParams{
+		ClientAccountID: clientAccountID,
+		TweetID:         tweetID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("set tweet as pinned", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}
+
 // Get liking user infos
 // (GET /tweets/{tweet_id}/likes)
 func (h *TweetHandler) GetLikingUserInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetLikingUserInfosParams) {

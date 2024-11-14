@@ -273,6 +273,37 @@ func (s *Service) PostReplyAndNotify(ctx context.Context, params *model.PostRepl
 	return nil
 }
 
+func (s *Service) SetTweetAsPinned(ctx context.Context, params *model.SetTweetAsPinnedParams) error {
+	// Get account id of tweet
+	accountID, err := s.repo.GetAccountIDByTweetID(ctx, params.TweetID)
+	if err != nil {
+		return apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if client is authorized
+	if accountID != params.ClientAccountID {
+		return apperrors.NewForbiddenAppError("Set tweet as pinned", nil)
+	}
+
+	// Check if pinned tweet already exists
+	exists, err := s.repo.CheckPinnedTweetExists(ctx, params.ClientAccountID)
+	if err != nil {
+		return apperrors.NewInternalAppError("check pinned tweet exists", err)
+	} else if exists {
+		return apperrors.NewDuplicateEntryAppError("pinned tweet", "set tweet as pinned", &apperrors.ErrDuplicateEntry{
+			Entity: "pinned tweet",
+			Err:    errors.New("pinned tweet already exists"),
+		})
+	}
+
+	// Set tweet as pinned
+	if err := s.repo.SetTweetAsPinned(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("tweet", "set tweet as pinned", err)
+	}
+
+	return nil
+}
+
 func (s *Service) UnlikeTweet(ctx context.Context, params *model.UnlikeTweetParams) error {
 	// Unlike tweet
 	if err := s.repo.UnlikeTweet(ctx, params); err != nil {

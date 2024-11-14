@@ -80,6 +80,57 @@ func (r *Repository) CreateTweet(ctx context.Context, params *model.CreateTweetP
 	return tweetID, nil
 }
 
+func (r *Repository) SetTweetAsPinned(ctx context.Context, params *model.SetTweetAsPinnedParams) error {
+	// Pin tweet
+	res, err := r.q.SetTweetAsPinned(ctx, sqlcgen.SetTweetAsPinnedParams{
+		ID:         params.TweetID,
+		AccountID: params.ClientAccountID,
+	})
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "pin tweet",
+				Err: err,
+			},
+		)
+	}
+
+	// Check if tweet pinned
+	num, err := res.RowsAffected()
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get rows affected",
+				Err: err,
+			},
+		)
+	}
+	if num == 0 {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "tweet id",
+			},
+		)
+	}
+
+	return nil
+}
+
+func (r *Repository) CheckPinnedTweetExists(ctx context.Context, accountID string) (bool, error) {
+	// Check pinned tweet exists
+	exists, err := r.q.CheckPinnedTweetExists(ctx, accountID)
+	if err != nil {
+		return false, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check pinned tweet exists",
+				Err: err,
+			},
+		)
+	}
+
+	return exists, nil
+}
+
 func (r *Repository) GetAccountIDByTweetID(ctx context.Context, tweetID int64) (string, error) {
 	// Get account id by tweet id
 	accountID, err := r.q.GetAccountIDByTweetID(ctx, tweetID)

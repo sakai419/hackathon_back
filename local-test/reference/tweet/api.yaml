@@ -176,6 +176,25 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/{tweet_id}/pin:
+        patch:
+            summary: Pin a tweet
+            operationId: SetTweetAsPinned
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet pinned successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
     /tweets/{tweet_id}/reply:
         post:
             summary: Reply to a tweet

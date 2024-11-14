@@ -56,6 +56,11 @@ func (p *PostTweetParams) Validate() error {
 	return nil
 }
 
+type SetTweetAsPinnedParams struct {
+	TweetID         int64
+	ClientAccountID string
+}
+
 type CreateTweetParams struct {
 	AccountID   string
 	Content     *string
