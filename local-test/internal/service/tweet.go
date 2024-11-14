@@ -285,11 +285,11 @@ func (s *Service) SetTweetAsPinned(ctx context.Context, params *model.SetTweetAs
 		return apperrors.NewForbiddenAppError("Set tweet as pinned", nil)
 	}
 
-	// Check if pinned tweet already exists
-	exists, err := s.repo.CheckPinnedTweetExists(ctx, params.ClientAccountID)
+	// Get pinned tweet id
+	pinnedTweetID, err := s.repo.GetPinnedTweetID(ctx, params.ClientAccountID)
 	if err != nil {
-		return apperrors.NewInternalAppError("check pinned tweet exists", err)
-	} else if exists {
+		return apperrors.NewInternalAppError("get pinned tweet id", err)
+	} else if pinnedTweetID != nil {
 		return apperrors.NewDuplicateEntryAppError("pinned tweet", "set tweet as pinned", &apperrors.ErrDuplicateEntry{
 			Entity: "pinned tweet",
 			Err:    errors.New("pinned tweet already exists"),
@@ -317,6 +317,38 @@ func (s *Service) Unretweet(ctx context.Context, params *model.UnretweetParams) 
 	// Unretweet
 	if err := s.repo.Unretweet(ctx, params); err != nil {
 		return apperrors.NewNotFoundAppError("retweet", "unretweet", err)
+	}
+
+	return nil
+}
+
+func (s *Service) UnsetTweetAsPinned(ctx context.Context, params *model.UnsetTweetAsPinnedParams) error {
+	// Get account id of tweet
+	accountID, err := s.repo.GetAccountIDByTweetID(ctx, params.TweetID)
+	if err != nil {
+		return apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if client is authorized
+	if accountID != params.ClientAccountID {
+		return apperrors.NewForbiddenAppError("Unset tweet as pinned", nil)
+	}
+
+	// Get pinned tweet id
+	pinnedTweetID, err := s.repo.GetPinnedTweetID(ctx, params.ClientAccountID)
+	if err != nil {
+		return apperrors.NewInternalAppError("get pinned tweet id", err)
+	} else if pinnedTweetID == nil {
+		return apperrors.NewNotFoundAppError("pinned tweet", "unset tweet as pinned", &apperrors.ErrRecordNotFound{
+			Condition: "pinned tweet id",
+		})
+	} else if *pinnedTweetID != params.TweetID {
+		return apperrors.NewForbiddenAppError("Unset tweet as pinned", nil)
+	}
+
+	// Unset tweet as pinned
+	if err := s.repo.UnsetTweetAsPinned(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("tweet", "unset tweet as pinned", err)
 	}
 
 	return nil

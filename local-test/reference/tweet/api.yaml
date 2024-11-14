@@ -194,6 +194,23 @@ paths:
                     description: Bad request
                 "500":
                     description: Internal server error
+        delete:
+            summary: Unpin a tweet
+            operationId: UnsetTweetAsPinned
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet unpinned successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
 
     /tweets/{tweet_id}/reply:
         post:

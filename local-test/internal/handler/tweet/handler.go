@@ -277,6 +277,32 @@ func (h *TweetHandler) SetTweetAsPinned(w http.ResponseWriter, r *http.Request, 
 	utils.Respond(w, nil)
 }
 
+// Unset tweet as pinned
+// (DELETE /tweets/{tweet_id}/pin)
+func (h *TweetHandler) UnsetTweetAsPinned(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Check if the user is suspended
+	if utils.IsClientSuspended(w, r) {
+		return
+	}
+
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Unset tweet as pinned
+	if err := h.svc.UnsetTweetAsPinned(r.Context(), &model.UnsetTweetAsPinnedParams{
+		ClientAccountID: clientAccountID,
+		TweetID:         tweetID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("unset tweet as pinned", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}
+
 // Get liking user infos
 // (GET /tweets/{tweet_id}/likes)
 func (h *TweetHandler) GetLikingUserInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetLikingUserInfosParams) {

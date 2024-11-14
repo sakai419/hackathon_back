@@ -61,6 +61,11 @@ type SetTweetAsPinnedParams struct {
 	ClientAccountID string
 }
 
+type UnsetTweetAsPinnedParams struct {
+	TweetID         int64
+	ClientAccountID string
+}
+
 type CreateTweetParams struct {
 	AccountID   string
 	Content     *string

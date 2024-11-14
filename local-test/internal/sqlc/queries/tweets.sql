@@ -100,16 +100,15 @@ UPDATE tweets
 SET is_pinned = TRUE
 WHERE id = $1 AND account_id = $2;
 
--- name: UnpinTweet :exec
+-- name: UnsetTweetAsPinned :execresult
 UPDATE tweets
 SET is_pinned = FALSE
 WHERE id = $1 AND account_id = $2;
 
--- name: CheckPinnedTweetExists :one
-SELECT EXISTS (
-    SELECT 1 FROM tweets
-    WHERE account_id = $1 AND is_pinned = TRUE
-);
+-- name: GetPinnedTweetID :one
+SELECT id FROM tweets
+WHERE account_id = $1 AND is_pinned = TRUE
+LIMIT 1;
 
 -- name: SearchTweets :many
 SELECT * FROM tweets
