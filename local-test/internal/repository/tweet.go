@@ -331,6 +331,7 @@ func convertToTweetInfoInternal(row []sqlcgen.GetTweetInfosByAccountIDRow) ([]*m
 					Message: "failed to unmarshal media",
 				}
 			}
+			info.Media = &media
 		}
 
 		infos = append(infos, &info)
