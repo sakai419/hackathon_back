@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	MediaTypeJPG = "jpg"
+	MediaTypeImage = "image"
+	MediaTypeVideo = "video"
 )
 
 type Media struct {
@@ -16,7 +17,8 @@ type Media struct {
 
 func (m *Media) Validate() error {
 	switch m.Type {
-	case MediaTypeJPG:
+	case MediaTypeImage:
+	case MediaTypeVideo:
 		if m.URL == "" {
 			return &apperrors.ErrInvalidInput{
 				Message: "media url is missing",
