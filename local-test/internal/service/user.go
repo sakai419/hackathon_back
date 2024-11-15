@@ -54,7 +54,17 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	}); err != nil {
 		return nil, apperrors.NewInternalAppError("check if blocked", err)
 	} else if blocked {
-		return nil, apperrors.NewForbiddenAppError("get user tweets", err)
+		return nil, apperrors.NewForbiddenAppError("get user tweets", errors.New("client is blocked by target"))
+	}
+
+	// Check if the target is private and the client is not following
+	if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
+		ClientAccountID: params.ClientAccountID,
+		TargetAccountID: params.TargetAccountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if private and not following", err)
+	} else if isPrivateAndNotFollowing {
+		return nil, apperrors.NewForbiddenAppError("get user tweets", errors.New("target is private and client is not following"))
 	}
 
 	// Get user tweets
@@ -117,8 +127,17 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 		accountIDs = append(accountIDs, accountID)
 	}
 
+	// Filter accesible account ids
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+		AccountIDs:       accountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("filter accessible account ids", err)
+	}
+
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -293,6 +312,8 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 				UserID:          userInfo.UserID,
 				UserName:        userInfo.UserName,
 				ProfileImageURL: userInfo.ProfileImageURL,
+				IsPrivate: 	     userInfo.IsPrivate,
+				IsAdmin: 	     userInfo.IsAdmin,
 			},
 		}
 
@@ -303,31 +324,35 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 		// Get quoted tweet info
 		quotedTweetInfo, ok := quotedTweetInfoMap[tweet.TweetID]
 		if ok {
+			quotedTweet := &model.TweetInfo{}
 			userInfo, ok := userInfoMap[quotedTweetInfo.QuotedTweet.AccountID]
-			if !ok {
-				return nil, apperrors.NewInternalAppError("user info not found", nil)
+			if ok {
+				quotedTweet = &model.TweetInfo{
+					TweetID:       quotedTweetInfo.QuotedTweet.TweetID,
+					Content:       quotedTweetInfo.QuotedTweet.Content,
+					Code:          quotedTweetInfo.QuotedTweet.Code,
+					Media:         quotedTweetInfo.QuotedTweet.Media,
+					LikesCount:    quotedTweetInfo.QuotedTweet.LikesCount,
+					RetweetsCount: quotedTweetInfo.QuotedTweet.RetweetsCount,
+					RepliesCount:  quotedTweetInfo.QuotedTweet.RepliesCount,
+					IsQuote:       quotedTweetInfo.QuotedTweet.IsQuote,
+					IsReply:       quotedTweetInfo.QuotedTweet.IsReply,
+					IsPinned:      quotedTweetInfo.QuotedTweet.IsPinned,
+					HasLiked:      quotedTweetInfo.QuotedTweet.HasLiked,
+					HasRetweeted:  quotedTweetInfo.QuotedTweet.HasRetweeted,
+					CreatedAt:     quotedTweetInfo.QuotedTweet.CreatedAt,
+					UserInfo:      model.UserInfoWithoutBio{
+						UserID:          userInfo.UserID,
+						UserName:        userInfo.UserName,
+						ProfileImageURL: userInfo.ProfileImageURL,
+						IsPrivate: 	     userInfo.IsPrivate,
+						IsAdmin: 	     userInfo.IsAdmin,
+					},
+				}
+			} else {
+				quotedTweet = nil
 			}
 
-			quotedTweet := &model.TweetInfo{
-				TweetID:       quotedTweetInfo.QuotedTweet.TweetID,
-				Content:       quotedTweetInfo.QuotedTweet.Content,
-				Code:          quotedTweetInfo.QuotedTweet.Code,
-				Media:         quotedTweetInfo.QuotedTweet.Media,
-				LikesCount:    quotedTweetInfo.QuotedTweet.LikesCount,
-				RetweetsCount: quotedTweetInfo.QuotedTweet.RetweetsCount,
-				RepliesCount:  quotedTweetInfo.QuotedTweet.RepliesCount,
-				IsQuote:       quotedTweetInfo.QuotedTweet.IsQuote,
-				IsReply:       quotedTweetInfo.QuotedTweet.IsReply,
-				IsPinned:      quotedTweetInfo.QuotedTweet.IsPinned,
-				HasLiked:      quotedTweetInfo.QuotedTweet.HasLiked,
-				HasRetweeted:  quotedTweetInfo.QuotedTweet.HasRetweeted,
-				CreatedAt:     quotedTweetInfo.QuotedTweet.CreatedAt,
-				UserInfo:      model.UserInfoWithoutBio{
-					UserID:          userInfo.UserID,
-					UserName:        userInfo.UserName,
-					ProfileImageURL: userInfo.ProfileImageURL,
-				},
-			}
 			response.OriginalTweet = quotedTweet
 		}
 
@@ -335,59 +360,67 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 		replyTweetInfo, ok := replyTweetInfoMap[tweet.TweetID]
 		if ok {
 			if replyTweetInfo.ParentReplyTweet != nil {
-				userInfo, ok := userInfoMap[replyTweetInfo.ParentReplyTweet.AccountID]
-				if !ok {
-					return nil, apperrors.NewInternalAppError("user info not found", nil)
-				}
+				parentReplyTweet := &model.TweetInfo{}
 
-				parentReplyTweet := &model.TweetInfo{
-					TweetID:       replyTweetInfo.ParentReplyTweet.TweetID,
-					Content:       replyTweetInfo.ParentReplyTweet.Content,
-					Code:          replyTweetInfo.ParentReplyTweet.Code,
-					Media:         replyTweetInfo.ParentReplyTweet.Media,
-					LikesCount:    replyTweetInfo.ParentReplyTweet.LikesCount,
-					RetweetsCount: replyTweetInfo.ParentReplyTweet.RetweetsCount,
-					RepliesCount:  replyTweetInfo.ParentReplyTweet.RepliesCount,
-					IsQuote:       replyTweetInfo.ParentReplyTweet.IsQuote,
-					IsReply:       replyTweetInfo.ParentReplyTweet.IsReply,
-					IsPinned:      replyTweetInfo.ParentReplyTweet.IsPinned,
-					HasLiked:      replyTweetInfo.ParentReplyTweet.HasLiked,
-					HasRetweeted:  replyTweetInfo.ParentReplyTweet.HasRetweeted,
-					CreatedAt:     replyTweetInfo.ParentReplyTweet.CreatedAt,
-					UserInfo:      model.UserInfoWithoutBio{
-						UserID:          userInfo.UserID,
-						UserName:        userInfo.UserName,
-						ProfileImageURL: userInfo.ProfileImageURL,
-					},
+				userInfo, ok := userInfoMap[replyTweetInfo.ParentReplyTweet.AccountID]
+				if ok {
+					parentReplyTweet = &model.TweetInfo{
+						TweetID:       replyTweetInfo.ParentReplyTweet.TweetID,
+						Content:       replyTweetInfo.ParentReplyTweet.Content,
+						Code:          replyTweetInfo.ParentReplyTweet.Code,
+						Media:         replyTweetInfo.ParentReplyTweet.Media,
+						LikesCount:    replyTweetInfo.ParentReplyTweet.LikesCount,
+						RetweetsCount: replyTweetInfo.ParentReplyTweet.RetweetsCount,
+						RepliesCount:  replyTweetInfo.ParentReplyTweet.RepliesCount,
+						IsQuote:       replyTweetInfo.ParentReplyTweet.IsQuote,
+						IsReply:       replyTweetInfo.ParentReplyTweet.IsReply,
+						IsPinned:      replyTweetInfo.ParentReplyTweet.IsPinned,
+						HasLiked:      replyTweetInfo.ParentReplyTweet.HasLiked,
+						HasRetweeted:  replyTweetInfo.ParentReplyTweet.HasRetweeted,
+						CreatedAt:     replyTweetInfo.ParentReplyTweet.CreatedAt,
+						UserInfo:      model.UserInfoWithoutBio{
+							UserID:          userInfo.UserID,
+							UserName:        userInfo.UserName,
+							ProfileImageURL: userInfo.ProfileImageURL,
+							IsPrivate: 	     userInfo.IsPrivate,
+							IsAdmin: 	     userInfo.IsAdmin,
+						},
+					}
+				} else {
+					parentReplyTweet = nil
 				}
 
 				response.ParentReply = parentReplyTweet
 			}
 
-			userInfo, ok := userInfoMap[replyTweetInfo.OriginalTweet.AccountID]
-			if !ok {
-				return nil, apperrors.NewInternalAppError("user info not found", nil)
-			}
+			originalTweet := &model.TweetInfo{}
 
-			originalTweet := &model.TweetInfo{
-				TweetID:       replyTweetInfo.OriginalTweet.TweetID,
-				Content:       replyTweetInfo.OriginalTweet.Content,
-				Code:          replyTweetInfo.OriginalTweet.Code,
-				Media:         replyTweetInfo.OriginalTweet.Media,
-				LikesCount:    replyTweetInfo.OriginalTweet.LikesCount,
-				RetweetsCount: replyTweetInfo.OriginalTweet.RetweetsCount,
-				RepliesCount:  replyTweetInfo.OriginalTweet.RepliesCount,
-				IsQuote:       replyTweetInfo.OriginalTweet.IsQuote,
-				IsReply:       replyTweetInfo.OriginalTweet.IsReply,
-				IsPinned:      replyTweetInfo.OriginalTweet.IsPinned,
-				HasLiked:      replyTweetInfo.OriginalTweet.HasLiked,
-				HasRetweeted:  replyTweetInfo.OriginalTweet.HasRetweeted,
-				CreatedAt:     replyTweetInfo.OriginalTweet.CreatedAt,
-				UserInfo:      model.UserInfoWithoutBio{
-					UserID:          userInfo.UserID,
-					UserName:        userInfo.UserName,
-					ProfileImageURL: userInfo.ProfileImageURL,
-				},
+			userInfo, ok := userInfoMap[replyTweetInfo.OriginalTweet.AccountID]
+			if ok {
+				originalTweet = &model.TweetInfo{
+					TweetID:       replyTweetInfo.OriginalTweet.TweetID,
+					Content:       replyTweetInfo.OriginalTweet.Content,
+					Code:          replyTweetInfo.OriginalTweet.Code,
+					Media:         replyTweetInfo.OriginalTweet.Media,
+					LikesCount:    replyTweetInfo.OriginalTweet.LikesCount,
+					RetweetsCount: replyTweetInfo.OriginalTweet.RetweetsCount,
+					RepliesCount:  replyTweetInfo.OriginalTweet.RepliesCount,
+					IsQuote:       replyTweetInfo.OriginalTweet.IsQuote,
+					IsReply:       replyTweetInfo.OriginalTweet.IsReply,
+					IsPinned:      replyTweetInfo.OriginalTweet.IsPinned,
+					HasLiked:      replyTweetInfo.OriginalTweet.HasLiked,
+					HasRetweeted:  replyTweetInfo.OriginalTweet.HasRetweeted,
+					CreatedAt:     replyTweetInfo.OriginalTweet.CreatedAt,
+					UserInfo:      model.UserInfoWithoutBio{
+						UserID:          userInfo.UserID,
+						UserName:        userInfo.UserName,
+						ProfileImageURL: userInfo.ProfileImageURL,
+						IsPrivate: 	     userInfo.IsPrivate,
+						IsAdmin: 	     userInfo.IsAdmin,
+					},
+				}
+			} else {
+				originalTweet = nil
 			}
 
 			response.OriginalTweet = originalTweet

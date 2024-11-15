@@ -38,6 +38,52 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) (sql.Result, err
 	return q.db.ExecContext(ctx, deleteAccount, id)
 }
 
+const filterAccessibleAccountIDs = `-- name: FilterAccessibleAccountIDs :many
+SELECT a.id::VARCHAR as account_id
+FROM unnest($1::VARCHAR[]) AS a(id)
+LEFT JOIN blocks AS b
+    ON (b.blocked_account_id = a.id
+    AND b.blocker_account_id = $2)
+    OR (b.blocked_account_id = $2
+    AND b.blocker_account_id = a.id)
+LEFT JOIN settings AS s
+    ON s.account_id = a.id
+LEFT JOIN follows AS f
+    ON f.following_account_id = a.id
+    AND f.follower_account_id = $2
+WHERE
+    b.blocked_account_id IS NULL
+    AND (s.is_private = FALSE OR f.follower_account_id IS NOT NULL)
+`
+
+type FilterAccessibleAccountIDsParams struct {
+	AccountIds      []string
+	ClientAccountID string
+}
+
+func (q *Queries) FilterAccessibleAccountIDs(ctx context.Context, arg FilterAccessibleAccountIDsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, filterAccessibleAccountIDs, pq.Array(arg.AccountIds), arg.ClientAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var account_id string
+		if err := rows.Scan(&account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, account_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAccountIDByUserID = `-- name: GetAccountIDByUserID :one
 SELECT id FROM accounts
 WHERE user_id = $1

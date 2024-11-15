@@ -286,3 +286,21 @@ func (r *Repository) GetAccountInfo(ctx context.Context, accountID string) (*mod
 
 	return accountInfo, nil
 }
+
+func (r *Repository) FilterAccessibleAccountIDs(ctx context.Context, params *model.FilterAccesibleAccountIDsParams) ([]string, error) {
+	// Filter accessible account ids
+	accessibleAccountIDs, err := r.q.FilterAccessibleAccountIDs(ctx, sqlcgen.FilterAccessibleAccountIDsParams{
+		AccountIds: params.AccountIDs,
+		ClientAccountID: params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "filter accessible account ids",
+				Err: err,
+			},
+		)
+	}
+
+	return accessibleAccountIDs, nil
+}

@@ -30,6 +30,11 @@ func (p *CreateAccountParams) Validate() error {
 	return nil
 }
 
+type FilterAccesibleAccountIDsParams struct {
+	AccountIDs []string
+	ClientAccountID string
+}
+
 type UserInfoInternal struct {
 	ID              string
 	UserID          string

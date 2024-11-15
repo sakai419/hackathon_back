@@ -66,3 +66,20 @@ SELECT a.is_suspended, a.is_admin, s.is_private
 FROM accounts a
 JOIN settings s ON a.id = s.account_id
 WHERE a.id = $1;
+
+-- name: FilterAccessibleAccountIDs :many
+SELECT a.id::VARCHAR as account_id
+FROM unnest(@account_ids::VARCHAR[]) AS a(id)
+LEFT JOIN blocks AS b
+    ON (b.blocked_account_id = a.id
+    AND b.blocker_account_id = @client_account_id)
+    OR (b.blocked_account_id = @client_account_id
+    AND b.blocker_account_id = a.id)
+LEFT JOIN settings AS s
+    ON s.account_id = a.id
+LEFT JOIN follows AS f
+    ON f.following_account_id = a.id
+    AND f.follower_account_id = @client_account_id
+WHERE
+    b.blocked_account_id IS NULL
+    AND (s.is_private = FALSE OR f.follower_account_id IS NOT NULL);
