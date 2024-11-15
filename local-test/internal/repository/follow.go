@@ -382,3 +382,21 @@ func (r *Repository) CheckIsFollowed(ctx context.Context, params *model.CheckIsF
 
 	return isFollowed, nil
 }
+
+func (r *Repository) IsPrivateAndNotFollowing(ctx context.Context, params *model.IsPrivateAndNotFollowingParams) (bool, error) {
+	// Get is private and not following
+	isPrivateAndNotFollowing, err := r.q.IsPrivateAndNotFollowing(ctx, sqlcgen.IsPrivateAndNotFollowingParams{
+		ClientAccountID: params.ClientAccountID,
+		TargetAccountID: params.TargetAccountID,
+	})
+	if err != nil {
+		return false, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get is private and not following",
+				Err: err,
+			},
+		)
+	}
+
+	return isPrivateAndNotFollowing, nil
+}

@@ -228,6 +228,35 @@ func (q *Queries) GetFollowingAccountIDs(ctx context.Context, arg GetFollowingAc
 	return items, nil
 }
 
+const isPrivateAndNotFollowing = `-- name: IsPrivateAndNotFollowing :one
+SELECT
+    CASE
+        WHEN s.is_private = TRUE AND f.follower_account_id IS NULL THEN TRUE
+        ELSE FALSE
+    END AS is_private_and_not_following
+FROM
+    settings AS s
+LEFT JOIN
+    follows AS f
+ON
+    s.account_id = f.following_account_id
+    AND f.follower_account_id = $1
+WHERE
+    s.account_id = $2
+`
+
+type IsPrivateAndNotFollowingParams struct {
+	ClientAccountID string
+	TargetAccountID string
+}
+
+func (q *Queries) IsPrivateAndNotFollowing(ctx context.Context, arg IsPrivateAndNotFollowingParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, isPrivateAndNotFollowing, arg.ClientAccountID, arg.TargetAccountID)
+	var is_private_and_not_following bool
+	err := row.Scan(&is_private_and_not_following)
+	return is_private_and_not_following, err
+}
+
 const listPendingRequests = `-- name: ListPendingRequests :many
 SELECT follower_account_id, following_account_id, created_at
 FROM follows

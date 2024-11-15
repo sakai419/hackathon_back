@@ -60,3 +60,19 @@ SELECT EXISTS(
     FROM follows
     WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'accepted'
 );
+
+-- name: IsPrivateAndNotFollowing :one
+SELECT
+    CASE
+        WHEN s.is_private = TRUE AND f.follower_account_id IS NULL THEN TRUE
+        ELSE FALSE
+    END AS is_private_and_not_following
+FROM
+    settings AS s
+LEFT JOIN
+    follows AS f
+ON
+    s.account_id = f.following_account_id
+    AND f.follower_account_id = @client_account_id
+WHERE
+    s.account_id = @target_account_id;

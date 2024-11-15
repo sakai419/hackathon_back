@@ -139,3 +139,8 @@ type CheckIsFollowedParams struct {
 	FollowerAccountID  string
 	FollowingAccountID  string
 }
+
+type IsPrivateAndNotFollowingParams struct {
+	ClientAccountID  string
+	TargetAccountID  string
+}

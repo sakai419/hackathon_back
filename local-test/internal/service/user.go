@@ -57,7 +57,6 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 		return nil, apperrors.NewForbiddenAppError("get user tweets", err)
 	}
 
-
 	// Get user tweets
 	tweets, err := s.repo.GetTweetInfosByAccountID(ctx, &model.GetTweetInfosByAccountIDParams{
 		ClientAccountID: params.ClientAccountID,
