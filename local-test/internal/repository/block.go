@@ -211,3 +211,21 @@ func (r *Repository) IsBlocked(ctx context.Context, params *model.IsBlockedParam
 
 	return is_blocked, nil
 }
+
+func (r *Repository) IsBlocking(ctx context.Context, params *model.IsBlockingParams) (bool, error) {
+	// Get block
+	is_blocking, err := r.q.CheckBlockExists(ctx, sqlcgen.CheckBlockExistsParams{
+		BlockerAccountID: params.BlockerAccountID,
+		BlockedAccountID: params.BlockedAccountID,
+	})
+	if err != nil {
+		return false, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check is_blocking",
+				Err: err,
+			},
+		)
+	}
+
+	return is_blocking, nil
+}

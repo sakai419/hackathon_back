@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/apperrors"
+	"time"
 
 	"github.com/sqlc-dev/pqtype"
 )
@@ -267,19 +269,14 @@ func (r *Repository) GetTweetInfosByIDs(ctx context.Context, params *model.GetTw
 	}
 
 	// Convert to model
-	var ret []*model.TweetInfoInternal
-	for _, tweetInfo := range tweetInfos {
-		info, err := convertToTweetInfoInternalFromGetTweetInfosByIDsRow(tweetInfo)
-		if err != nil {
-			return nil, apperrors.WrapRepositoryError(
-				&apperrors.ErrOperationFailed{
-					Operation: "convert to tweet infos internal",
-					Err: err,
-				},
-			)
-		}
-
-		ret = append(ret, &info)
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
 	}
 
 	return ret, nil
@@ -390,42 +387,112 @@ func convertToTweetMetadata(row sqlcgen.GetRecentTweetMetadatasRow) (*model.Twee
 	return &metadata
 }
 
-func convertToTweetInfoInternal(row []sqlcgen.GetTweetInfosByAccountIDRow) ([]*model.TweetInfoInternal, error) {
-	infos := make([]*model.TweetInfoInternal, 0, len(row))
-	for _, r := range row {
-		info := model.TweetInfoInternal{
-			TweetID:       r.ID,
-			AccountID:     r.AccountID,
-			LikesCount:    r.LikesCount,
-			RetweetsCount: r.RetweetsCount,
-			RepliesCount:  r.RepliesCount,
-			IsQuote:       r.IsQuote,
-			IsReply:       r.IsReply,
-			IsPinned:      r.IsPinned,
-			HasLiked:      r.HasLiked,
-			HasRetweeted:  r.HasRetweeted,
-			CreatedAt:     r.CreatedAt,
-		}
+func mapRowToTweetInfoInternal(row interface{}) (*model.TweetInfoInternal, error) {
+	var r struct {
+		ID            int64
+		AccountID     string
+		LikesCount    int32
+		RetweetsCount int32
+		RepliesCount  int32
+		IsQuote       bool
+		IsReply       bool
+		IsPinned      bool
+		HasLiked      bool
+		HasRetweeted  bool
+		CreatedAt     time.Time
+		Content       sql.NullString
+		Code          sql.NullString
+		Media         pqtype.NullRawMessage
+	}
 
-		if r.Content.Valid {
-			info.Content = &r.Content.String
-		}
+	switch t := row.(type) {
+	case sqlcgen.GetTweetInfosByAccountIDRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
+	case sqlcgen.GetTweetInfosByIDsRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
+	default:
+		return nil, fmt.Errorf("invalid type: %T", t)
+	}
 
-		if r.Code.Valid {
-			info.Code = &r.Code.String
-		}
+	info := &model.TweetInfoInternal{
+		TweetID:       r.ID,
+		AccountID:     r.AccountID,
+		LikesCount:    r.LikesCount,
+		RetweetsCount: r.RetweetsCount,
+		RepliesCount:  r.RepliesCount,
+		IsQuote:       r.IsQuote,
+		IsReply:       r.IsReply,
+		IsPinned:      r.IsPinned,
+		HasLiked:      r.HasLiked,
+		HasRetweeted:  r.HasRetweeted,
+		CreatedAt:     r.CreatedAt,
+	}
 
-		if r.Media.Valid {
-			var media model.Media
-			if err := json.Unmarshal(r.Media.RawMessage, &media); err != nil {
-				return nil, &apperrors.ErrInvalidInput{
-					Message: "failed to unmarshal media",
-				}
+	if r.Content.Valid {
+		info.Content = &r.Content.String
+	}
+	if r.Code.Valid {
+		info.Code = &r.Code.String
+	}
+	if r.Media.Valid {
+		var m model.Media
+		if err := json.Unmarshal(r.Media.RawMessage, &m); err != nil {
+			return nil, errors.New("failed to unmarshal media")
+		}
+		info.Media = &m
+	}
+
+	return info, nil
+}
+
+func convertToTweetInfoInternal(rows interface{}) ([]*model.TweetInfoInternal, error) {
+	infos := []*model.TweetInfoInternal{}
+
+	switch typedRows := rows.(type) {
+	case []sqlcgen.GetTweetInfosByAccountIDRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
 			}
-			info.Media = &media
+			infos = append(infos, info)
 		}
-
-		infos = append(infos, &info)
+	case []sqlcgen.GetTweetInfosByIDsRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+	default:
+		return nil, errors.New("unsupported row type")
 	}
 
 	return infos, nil

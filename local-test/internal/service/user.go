@@ -54,7 +54,17 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	}); err != nil {
 		return nil, apperrors.NewInternalAppError("check if blocked", err)
 	} else if blocked {
-		return nil, apperrors.NewForbiddenAppError("get user tweets", errors.New("client is blocked by target"))
+		return nil, apperrors.NewBlockedAppError("get user tweets", errors.New("client is blocked by target"))
+	}
+
+	// Check if the client is blocking the target
+	if blocking, err := s.repo.IsBlocking(ctx, &model.IsBlockingParams{
+		BlockerAccountID: params.ClientAccountID,
+		BlockedAccountID: params.TargetAccountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if blocking", err)
+	} else if blocking {
+		return nil, apperrors.NewBlockingAppError("get user tweets", errors.New("client is blocking target"))
 	}
 
 	// Check if the target is private and the client is not following
@@ -76,6 +86,29 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	})
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("get user tweets", err)
+	}
+
+	if params.Offset == 0 {
+		// Get pinned tweet id
+		pinnedTweetID, err := s.repo.GetPinnedTweetID(ctx, params.TargetAccountID)
+		if err != nil {
+			return nil, apperrors.NewNotFoundAppError("pinned tweet id", "get pinned tweet id", err)
+		}
+
+		// Get pinned tweet info
+		if pinnedTweetID != nil {
+			pinnedTweet, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
+				ClientAccountID: params.ClientAccountID,
+				TweetIDs:        []int64{*pinnedTweetID},
+			})
+			if err != nil {
+				return nil, apperrors.NewNotFoundAppError("pinned tweet info", "get pinned tweet info", err)
+			}
+
+			if len(pinnedTweet) > 0 {
+				tweets = append([]*model.TweetInfoInternal{pinnedTweet[0]}, tweets...)
+			}
+		}
 	}
 
 	// Extract quoting and reply tweet ids
@@ -291,7 +324,7 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 		// Get user info
 		userInfo, ok := userInfoMap[tweet.AccountID]
 		if !ok {
-			return nil, apperrors.NewInternalAppError("user info not found", nil)
+			return nil, apperrors.NewInternalAppError("get user info", errors.New("user info not found"))
 		}
 
 		tweetInfo := model.TweetInfo{
@@ -349,8 +382,6 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 						IsAdmin: 	     userInfo.IsAdmin,
 					},
 				}
-			} else {
-				quotedTweet = nil
 			}
 
 			response.OriginalTweet = quotedTweet
@@ -386,8 +417,6 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 							IsAdmin: 	     userInfo.IsAdmin,
 						},
 					}
-				} else {
-					parentReplyTweet = nil
 				}
 
 				response.ParentReply = parentReplyTweet
@@ -419,8 +448,6 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 						IsAdmin: 	     userInfo.IsAdmin,
 					},
 				}
-			} else {
-				originalTweet = nil
 			}
 
 			response.OriginalTweet = originalTweet

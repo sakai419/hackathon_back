@@ -70,3 +70,8 @@ type IsBlockedParams struct {
 	BlockerAccountID string
 	BlockedAccountID string
 }
+
+type IsBlockingParams struct {
+	BlockerAccountID string
+	BlockedAccountID string
+}

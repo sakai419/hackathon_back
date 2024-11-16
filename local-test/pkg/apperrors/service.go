@@ -48,6 +48,34 @@ func NewForbiddenAppError(operation string, err error) *AppError {
 	}
 }
 
+func NewBlockedAppError(operation string, err error) *AppError {
+	return &AppError{
+		Status:  http.StatusForbidden,
+		Code:    "BLOCKED",
+		Message: "You are blocked by target user",
+		Err:     WrapServiceError(
+			&ErrOperationFailed{
+				Operation: operation,
+				Err: err,
+			},
+		),
+	}
+}
+
+func NewBlockingAppError(operation string, err error) *AppError {
+	return &AppError{
+		Status:  http.StatusForbidden,
+		Code:    "BLOCKING",
+		Message: "You are blocking target user",
+		Err:     WrapServiceError(
+			&ErrOperationFailed{
+				Operation: operation,
+				Err: err,
+			},
+		),
+	}
+}
+
 func NewDuplicateEntryAppError(entity, operation string, err error) *AppError {
 	var duplicateErr *ErrDuplicateEntry
 	if errors.As(err, &duplicateErr) {
