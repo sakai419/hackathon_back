@@ -14,7 +14,7 @@ import (
 
 // GetUserTweetsResponse defines model for GetUserTweetsResponse.
 type GetUserTweetsResponse struct {
-	OmittedReplyExist *bool      `json:"omitted_reply_exist"`
+	OmittedReplyExist *bool      `json:"omitted_reply_exist,omitempty"`
 	OriginalTweet     *TweetInfo `json:"original_tweet,omitempty"`
 	ParentReply       *TweetInfo `json:"parent_reply,omitempty"`
 	Tweet             TweetInfo  `json:"tweet"`
