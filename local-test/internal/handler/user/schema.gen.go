@@ -31,8 +31,8 @@ type Media struct {
 
 // TweetInfo defines model for TweetInfo.
 type TweetInfo struct {
-	Code          *string            `json:"code"`
-	Content       *string            `json:"content"`
+	Code          *string            `json:"code,omitempty"`
+	Content       *string            `json:"content,omitempty"`
 	CreatedAt     time.Time          `json:"created_at"`
 	HasLiked      bool               `json:"has_liked"`
 	HasRetweeted  bool               `json:"has_retweeted"`

@@ -178,6 +178,8 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 					UserName:        senderInfo.UserName,
 					Bio:             senderInfo.Bio,
 					ProfileImageURL: senderInfo.ProfileImageURL,
+					IsPrivate:       senderInfo.IsPrivate,
+					IsAdmin:         senderInfo.IsAdmin,
 				}
 			}
 		}
@@ -191,6 +193,8 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 						UserID:          clientUserInfo.UserID,
 						UserName: 	     clientUserInfo.UserName,
 						ProfileImageURL: clientUserInfo.ProfileImageURL,
+						IsPrivate: 	     clientUserInfo.IsPrivate,
+						IsAdmin: 	     clientUserInfo.IsAdmin,
 					},
 					Content:       tweetInfo.Content,
 					Code:          tweetInfo.Code,

@@ -167,12 +167,15 @@ components:
                 content:
                     type: string
                     nullable: true
+                    x-omitempty: true
                 code:
                     type: string
                     nullable: true
+                    x-omitempty: true
                 media:
                     $ref: "#/components/schemas/Media"
                     nullable: true
+                    x-omitempty: true
                 likes_count:
                     type: integer
                     format: int32

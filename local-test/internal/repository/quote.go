@@ -85,7 +85,7 @@ func (r *Repository) CreateQuoteAndNotify(ctx context.Context, params *model.Cre
 		SenderAccountID: sql.NullString{String: params.QuotingAccountID, Valid: true},
 		RecipientAccountID: params.QuotedAccountID,
 		Type: sqlcgen.NotificationTypeQuote,
-		TweetID: sql.NullInt64{Int64: tweetID, Valid: true},
+		TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
 	}); err != nil {
 		tx.Rollback()
 		return 0, apperrors.WrapRepositoryError(
