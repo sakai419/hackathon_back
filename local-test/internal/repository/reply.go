@@ -81,19 +81,21 @@ func (r *Repository) CreateReplyAndNotify(ctx context.Context, params *model.Cre
 	}
 
 	// Notify replied account
-	if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
-		SenderAccountID: sql.NullString{String: params.ReplyingAccountID, Valid: true},
-		RecipientAccountID: params.RepliedAccountID,
-		Type: sqlcgen.NotificationTypeReply,
-		TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
-	}); err != nil {
-		tx.Rollback()
-		return 0, apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create notification",
-				Err: err,
-			},
-		)
+	if params.RepliedAccountID != params.ReplyingAccountID {
+		if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
+			SenderAccountID: sql.NullString{String: params.ReplyingAccountID, Valid: true},
+			RecipientAccountID: params.RepliedAccountID,
+			Type: sqlcgen.NotificationTypeReply,
+			TweetID: sql.NullInt64{Int64: tweetID, Valid: true},
+		}); err != nil {
+			tx.Rollback()
+			return 0, apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "create notification",
+					Err: err,
+				},
+			)
+		}
 	}
 
 	// Commit transaction
@@ -141,13 +143,21 @@ func (r *Repository) GetRepliedTweetInfos(ctx context.Context, params *model.Get
 	}
 
 	// extract original and parent reply tweet ids
+	originalTweetMap := make(map[int64]bool)
+	parentReplyMap := make(map[int64]bool)
+	for _, relation := range replyRelations {
+		originalTweetMap[relation.OriginalTweetID] = true
+		if relation.ParentReplyID.Valid {
+			parentReplyMap[relation.ParentReplyID.Int64] = true
+		}
+	}
 	originalTweetIDs := make([]int64, 0, len(replyRelations))
 	parentReplyTweetIDs := make([]int64, 0, len(replyRelations))
-	for _, relation := range replyRelations {
-		originalTweetIDs = append(originalTweetIDs, relation.OriginalTweetID)
-		if relation.ParentReplyID.Valid {
-			parentReplyTweetIDs = append(parentReplyTweetIDs, relation.ParentReplyID.Int64)
-		}
+	for id := range originalTweetMap {
+		originalTweetIDs = append(originalTweetIDs, id)
+	}
+	for id := range parentReplyMap {
+		parentReplyTweetIDs = append(parentReplyTweetIDs, id)
 	}
 
 	// Get original tweet infos

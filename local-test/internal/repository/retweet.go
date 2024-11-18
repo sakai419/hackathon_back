@@ -48,20 +48,22 @@ func (r *Repository) CreateRetweetAndNotify(ctx context.Context, params *model.C
 		)
 	}
 
-	// Notify original tweet poster
-	if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
-		SenderAccountID: sql.NullString{String: params.RetweetingAccountID, Valid: true},
-		RecipientAccountID: params.RetweetedAccountID,
-		Type: sqlcgen.NotificationTypeRetweet,
-		TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
-	}); err != nil {
-		tx.Rollback()
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create notification",
-				Err: err,
-			},
-		)
+	if params.RetweetedAccountID != params.RetweetingAccountID {
+		// Notify original tweet poster
+		if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
+			SenderAccountID: sql.NullString{String: params.RetweetingAccountID, Valid: true},
+			RecipientAccountID: params.RetweetedAccountID,
+			Type: sqlcgen.NotificationTypeRetweet,
+			TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
+		}); err != nil {
+			tx.Rollback()
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "create notification",
+					Err: err,
+				},
+			)
+		}
 	}
 
 	// Commit transaction

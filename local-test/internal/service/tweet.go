@@ -219,7 +219,7 @@ func (s *Service) PostReplyAndNotify(ctx context.Context, params *model.PostRepl
 	}); if err != nil {
 		return apperrors.NewInternalAppError("check if blocked", err)
 	} else if isBlocked {
-		return apperrors.NewForbiddenAppError("Reply request", err)
+		return apperrors.NewBlockedAppError("reply", errors.New("replying account is blocked"))
 	}
 
 	// Extract hashtags

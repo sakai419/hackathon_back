@@ -88,6 +88,11 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 		return nil, apperrors.NewInternalAppError("get user tweets", err)
 	}
 
+	// unset tweet as pinned
+	for _, tweet := range tweets {
+		tweet.IsPinned = false
+	}
+
 	if params.Offset == 0 {
 		// Get pinned tweet id
 		pinnedTweetID, err := s.repo.GetPinnedTweetID(ctx, params.TargetAccountID)
@@ -448,6 +453,10 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 						IsAdmin: 	     userInfo.IsAdmin,
 					},
 				}
+			}
+
+			if replyTweetInfo.OmittedReplyExist != nil {
+				response.OmittedReplyExist = replyTweetInfo.OmittedReplyExist
 			}
 
 			response.OriginalTweet = originalTweet

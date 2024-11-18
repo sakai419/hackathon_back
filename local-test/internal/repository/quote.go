@@ -80,20 +80,22 @@ func (r *Repository) CreateQuoteAndNotify(ctx context.Context, params *model.Cre
 		)
 	}
 
-	// Notify quoted account
-	if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
-		SenderAccountID: sql.NullString{String: params.QuotingAccountID, Valid: true},
-		RecipientAccountID: params.QuotedAccountID,
-		Type: sqlcgen.NotificationTypeQuote,
-		TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
-	}); err != nil {
-		tx.Rollback()
-		return 0, apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create notification",
-				Err: err,
-			},
-		)
+	if params.QuotingAccountID != params.QuotedAccountID {
+		// Notify quoted account
+		if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
+			SenderAccountID: sql.NullString{String: params.QuotingAccountID, Valid: true},
+			RecipientAccountID: params.QuotedAccountID,
+			Type: sqlcgen.NotificationTypeQuote,
+			TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
+		}); err != nil {
+			tx.Rollback()
+			return 0, apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "create notification",
+					Err: err,
+				},
+			)
+		}
 	}
 
 	// Commit transaction
