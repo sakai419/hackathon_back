@@ -24,7 +24,7 @@ RETURNING id
 type CreateTweetParams struct {
 	AccountID string
 	Content   sql.NullString
-	Code      sql.NullString
+	Code      pqtype.NullRawMessage
 	Media     pqtype.NullRawMessage
 }
 
@@ -50,7 +50,7 @@ RETURNING id
 type CreateTweetAsQuoteParams struct {
 	AccountID string
 	Content   sql.NullString
-	Code      sql.NullString
+	Code      pqtype.NullRawMessage
 	Media     pqtype.NullRawMessage
 }
 
@@ -76,7 +76,7 @@ RETURNING id
 type CreateTweetAsReplyParams struct {
 	AccountID string
 	Content   sql.NullString
-	Code      sql.NullString
+	Code      pqtype.NullRawMessage
 	Media     pqtype.NullRawMessage
 }
 
@@ -267,7 +267,7 @@ type GetTweetInfosByAccountIDRow struct {
 	AccountID     string
 	IsPinned      bool
 	Content       sql.NullString
-	Code          sql.NullString
+	Code          pqtype.NullRawMessage
 	LikesCount    int32
 	RepliesCount  int32
 	RetweetsCount int32
@@ -355,7 +355,7 @@ type GetTweetInfosByIDsRow struct {
 	AccountID     string
 	IsPinned      bool
 	Content       sql.NullString
-	Code          sql.NullString
+	Code          pqtype.NullRawMessage
 	LikesCount    int32
 	RepliesCount  int32
 	RetweetsCount int32
@@ -414,7 +414,7 @@ LIMIT $3 OFFSET $4
 
 type SearchTweetsParams struct {
 	Content sql.NullString
-	Code    sql.NullString
+	Code    pqtype.NullRawMessage
 	Limit   int32
 	Offset  int32
 }

@@ -169,7 +169,7 @@ components:
                     nullable: true
                     x-omitempty: true
                 code:
-                    type: string
+                    $ref: "#/components/schemas/Code"
                     nullable: true
                     x-omitempty: true
                 media:
@@ -283,6 +283,16 @@ components:
                 - profile_image_url
                 - is_private
                 - is_admin
+        Code:
+            type: object
+            properties:
+                language:
+                    type: string
+                content:
+                    type: string
+            required:
+                - language
+                - content
         Media:
             type: object
             properties:

@@ -12,6 +12,12 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Code defines model for Code.
+type Code struct {
+	Content  string `json:"content"`
+	Language string `json:"language"`
+}
+
 // GetUserTweetsResponse defines model for GetUserTweetsResponse.
 type GetUserTweetsResponse struct {
 	OmittedReplyExist *bool      `json:"omitted_reply_exist,omitempty"`
@@ -31,7 +37,7 @@ type Media struct {
 
 // TweetInfo defines model for TweetInfo.
 type TweetInfo struct {
-	Code          *string            `json:"code,omitempty"`
+	Code          *Code              `json:"code,omitempty"`
 	Content       *string            `json:"content,omitempty"`
 	CreatedAt     time.Time          `json:"created_at"`
 	HasLiked      bool               `json:"has_liked"`

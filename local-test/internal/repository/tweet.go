@@ -340,7 +340,17 @@ func convertToCreateTweetParams(params *model.CreateTweetParams) (*sqlcgen.Creat
 	}
 
 	if params.Code != nil {
-		ret.Code = sql.NullString{String: *params.Code, Valid: true}
+		jsonb, err := json.Marshal(params.Code)
+		if err != nil {
+			return nil, &apperrors.ErrInvalidInput{
+				Message: "failed to marshal code",
+			}
+		}
+
+		ret.Code = pqtype.NullRawMessage{
+			RawMessage: jsonb,
+			Valid: true,
+		}
 	}
 
 	if params.Media != nil {
@@ -401,7 +411,7 @@ func mapRowToTweetInfoInternal(row interface{}) (*model.TweetInfoInternal, error
 		HasRetweeted  bool
 		CreatedAt     time.Time
 		Content       sql.NullString
-		Code          sql.NullString
+		Code          pqtype.NullRawMessage
 		Media         pqtype.NullRawMessage
 	}
 
@@ -457,9 +467,15 @@ func mapRowToTweetInfoInternal(row interface{}) (*model.TweetInfoInternal, error
 	if r.Content.Valid {
 		info.Content = &r.Content.String
 	}
+
 	if r.Code.Valid {
-		info.Code = &r.Code.String
+		var code model.Code
+		if err := json.Unmarshal(r.Code.RawMessage, &code); err != nil {
+			return nil, errors.New("failed to unmarshal code")
+		}
+		info.Code = &code
 	}
+
 	if r.Media.Valid {
 		var m model.Media
 		if err := json.Unmarshal(r.Media.RawMessage, &m); err != nil {
@@ -518,7 +534,13 @@ func convertToTweetInfoInternalFromGetTweetInfosByIDsRow(row sqlcgen.GetTweetInf
 	}
 
 	if row.Code.Valid {
-		info.Code = &row.Code.String
+		var code model.Code
+		if err := json.Unmarshal(row.Code.RawMessage, &code); err != nil {
+			return model.TweetInfoInternal{}, &apperrors.ErrInvalidInput{
+				Message: "failed to unmarshal code",
+			}
+		}
+		info.Code = &code
 	}
 
 	if row.Media.Valid {

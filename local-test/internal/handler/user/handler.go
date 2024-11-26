@@ -225,7 +225,10 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 	}
 
 	if t.Code != nil {
-		tweet.Code = t.Code
+		tweet.Code = &Code{
+			Language: t.Code.Language,
+			Content: t.Code.Content,
+		}
 	}
 
 	if t.Media != nil {

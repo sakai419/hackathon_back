@@ -221,7 +221,17 @@ func convertToCreateTweetAsReplyParams(params *model.CreateReplyAndNotifyParams)
 	}
 
 	if params.Code != nil {
-		ret.Code = sql.NullString{String: *params.Code, Valid: true}
+		jsonb, err := json.Marshal(params.Code)
+		if err != nil {
+			return nil, &apperrors.ErrInvalidInput{
+				Message: "failed to marshal code",
+			}
+		}
+
+		ret.Code = pqtype.NullRawMessage{
+			RawMessage: jsonb,
+			Valid: true,
+		}
 	}
 
 	if params.Media != nil {

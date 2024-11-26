@@ -11,8 +11,8 @@ const (
 )
 
 type Media struct {
-	Type string `json:"type"`
-	URL  string `json:"url"`
+	Type string
+	URL  string
 }
 
 func (m *Media) Validate() error {
@@ -33,10 +33,15 @@ func (m *Media) Validate() error {
 	return nil
 }
 
+type Code struct {
+	Language string
+	Content  string
+}
+
 type PostTweetParams struct {
 	AccountID       string
 	Content         *string
-	Code            *string
+	Code            *Code
 	Media           *Media
 }
 
@@ -69,14 +74,14 @@ type UnsetTweetAsPinnedParams struct {
 type CreateTweetParams struct {
 	AccountID   string
 	Content     *string
-	Code        *string
+	Code        *Code
 	Media       *Media
 	HashtagIDs  []int64
 }
 
 type GetTweetLabelsParams struct {
 	Content *string
-	Code    *string
+	Code    *Code
 	Media   *Media
 }
 
@@ -96,7 +101,7 @@ type TweetInfoInternal struct {
 	TweetID       int64
 	AccountID     string
 	Content       *string
-	Code          *string
+	Code          *Code
 	Media         *Media
 	LikesCount    int32
 	RetweetsCount int32
@@ -113,7 +118,7 @@ type TweetInfo struct {
 	TweetID       int64
 	UserInfo	  UserInfoWithoutBio
 	Content       *string
-	Code          *string
+	Code          *Code
 	Media         *Media
 	LikesCount    int32
 	RetweetsCount int32

@@ -6,7 +6,7 @@ type PostReplyAndNotifyParams struct {
 	ReplyingAccountID string
 	OriginalTweetID   int64
 	Content           *string
-	Code 			  *string
+	Code 			  *Code
 	Media             *Media
 }
 
@@ -31,7 +31,7 @@ type CreateReplyAndNotifyParams struct {
 	RepliedAccountID  string
 	OriginalTweetID   int64
 	Content           *string
-	Code 			  *string
+	Code 			  *Code
 	Media             *Media
 	HashtagIDs		  []int64
 }

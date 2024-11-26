@@ -178,7 +178,6 @@ func convertToNotificationResponse(notifications []*model.NotificationResponse) 
 					IsAdmin: 	     notification.RelatedTweet.UserInfo.IsAdmin,
 				},
 				Content:       notification.RelatedTweet.Content,
-				Code:          notification.RelatedTweet.Code,
 				LikesCount:    notification.RelatedTweet.LikesCount,
 				RetweetsCount: notification.RelatedTweet.RetweetsCount,
 				RepliesCount:  notification.RelatedTweet.RepliesCount,

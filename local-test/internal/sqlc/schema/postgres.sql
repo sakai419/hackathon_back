@@ -429,7 +429,7 @@ CREATE TABLE tweets (
     account_id CHAR(28) NOT NULL,
     is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
     content TEXT DEFAULT NULL,
-    code TEXT DEFAULT NULL,
+    code JSONB,
     likes_count INTEGER NOT NULL DEFAULT 0,
     replies_count INTEGER NOT NULL DEFAULT 0,
     retweets_count INTEGER NOT NULL DEFAULT 0,

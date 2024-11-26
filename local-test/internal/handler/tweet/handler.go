@@ -41,7 +41,14 @@ func (h *TweetHandler) PostTweet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Post tweet
+	var code *model.Code
 	var media *model.Media
+	if req.Code != nil {
+		code = &model.Code{
+			Language: req.Code.Language,
+			Content:  req.Code.Content,
+		}
+	}
 	if req.Media != nil {
 		media = &model.Media{
 			Type: req.Media.Type,
@@ -51,7 +58,7 @@ func (h *TweetHandler) PostTweet(w http.ResponseWriter, r *http.Request) {
 	if err := h.svc.PostTweet(r.Context(), &model.PostTweetParams{
 		AccountID: clientAccountID,
 		Content:   req.Content,
-		Code:      req.Code,
+		Code:      code,
 		Media:     media,
 	}); err != nil {
 		utils.RespondError(w, apperrors.NewHandlerError("post tweet", err))
@@ -135,7 +142,14 @@ func (h *TweetHandler) PostQuoteAndNotify(w http.ResponseWriter, r *http.Request
 	}
 
 	// Post quote
+	var code *model.Code
 	var media *model.Media
+	if req.Code != nil {
+		code = &model.Code{
+			Language: req.Code.Language,
+			Content:   req.Code.Content,
+		}
+	}
 	if req.Media != nil {
 		media = &model.Media{
 			Type: req.Media.Type,
@@ -146,7 +160,7 @@ func (h *TweetHandler) PostQuoteAndNotify(w http.ResponseWriter, r *http.Request
 		QuotingAccountID: clientAccountID,
 		OriginalTweetID:  tweetID,
 		Content:          req.Content,
-		Code:             req.Code,
+		Code:             code,
 		Media:            media,
 	}); err != nil {
 		utils.RespondError(w, apperrors.NewHandlerError("quote tweet", err))
@@ -178,7 +192,14 @@ func (h *TweetHandler) PostReplyAndNotify(w http.ResponseWriter, r *http.Request
 	}
 
 	// Post reply
+	var code *model.Code
 	var media *model.Media
+	if req.Code != nil {
+		code = &model.Code{
+			Language: req.Code.Language,
+			Content:  req.Code.Content,
+		}
+	}
 	if req.Media != nil {
 		media = &model.Media{
 			Type: req.Media.Type,
@@ -189,7 +210,7 @@ func (h *TweetHandler) PostReplyAndNotify(w http.ResponseWriter, r *http.Request
 		ReplyingAccountID: clientAccountID,
 		OriginalTweetID:   tweetID,
 		Content:           req.Content,
-		Code:              req.Code,
+		Code:              code,
 		Media:             media,
 	}); err != nil {
 		utils.RespondError(w, apperrors.NewHandlerError("reply tweet", err))
@@ -532,7 +553,10 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 	}
 
 	if t.Code != nil {
-		tweet.Code = t.Code
+		tweet.Code = &Code{
+			Language: t.Code.Language,
+			Content:  t.Code.Content,
+		}
 	}
 
 	if t.Media != nil {

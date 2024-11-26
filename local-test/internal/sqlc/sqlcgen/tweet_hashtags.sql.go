@@ -159,7 +159,7 @@ type GetRecentTweetsWithHashtagRow struct {
 	AccountID     string
 	IsPinned      bool
 	Content       sql.NullString
-	Code          sql.NullString
+	Code          pqtype.NullRawMessage
 	LikesCount    int32
 	RepliesCount  int32
 	RetweetsCount int32

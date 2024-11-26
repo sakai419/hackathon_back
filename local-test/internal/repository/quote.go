@@ -195,7 +195,17 @@ func convertToCreateTweetAsQuoteParams(params *model.CreateQuoteAndNotifyParams)
 	}
 
 	if params.Code != nil {
-		ret.Code = sql.NullString{String: *params.Code, Valid: true}
+		jsonb, err := json.Marshal(params.Code)
+		if err != nil {
+			return nil, &apperrors.ErrInvalidInput{
+				Message: "failed to marshal code",
+			}
+		}
+
+		ret.Code = pqtype.NullRawMessage{
+			RawMessage: jsonb,
+			Valid: true,
+		}
 	}
 
 	if params.Media != nil {
@@ -251,7 +261,13 @@ func convertToQuotedTweetInfos(quoteRelations []sqlcgen.GetQuoteRelationsRow, or
 		}
 
 		if originalTweet.Code.Valid {
-			tweet.Code = &originalTweet.Code.String
+			var code model.Code
+			if err := json.Unmarshal(originalTweet.Code.RawMessage, &code); err != nil {
+				return nil, &apperrors.ErrInvalidInput{
+					Message: "failed to unmarshal code",
+				}
+			}
+			tweet.Code = &code
 		}
 
 		if originalTweet.Media.Valid {

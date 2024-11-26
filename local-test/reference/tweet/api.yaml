@@ -387,7 +387,7 @@ components:
                 content:
                     type: string
                 code:
-                    type: string
+                    $ref: "#/components/schemas/Code"
                 media:
                     $ref: "#/components/schemas/Media"
         GetTimelineTweetInfos:
@@ -426,7 +426,7 @@ components:
                     type: string
                     nullable: true
                 code:
-                    type: string
+                    $ref: "#/components/schemas/Code"
                     nullable: true
                 media:
                     $ref: "#/components/schemas/Media"
@@ -465,6 +465,16 @@ components:
                 - has_liked
                 - has_retweeted
                 - created_at
+        Code:
+            type: object
+            properties:
+                language:
+                    type: string
+                content:
+                    type: string
+            required:
+                - language
+                - content
         Media:
             type: object
             properties:
