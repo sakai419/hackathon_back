@@ -81,6 +81,10 @@ func (p *GetUserRetweetsParams) Validate() error {
 	return nil
 }
 
+type GetClientProfileParams struct {
+	ClientAccountID string
+}
+
 type GetUserProfileParams struct {
 	ClientAccountID string
 	TargetAccountID string

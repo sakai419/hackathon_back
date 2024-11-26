@@ -106,6 +106,9 @@ type GetUserTweetsParams struct {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get client profile
+	// (GET /users/me)
+	GetClientProfile(w http.ResponseWriter, r *http.Request)
 	// Get user profile
 	// (GET /users/{user_id})
 	GetUserProfile(w http.ResponseWriter, r *http.Request, userId string)
@@ -128,6 +131,20 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetClientProfile operation middleware
+func (siw *ServerInterfaceWrapper) GetClientProfile(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetClientProfile(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetUserProfile operation middleware
 func (siw *ServerInterfaceWrapper) GetUserProfile(w http.ResponseWriter, r *http.Request) {
@@ -440,6 +457,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		HandlerMiddlewares: options.Middlewares,
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
+
+	r.HandleFunc(options.BaseURL+"/users/me", wrapper.GetClientProfile).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/users/{user_id}", wrapper.GetUserProfile).Methods("GET")
 

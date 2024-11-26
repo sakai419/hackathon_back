@@ -5,6 +5,22 @@ info:
     description: API for managing users
 
 paths:
+    /users/me:
+        get:
+            summary: Get client profile
+            operationId: GetClientProfile
+            responses:
+                "200":
+                    description: User profile retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserProfile"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
     /users/{user_id}:
         get:
             summary: Get user profile

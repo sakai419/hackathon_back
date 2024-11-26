@@ -7,6 +7,31 @@ import (
 	"local-test/pkg/apperrors"
 )
 
+func (s *Service) GetClientProfile(ctx context.Context, params *model.GetClientProfileParams) (*model.UserProfile, error) {
+	// Get user infos
+	userInfo, err := s.repo.GetUserInfo(ctx, params.ClientAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
+	}
+
+	// Get tweet count
+	tweetCount, err := s.repo.GetTweetCountByAccountID(ctx, params.ClientAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet count", "get tweet count by account id", err)
+	}
+
+	// Get follower and following count
+	followCounts, err := s.repo.GetFollowCounts(ctx, params.ClientAccountID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("follow counts", "get follow counts", err)
+	}
+
+	// Convert to response
+	resp := convertToUserProfile(userInfo, tweetCount, followCounts, false)
+
+	return resp, nil
+}
+
 func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfileParams) (*model.UserProfile, error) {
 	// Get user infos
 	userInfo, err := s.repo.GetUserInfo(ctx, params.TargetAccountID)

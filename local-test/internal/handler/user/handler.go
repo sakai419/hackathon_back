@@ -19,6 +19,45 @@ func NewUserHandler(svc *service.Service) ServerInterface {
 	}
 }
 
+// Get client profile
+// (GET /users/me)
+func (h *UserHandler) GetClientProfile(w http.ResponseWriter, r *http.Request) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get client profile
+	profile, err := h.svc.GetClientProfile(r.Context(), &model.GetClientProfileParams{
+		ClientAccountID: clientAccountID,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get client profile", err))
+		return
+	}
+
+	// Convert to response
+	resp := UserProfile{
+		UserInfo: UserInfo{
+			UserId:          profile.UserInfo.UserID,
+			UserName:        profile.UserInfo.UserName,
+			Bio:             profile.UserInfo.Bio,
+			ProfileImageUrl: profile.UserInfo.ProfileImageURL,
+			IsPrivate:       profile.UserInfo.IsPrivate,
+			IsAdmin:         profile.UserInfo.IsAdmin,
+		},
+		BannerImageUrl: profile.BannerImageURL,
+		TweetCount:     profile.TweetCount,
+		FollowerCount:  profile.FollowerCount,
+		FollowingCount: profile.FollowingCount,
+		IsFollowed:     profile.IsFollowed,
+		CreatedAt:      profile.CreatedAt,
+	}
+
+	utils.Respond(w, resp)
+}
+
 // Get user profile
 // (GET /users/{user_id})
 func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request, _ string) {
