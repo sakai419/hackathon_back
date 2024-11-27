@@ -33,6 +33,36 @@ func (s *Service) GetClientProfile(ctx context.Context, params *model.GetClientP
 }
 
 func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfileParams) (*model.UserProfile, error) {
+	// Check if the client is blocked by the target
+	if blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: params.TargetAccountID,
+		BlockedAccountID: params.ClientAccountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if blocked", err)
+	} else if blocked {
+		return nil, apperrors.NewBlockedAppError("get user profile", errors.New("client is blocked by target"))
+	}
+
+	// Check if the client is blocking the target
+	if blocking, err := s.repo.IsBlocking(ctx, &model.IsBlockingParams{
+		BlockerAccountID: params.ClientAccountID,
+		BlockedAccountID: params.TargetAccountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if blocking", err)
+	} else if blocking {
+		return nil, apperrors.NewBlockingAppError("get user profile", errors.New("client is blocking target"))
+	}
+
+	// Check if the target is private and the client is not following
+	if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
+		ClientAccountID: params.ClientAccountID,
+		TargetAccountID: params.TargetAccountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if private and not following", err)
+	} else if isPrivateAndNotFollowing {
+		return nil, apperrors.NewForbiddenAppError("get user profile", errors.New("target is private and client is not following"))
+	}
+
 	// Get user infos
 	userInfo, err := s.repo.GetUserInfo(ctx, params.TargetAccountID)
 	if err != nil {
@@ -274,7 +304,7 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 		accountIDs = append(accountIDs, accountID)
 	}
 
-	// Filter accesible account ids
+	// Filter accessible account ids
 	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
 		AccountIDs:       accountIDs,
 		ClientAccountID:  params.ClientAccountID,

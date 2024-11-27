@@ -138,6 +138,11 @@ type TweetNode struct {
 	OmittedReplyExist *bool
 }
 
+type GetTweetInfoParams struct {
+	ClientAccountID string
+	TweetID         int64
+}
+
 type GetReplyTweetInfosParams struct {
 	ClientAccountID string
 	ParentTweetID   int64

@@ -18,17 +18,6 @@ type Code struct {
 	Language string `json:"language"`
 }
 
-// GetTimelineTweetInfo defines model for GetTimelineTweetInfo.
-type GetTimelineTweetInfo struct {
-	OmittedReplyExist *bool      `json:"omitted_reply_exist"`
-	OriginalTweet     *TweetInfo `json:"original_tweet,omitempty"`
-	ParentReply       *TweetInfo `json:"parent_reply,omitempty"`
-	Tweet             TweetInfo  `json:"tweet"`
-}
-
-// GetTimelineTweetInfos defines model for GetTimelineTweetInfos.
-type GetTimelineTweetInfos = []GetTimelineTweetInfo
-
 // Media defines model for Media.
 type Media struct {
 	Type string `json:"type"`
@@ -59,6 +48,17 @@ type TweetInfo struct {
 	TweetId       int64              `json:"tweet_id"`
 	UserInfo      UserInfoWithoutBio `json:"user_info"`
 }
+
+// TweetNode defines model for TweetNode.
+type TweetNode struct {
+	OmittedReplyExist *bool      `json:"omitted_reply_exist"`
+	OriginalTweet     *TweetInfo `json:"original_tweet,omitempty"`
+	ParentReply       *TweetInfo `json:"parent_reply,omitempty"`
+	Tweet             TweetInfo  `json:"tweet"`
+}
+
+// TweetNodes defines model for TweetNodes.
+type TweetNodes = []TweetNode
 
 // UserInfoWithoutBio defines model for UserInfoWithoutBio.
 type UserInfoWithoutBio struct {
@@ -122,6 +122,9 @@ type ServerInterface interface {
 	// Delete a tweet
 	// (DELETE /tweets/{tweet_id})
 	DeleteTweet(w http.ResponseWriter, r *http.Request, tweetId int64)
+	// Get tweet by ID
+	// (GET /tweets/{tweet_id})
+	GetTweetNode(w http.ResponseWriter, r *http.Request, tweetId int64)
 	// Unlike a tweet
 	// (DELETE /tweets/{tweet_id}/like)
 	UnlikeTweet(w http.ResponseWriter, r *http.Request, tweetId int64)
@@ -248,6 +251,31 @@ func (siw *ServerInterfaceWrapper) DeleteTweet(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteTweet(w, r, tweetId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTweetNode operation middleware
+func (siw *ServerInterfaceWrapper) GetTweetNode(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "tweet_id" -------------
+	var tweetId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tweet_id", mux.Vars(r)["tweet_id"], &tweetId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tweet_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTweetNode(w, r, tweetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -807,6 +835,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/tweets/timeline", wrapper.GetTimelineTweetInfos).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}", wrapper.DeleteTweet).Methods("DELETE")
+
+	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}", wrapper.GetTweetNode).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/tweets/{tweet_id}/like", wrapper.UnlikeTweet).Methods("DELETE")
 

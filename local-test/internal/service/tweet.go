@@ -468,6 +468,117 @@ func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuot
 	return quotingUserInfos, nil
 }
 
+func (s *Service) GetTweetInfo(ctx context.Context, params *model.GetTweetInfoParams) (*model.TweetNode, error) {
+	// Get tweet info internal
+	tweet, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		TweetIDs:        []int64{params.TweetID},
+	})
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet info", "get tweet info internal", err)
+	}
+
+	// Get account id of tweet
+	accountID, err := s.repo.GetAccountIDByTweetID(ctx, params.TweetID)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
+	}
+
+	// Check if the client is blocked
+	if isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: params.ClientAccountID,
+		BlockedAccountID: accountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if blocked", err)
+	} else if isBlocked {
+		return nil, apperrors.NewBlockedAppError("tweet", errors.New("client is blocked"))
+	}
+
+	// Check if the client is blocked
+	if isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+		BlockerAccountID: accountID,
+		BlockedAccountID: params.ClientAccountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if blocked", err)
+	} else if isBlocked {
+		return nil, apperrors.NewBlockedAppError("tweet", errors.New("client is blocked"))
+	}
+
+	// Check if the tweet poster is private and the client is not following
+	if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
+		ClientAccountID: params.ClientAccountID,
+		TargetAccountID: accountID,
+	}); err != nil {
+		return nil, apperrors.NewInternalAppError("check if private and not following", err)
+	} else if isPrivateAndNotFollowing {
+		return nil, apperrors.NewForbiddenAppError("tweet", errors.New("tweet poster is private and client is not following"))
+	}
+
+	// Get quoted tweet info
+	quotedTweetInfo := make([]*model.QuotedTweetInfoInternal, 0)
+	if tweet[0].IsQuote {
+		quotedTweetInfo, err = s.repo.GetQuotedTweetInfos(ctx, &model.GetQuotedTweetInfosParams{
+			ClientAccountID: params.ClientAccountID,
+			QuotingTweetIDs: []int64{params.TweetID},
+		})
+		if err != nil {
+			return nil, apperrors.NewNotFoundAppError("quoted tweet info", "get quoted tweet info", err)
+		}
+	}
+
+	// Get replied tweet info
+	repliedTweetInfo := make([]*model.RepliedTweetInfoInternal, 0)
+	if tweet[0].IsReply {
+		repliedTweetInfo, err = s.repo.GetRepliedTweetInfos(ctx, &model.GetRepliedTweetInfosParams{
+			ClientAccountID: params.ClientAccountID,
+			ReplyingTweetIDs: []int64{params.TweetID},
+		})
+		if err != nil {
+			return nil, apperrors.NewNotFoundAppError("reply tweet info", "get reply tweet info", err)
+		}
+	}
+
+	// Get account ids of all tweets
+	accountIDsMap := make(map[string]bool)
+	accountIDsMap[tweet[0].AccountID] = true
+	if len(quotedTweetInfo) > 0 {
+		accountIDsMap[quotedTweetInfo[0].QuotedTweet.AccountID] = true
+	}
+	if len(repliedTweetInfo) > 0 {
+		accountIDsMap[repliedTweetInfo[0].OriginalTweet.AccountID] = true
+		if repliedTweetInfo[0].ParentReplyTweet != nil {
+			accountIDsMap[repliedTweetInfo[0].ParentReplyTweet.AccountID] = true
+		}
+	}
+	accountIDs := make([]string, 0, len(accountIDsMap))
+	for accountID := range accountIDsMap {
+		accountIDs = append(accountIDs, accountID)
+	}
+
+	// Filter accessible account ids
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		AccountIDs:      accountIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("filter accessible account ids", err)
+	}
+
+	// Get user infos
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("user info", "get user info", err)
+	}
+
+	// Convert to response
+	response, err := convertToTweetNodes(tweet, quotedTweetInfo, repliedTweetInfo, userInfos)
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("convert to tweet node", err)
+	}
+
+	return response[0], nil
+}
+
 func (s *Service) GetReplyTweetInfos(ctx context.Context, params *model.GetReplyTweetInfosParams) ([]*model.TweetInfo, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {

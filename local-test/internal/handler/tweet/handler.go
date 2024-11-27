@@ -324,6 +324,31 @@ func (h *TweetHandler) UnsetTweetAsPinned(w http.ResponseWriter, r *http.Request
 	utils.Respond(w, nil)
 }
 
+// Get tweet info
+// (GET /tweets/{tweet_id})
+func (h *TweetHandler) GetTweetNode(w http.ResponseWriter, r *http.Request, tweetID int64) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get tweet info
+	tweet, err := h.svc.GetTweetInfo(r.Context(), &model.GetTweetInfoParams{
+		ClientAccountID: clientAccountID,
+		TweetID:         tweetID,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get tweet info", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToTweetNodes([]*model.TweetNode{tweet})
+
+	utils.Respond(w, resp[0])
+}
+
 // Get liking user infos
 // (GET /tweets/{tweet_id}/likes)
 func (h *TweetHandler) GetLikingUserInfos(w http.ResponseWriter, r *http.Request, tweetID int64, params GetLikingUserInfosParams) {
@@ -569,10 +594,23 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 	return tweet
 }
 
-func convertToGetTimelineTweetInfosResponse(tweets []*model.GetTimelineTweetInfosResponse) []GetTimelineTweetInfo {
-	resp := make([]GetTimelineTweetInfo, 0, len(tweets))
+func convertToTweetNodes(tweets []*model.TweetNode) []TweetNode {
+	resp := make([]TweetNode, 0, len(tweets))
+	for _, t := range tweets {
+		resp = append(resp, TweetNode{
+			Tweet:             *convertToTweetInfo(&t.Tweet),
+			OriginalTweet:     convertToTweetInfo(t.OriginalTweet),
+			ParentReply:       convertToTweetInfo(t.ParentReply),
+			OmittedReplyExist: t.OmittedReplyExist,
+		})
+	}
+	return resp
+}
+
+func convertToGetTimelineTweetInfosResponse(tweets []*model.GetTimelineTweetInfosResponse) []TweetNode {
+	resp := make([]TweetNode, 0, len(tweets))
 	for _, tweet := range tweets {
-		resp = append(resp, GetTimelineTweetInfo{
+		resp = append(resp, TweetNode{
 			Tweet:             *convertToTweetInfo(&tweet.Tweet),
 			OriginalTweet:     convertToTweetInfo(tweet.OriginalTweet),
 			ParentReply:       convertToTweetInfo(tweet.ParentReply),
