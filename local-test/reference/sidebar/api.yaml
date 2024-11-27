@@ -26,8 +26,6 @@ components:
         SidebarInfo:
             type: object
             properties:
-                user_info:
-                    $ref: "#/components/schemas/UserInfoWithoutBio"
                 unread_conversation_count:
                     type: integer
                     format: int64
@@ -35,26 +33,5 @@ components:
                     type: integer
                     format: int64
             required:
-                - user_info
                 - unread_conversation_count
                 - unread_notification_count
-        UserInfoWithoutBio:
-            type: object
-            properties:
-                user_id:
-                    type: string
-                user_name:
-                    type: string
-                profile_image_url:
-                    type: string
-                    format: uri
-                is_private:
-                    type: boolean
-                is_admin:
-                    type: boolean
-            required:
-                - user_id
-                - user_name
-                - profile_image_url
-                - is_private
-                - is_admin

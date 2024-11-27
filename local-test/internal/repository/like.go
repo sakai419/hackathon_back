@@ -44,19 +44,21 @@ func (r *Repository) CreateLikeAndNotify(ctx context.Context, params *model.Crea
 	}
 
 	// Notify original tweet poster
-	if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
-		SenderAccountID: sql.NullString{String: params.LikingAccountID, Valid: true},
-		RecipientAccountID: params.LikedAccountID,
-		Type: sqlcgen.NotificationTypeLike,
-		TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
-	}); err != nil {
-		tx.Rollback()
-		return apperrors.WrapRepositoryError(
-			&apperrors.ErrOperationFailed{
-				Operation: "create notification",
-				Err: err,
-			},
-		)
+	if params.LikingAccountID != params.LikedAccountID {
+		if err := q.CreateNotification(ctx, sqlcgen.CreateNotificationParams{
+			SenderAccountID: sql.NullString{String: params.LikingAccountID, Valid: true},
+			RecipientAccountID: params.LikedAccountID,
+			Type: sqlcgen.NotificationTypeLike,
+			TweetID: sql.NullInt64{Int64: params.OriginalTweetID, Valid: true},
+		}); err != nil {
+			tx.Rollback()
+			return apperrors.WrapRepositoryError(
+				&apperrors.ErrOperationFailed{
+					Operation: "create notification",
+					Err: err,
+				},
+			)
+		}
 	}
 
 	// Commit transaction
