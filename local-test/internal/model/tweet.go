@@ -131,6 +131,13 @@ type TweetInfo struct {
 	CreatedAt     time.Time
 }
 
+type TweetNode struct {
+	Tweet TweetInfo
+	OriginalTweet *TweetInfo
+	ParentReply *TweetInfo
+	OmittedReplyExist *bool
+}
+
 type GetReplyTweetInfosParams struct {
 	ClientAccountID string
 	ParentTweetID   int64

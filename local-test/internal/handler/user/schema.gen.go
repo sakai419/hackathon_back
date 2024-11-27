@@ -18,17 +18,6 @@ type Code struct {
 	Language string `json:"language"`
 }
 
-// GetUserTweetsResponse defines model for GetUserTweetsResponse.
-type GetUserTweetsResponse struct {
-	OmittedReplyExist *bool      `json:"omitted_reply_exist,omitempty"`
-	OriginalTweet     *TweetInfo `json:"original_tweet,omitempty"`
-	ParentReply       *TweetInfo `json:"parent_reply,omitempty"`
-	Tweet             TweetInfo  `json:"tweet"`
-}
-
-// GetUserTweetsResponses defines model for GetUserTweetsResponses.
-type GetUserTweetsResponses = []GetUserTweetsResponse
-
 // Media defines model for Media.
 type Media struct {
 	Type string `json:"type"`
@@ -53,8 +42,16 @@ type TweetInfo struct {
 	UserInfo      UserInfoWithoutBio `json:"user_info"`
 }
 
-// TweetInfos defines model for TweetInfos.
-type TweetInfos = []TweetInfo
+// TweetNode defines model for TweetNode.
+type TweetNode struct {
+	OmittedReplyExist *bool      `json:"omitted_reply_exist,omitempty"`
+	OriginalTweet     *TweetInfo `json:"original_tweet,omitempty"`
+	ParentReply       *TweetInfo `json:"parent_reply,omitempty"`
+	Tweet             TweetInfo  `json:"tweet"`
+}
+
+// TweetNodes defines model for TweetNodes.
+type TweetNodes = []TweetNode
 
 // UserInfo defines model for UserInfo.
 type UserInfo struct {

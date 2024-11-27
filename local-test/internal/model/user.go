@@ -28,13 +28,6 @@ func (p *GetUserTweetsParams) Validate() error {
 	return nil
 }
 
-type GetUserTweetsResponse struct {
-	Tweet             TweetInfo
-	OriginalTweet     *TweetInfo
-	ParentReply       *TweetInfo
-	OmittedReplyExist *bool
-}
-
 type GetUserLikesParams struct {
 	ClientAccountID string
 	TargetAccountID string

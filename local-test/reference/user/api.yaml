@@ -71,7 +71,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/GetUserTweetsResponses"
+                                $ref: "#/components/schemas/TweetNodes"
                 "400":
                     description: Bad request
                 "500":
@@ -105,7 +105,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/TweetInfos"
+                                $ref: "#/components/schemas/TweetNodes"
                 "400":
                     description: Bad request
                 "500":
@@ -139,7 +139,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/TweetInfos"
+                                $ref: "#/components/schemas/TweetNodes"
                 "400":
                     description: Bad request
                 "500":
@@ -147,11 +147,11 @@ paths:
 
 components:
     schemas:
-        GetUserTweetsResponses:
+        TweetNodes:
             type: array
             items:
-                $ref: "#/components/schemas/GetUserTweetsResponse"
-        GetUserTweetsResponse:
+                $ref: "#/components/schemas/TweetNode"
+        TweetNode:
             type: object
             properties:
                 tweet:
@@ -168,10 +168,6 @@ components:
                     x-omitempty: true
             required:
                 - tweet
-        TweetInfos:
-            type: array
-            items:
-                $ref: "#/components/schemas/TweetInfo"
         TweetInfo:
             type: object
             properties:

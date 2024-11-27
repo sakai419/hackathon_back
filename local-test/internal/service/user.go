@@ -66,7 +66,7 @@ func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfi
 	return resp, nil
 }
 
-func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweetsParams) ([]*model.GetUserTweetsResponse, error) {
+func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweetsParams) ([]*model.TweetNode, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
@@ -206,7 +206,7 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	}
 
 	// Convert to response
-	responses, err := convertToGetUserTweetsResponse(tweets, quotedTweetInfos, replyTweetInfos, userInfos)
+	responses, err := convertToTweetNodes(tweets, quotedTweetInfos, replyTweetInfos, userInfos)
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("convert to get user tweets response", err)
 	}
@@ -214,7 +214,7 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	return responses, nil
 }
 
-func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesParams) ([]*model.TweetInfo, error) {
+func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesParams) ([]*model.TweetNode, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
@@ -244,24 +244,53 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 		return nil, apperrors.NewInternalAppError("get tweet infos by tweet ids", err)
 	}
 
+	// Extract quoting tweet ids
+	quotingTweetIDs := make([]int64, 0, len(tweets))
+	for _, tweet := range tweets {
+		if tweet.IsQuote {
+			quotingTweetIDs = append(quotingTweetIDs, tweet.TweetID)
+		}
+	}
+
+	// Get quoted tweet infos
+	quotedTweetInfos, err := s.repo.GetQuotedTweetInfos(ctx, &model.GetQuotedTweetInfosParams{
+		ClientAccountID: params.ClientAccountID,
+		QuotingTweetIDs: quotingTweetIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("quoted tweet infos", "get quoted tweet infos", err)
+	}
+
 	// Get account ids of all tweets
 	accountIDsMap := make(map[string]bool)
 	for _, tweet := range tweets {
 		accountIDsMap[tweet.AccountID] = true
+	}
+	for _, quotedTweetInfo := range quotedTweetInfos {
+		accountIDsMap[quotedTweetInfo.QuotedTweet.AccountID] = true
 	}
 	accountIDs := make([]string, 0, len(accountIDsMap))
 	for accountID := range accountIDsMap {
 		accountIDs = append(accountIDs, accountID)
 	}
 
+	// Filter accesible account ids
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+		AccountIDs:       accountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("filter accessible account ids", err)
+	}
+
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
 
 	// Convert to response
-	responses, err := convertToTweetInfos(likedTweetIDs, tweets, userInfos)
+	responses, err := convertToTweetNodes(tweets, quotedTweetInfos, nil, userInfos)
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("convert to get user likes response", err)
 	}
@@ -269,7 +298,7 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 	return responses, nil
 }
 
-func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetweetsParams) ([]*model.TweetInfo, error) {
+func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetweetsParams) ([]*model.TweetNode, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
@@ -304,24 +333,53 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 		return nil, apperrors.NewInternalAppError("get tweet infos by tweet ids", err)
 	}
 
+	// Extract quoting tweet ids
+	quotingTweetIDs := make([]int64, 0, len(tweets))
+	for _, tweet := range tweets {
+		if tweet.IsQuote {
+			quotingTweetIDs = append(quotingTweetIDs, tweet.TweetID)
+		}
+	}
+
+	// Get quoted tweet infos
+	quotedTweetInfos, err := s.repo.GetQuotedTweetInfos(ctx, &model.GetQuotedTweetInfosParams{
+		ClientAccountID: params.ClientAccountID,
+		QuotingTweetIDs: quotingTweetIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("quoted tweet infos", "get quoted tweet infos", err)
+	}
+
 	// Get account ids of all tweets
 	accountIDsMap := make(map[string]bool)
 	for _, tweet := range tweets {
 		accountIDsMap[tweet.AccountID] = true
+	}
+	for _, quotedTweetInfo := range quotedTweetInfos {
+		accountIDsMap[quotedTweetInfo.QuotedTweet.AccountID] = true
 	}
 	accountIDs := make([]string, 0, len(accountIDsMap))
 	for accountID := range accountIDsMap {
 		accountIDs = append(accountIDs, accountID)
 	}
 
+	// Filter accesible account ids
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+		AccountIDs:       accountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("filter accessible account ids", err)
+	}
+
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
 
 	// Convert to response
-	responses, err := convertToTweetInfos(retweetedTweetIDs, tweets, userInfos)
+	responses, err := convertToTweetNodes(tweets, quotedTweetInfos, nil, userInfos)
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("convert to get user retweets response", err)
 	}
@@ -329,7 +387,7 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 	return responses, nil
 }
 
-func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTweetInfos []*model.QuotedTweetInfoInternal, replyTweetInfos []*model.RepliedTweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.GetUserTweetsResponse, error) {
+func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*model.QuotedTweetInfoInternal, replyTweetInfos []*model.RepliedTweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.TweetNode, error) {
 	// Create map of user infos
 	userInfoMap := make(map[string]*model.UserInfoInternal)
 	for _, userInfo := range userInfos {
@@ -349,7 +407,7 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 	}
 
 	// Create response
-	responses := make([]*model.GetUserTweetsResponse, 0, len(tweets))
+	responses := make([]*model.TweetNode, 0, len(tweets))
 	for _, tweet := range tweets {
 		// Get user info
 		userInfo, ok := userInfoMap[tweet.AccountID]
@@ -380,7 +438,7 @@ func convertToGetUserTweetsResponse(tweets []*model.TweetInfoInternal, quotedTwe
 			},
 		}
 
-		response := &model.GetUserTweetsResponse{
+		response := &model.TweetNode{
 			Tweet: tweetInfo,
 		}
 

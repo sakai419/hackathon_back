@@ -137,7 +137,7 @@ func (h *UserHandler) GetUserTweets(w http.ResponseWriter, r *http.Request, _ st
 	}
 
 	// Convert to response
-	resp := convertToGetUserTweetsResponse(tweets)
+	resp := convertToTweetNodes(tweets)
 
 	utils.Respond(w, resp)
 }
@@ -170,7 +170,7 @@ func (h *UserHandler) GetUserLikes(w http.ResponseWriter, r *http.Request, _ str
 	}
 
 	// Convert to response
-	resp := convertToGetUserLikesResponse(likes)
+	resp := convertToTweetNodes(likes)
 
 	utils.Respond(w, resp)
 }
@@ -209,7 +209,7 @@ func (h *UserHandler) GetUserRetweets(w http.ResponseWriter, r *http.Request, _ 
 	}
 
 	// Convert to response
-	resp := convertToGetUserRetweetsResponse(retweets)
+	resp := convertToTweetNodes(retweets)
 
 	utils.Respond(w, resp)
 }
@@ -280,31 +280,15 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 	return tweet
 }
 
-func convertToGetUserTweetsResponse(tweets []*model.GetUserTweetsResponse) []GetUserTweetsResponse {
-	resp := make([]GetUserTweetsResponse, 0, len(tweets))
+func convertToTweetNodes(tweets []*model.TweetNode) []TweetNode {
+	resp := make([]TweetNode, 0, len(tweets))
 	for _, t := range tweets {
-		resp = append(resp, GetUserTweetsResponse{
+		resp = append(resp, TweetNode{
 			Tweet:             *convertToTweetInfo(&t.Tweet),
 			OriginalTweet:     convertToTweetInfo(t.OriginalTweet),
 			ParentReply:       convertToTweetInfo(t.ParentReply),
 			OmittedReplyExist: t.OmittedReplyExist,
 		})
-	}
-	return resp
-}
-
-func convertToGetUserLikesResponse(likes []*model.TweetInfo) []TweetInfo {
-	resp := make([]TweetInfo, 0, len(likes))
-	for _, l := range likes {
-		resp = append(resp, *convertToTweetInfo(l))
-	}
-	return resp
-}
-
-func convertToGetUserRetweetsResponse(retweets []*model.TweetInfo) []TweetInfo {
-	resp := make([]TweetInfo, 0, len(retweets))
-	for _, r := range retweets {
-		resp = append(resp, *convertToTweetInfo(r))
 	}
 	return resp
 }
