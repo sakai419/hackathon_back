@@ -1,6 +1,8 @@
 package model
 
-import "local-test/pkg/apperrors"
+import (
+	"local-test/pkg/apperrors"
+)
 
 type Label string
 
@@ -215,6 +217,118 @@ func (l Label) Validate() error {
 			Message: "label is invalid",
 		}
 	}
+}
+
+func GetLabels() []string{
+	// Get all labels
+	labels := []Label{
+		LabelNews,
+		LabelPolitics,
+		LabelEconomics,
+		LabelHealth,
+		LabelSports,
+		LabelEntertainment,
+		LabelArt,
+		LabelCooking,
+		LabelTravel,
+		LabelFashion,
+		LabelBeauty,
+		LabelPets,
+		LabelParenting,
+		LabelEducation,
+		LabelEnvironment,
+		LabelClimate,
+		LabelSpace,
+		LabelMentalHealth,
+		LabelFitness,
+		LabelReading,
+		LabelHistory,
+		LabelPhilosophy,
+		LabelReligion,
+		LabelCulture,
+		LabelVolunteering,
+		LabelSocialIssues,
+		LabelLaw,
+		LabelTaxes,
+		LabelInvestment,
+		LabelRealEstate,
+		LabelDIY,
+		LabelGardening,
+		LabelInteriorDesign,
+		LabelAutomotive,
+		LabelGaming,
+		LabelAnimeManga,
+		LabelCreativeWorks,
+		LabelPhotographyVideo,
+		LabelMedia,
+		LabelMarketing,
+		LabelBranding,
+		LabelEntrepreneurship,
+		LabelRemoteWork,
+		LabelDataScience,
+		LabelIoT,
+		LabelRoboticsEngineering,
+		LabelBiotechnology,
+		LabelNanotechnology,
+		LabelEnergyTechnology,
+		LabelArchaeology,
+		LabelPsychology,
+		LabelSociology,
+		LabelAnthropology,
+		LabelGeography,
+		LabelGeology,
+		LabelMeteorology,
+		LabelDisasterEmergencyManagement,
+		LabelUrbanPlanning,
+		LabelArchitecture,
+		LabelAgriculture,
+		LabelNutritionScience,
+		LabelSleepScience,
+		LabelProductivity,
+		LabelLeadership,
+		LabelInternationalRelations,
+		LabelFuturePredictions,
+		LabelEvents,
+		LabelCommunity,
+		LabelTrends,
+		LabelLifestyle,
+		LabelSoftwareDevelopment,
+		LabelProgrammingLanguages,
+		LabelWebDevelopment,
+		LabelMobileAppDevelopment,
+		LabelDebuggingTechniques,
+		LabelAlgorithmsMathematics,
+		LabelDatabaseDesign,
+		LabelCloudComputing,
+		LabelServerManagement,
+		LabelNetworkSecurity,
+		LabelCryptography,
+		LabelArtificialIntelligence,
+		LabelMachineLearning,
+		LabelDeepLearning,
+		LabelComputerVision,
+		LabelNaturalLanguageProcessing,
+		LabelBlockchainTechnology,
+		LabelQuantumComputing,
+		LabelEdgeComputing,
+		LabelMicroservicesArchitecture,
+		LabelDevOps,
+		LabelContainerTechnology,
+		LabelCICD,
+		LabelTestAutomation,
+		LabelUXUIDesign,
+		LabelAgileDevelopmentMethodologies,
+		LabelOpenSource,
+		LabelVersionControl,
+		LabelAPIDesign,
+		LabelPerformanceOptimization,
+	}
+
+	ret := make([]string, 0)
+	for _, label := range labels {
+		ret = append(ret, string(label))
+	}
+	return ret
 }
 
 type LabelTweetParams struct {

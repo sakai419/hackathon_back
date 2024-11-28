@@ -5,6 +5,7 @@ import (
 	"errors"
 	"local-test/internal/model"
 	"local-test/pkg/apperrors"
+	"local-test/pkg/gemini"
 	"local-test/pkg/utils"
 	"log"
 	"sort"
@@ -58,9 +59,9 @@ func (s *Service) PostTweet(ctx context.Context, params *model.PostTweetParams) 
         })
 		if err := s.repo.LabelTweet(timeoutCtx, &model.LabelTweetParams{
 			TweetID: tweetID,
-			Label1: &labels[0],
-			Label2: &labels[1],
-			Label3: &labels[2],
+			Label1: labels[0],
+			Label2: labels[1],
+			Label3: labels[2],
 		}); err != nil {
 			log.Println(apperrors.NewInternalAppError("label tweet", err))
 		}
@@ -189,9 +190,9 @@ func (s *Service) PostQuoteAndNotify(ctx context.Context, params *model.PostQuot
 		})
 		if err := s.repo.LabelTweet(timeoutCtx, &model.LabelTweetParams{
 			TweetID: tweetID,
-			Label1: &labels[0],
-			Label2: &labels[1],
-			Label3: &labels[2],
+			Label1: labels[0],
+			Label2: labels[1],
+			Label3: labels[2],
 		}); err != nil {
 			log.Println(apperrors.NewInternalAppError("label tweet", err))
 		}
@@ -262,9 +263,9 @@ func (s *Service) PostReplyAndNotify(ctx context.Context, params *model.PostRepl
         })
         if err := s.repo.LabelTweet(timeoutCtx, &model.LabelTweetParams{
             TweetID: tweetID,
-            Label1: &labels[0],
-            Label2: &labels[1],
-            Label3: &labels[2],
+            Label1: labels[0],
+            Label2: labels[1],
+            Label3: labels[2],
         }); err != nil {
             log.Println(apperrors.NewInternalAppError("label tweet", err))
         }
@@ -817,16 +818,23 @@ func convertToTweetInfos(tweetIDs []int64, tweets []*model.TweetInfoInternal, us
 	return ret, nil
 }
 
-func getTweetLabels(_ context.Context, _ *model.GetTweetLabelsParams) []model.Label{
-	// Temporary function to get the label of a tweet
-	// This function should be implemented in the future
-	// For now, it returns a static label
-	labels := make([]model.Label, 3)
-	labels[0] = model.LabelNews
-	labels[1] = model.LabelPolitics
-	labels[2] = model.LabelEconomics
+func getTweetLabels(ctx context.Context, params *model.GetTweetLabelsParams) []*model.Label{
+	labels, err := gemini.LabelingTweet(ctx, params.Content, params.Code, params.Media)
+	if err != nil {
+		log.Println(apperrors.NewInternalAppError("labeling tweet", err))
+	}
 
-	return labels
+	// Convert to model
+	ret := make([]*model.Label, 3)
+	for i, label := range labels {
+		temp := model.Label(label)
+		if temp.Validate() != nil {
+			continue
+		}
+		ret[i] = &temp
+	}
+
+	return ret
 }
 
 func calculateTweetScore(metadata *model.TweetMetadata, interestScores *model.InterestScores) int64 {
