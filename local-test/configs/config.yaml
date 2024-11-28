@@ -43,8 +43,5 @@ firebase:
     universe_domain: gogoleapis.com
 server:
     port: 8080
-vertex:
-    project_id: ${VERTEX_PROJECT_ID}
-    location: ${VERTEX_LOCATION}
-    engine_id: ${VERTEX_ENGINE_ID}
-    scope: https://www.googleapis.com/auth/cloud-platform
+gemini:
+    api_key: ${GEMINI_API_KEY}

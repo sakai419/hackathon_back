@@ -12,7 +12,7 @@ type Config struct {
 	DBConfig *DBConfig
 	FirebaseConfig *FirebaseConfig
 	ServerConfig *ServerConfig
-	VertexConfig *VertexConfig
+	GeminiConfig *GeminiConfig
 }
 
 type DBConfig struct {
@@ -47,11 +47,8 @@ type FirebaseConfig struct {
 	ClientX509CertURL string
 }
 
-type VertexConfig struct {
-	ProjectID string
-	Location string
-	EngineID string
-	Scope    string
+type GeminiConfig struct {
+	APIKey string
 }
 
 type ServerConfig struct {
@@ -100,12 +97,9 @@ func generateServerConfig(v *viper.Viper) (*ServerConfig, error) {
 	}, nil
 }
 
-func generateVertexConfig(v *viper.Viper) (*VertexConfig, error) {
-	return &VertexConfig{
-		ProjectID: v.GetString("vertex.project_id"),
-		Location: v.GetString("vertex.location"),
-		EngineID: v.GetString("vertex.engine_id"),
-		Scope:    v.GetString("vertex.scope"),
+func generateGeminiConfig(v *viper.Viper) (*GeminiConfig, error) {
+	return &GeminiConfig{
+		APIKey: v.GetString("gemini.api_key"),
 	}, nil
 }
 
@@ -171,12 +165,12 @@ func LoadConfig() (*Config, error) {
 		)
 	}
 
-	// Generate Vertex config
-	VertexConfig, err := generateVertexConfig(v)
+	// Generate Gemini config
+	GeminiConfig, err := generateGeminiConfig(v)
 	if err != nil {
 		return nil, apperrors.WrapConfigError(
 			&apperrors.ErrOperationFailed{
-				Operation: "generate vertex config",
+				Operation: "generate gemini config",
 				Err: err,
 			},
 		)
@@ -186,6 +180,6 @@ func LoadConfig() (*Config, error) {
 		FirebaseConfig: FirebaseConfig,
 		DBConfig:       DBConfig,
 		ServerConfig:   ServerConfig,
-		VertexConfig:   VertexConfig,
+		GeminiConfig:   GeminiConfig,
 	}, nil
 }
