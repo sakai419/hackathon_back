@@ -233,7 +233,7 @@ func (q *Queries) IsSuspended(ctx context.Context, id string) (bool, error) {
 
 const searchAccountsByUserID = `-- name: SearchAccountsByUserID :many
 SELECT id, user_id, user_name, is_suspended, is_admin, created_at FROM accounts
-WHERE user_id LIKE CONCAT('%', $1, '%')
+WHERE user_id ILIKE CONCAT('%', $1, '%')
 ORDER BY user_id
 LIMIT $2 OFFSET $3
 `
@@ -276,7 +276,7 @@ func (q *Queries) SearchAccountsByUserID(ctx context.Context, arg SearchAccounts
 
 const searchAccountsByUserName = `-- name: SearchAccountsByUserName :many
 SELECT id, user_id, user_name, is_suspended, is_admin, created_at FROM accounts
-WHERE user_name LIKE CONCAT('%', $1, '%')
+WHERE user_name ILIKE CONCAT('%', $1, '%')
 ORDER BY user_name
 LIMIT $2 OFFSET $3
 `
@@ -303,6 +303,68 @@ func (q *Queries) SearchAccountsByUserName(ctx context.Context, arg SearchAccoun
 			&i.IsSuspended,
 			&i.IsAdmin,
 			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchAccountsOrderByCreatedAt = `-- name: SearchAccountsOrderByCreatedAt :many
+SELECT a.id, a.is_admin, a.user_id, a.user_name, a.created_at, p.bio, p.profile_image_url, s.is_private FROM accounts AS a
+JOIN profiles AS p ON a.id = p.account_id
+JOIN settings AS s ON a.id = s.account_id
+WHERE
+    a.user_id ILIKE CONCAT('%', $3::VARCHAR, '%')
+    OR a.user_name ILIKE CONCAT('%', $3::VARCHAR, '%')
+    OR p.bio ILIKE CONCAT('%', $3::VARCHAR, '%')
+    AND a.is_suspended = FALSE
+ORDER BY a.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type SearchAccountsOrderByCreatedAtParams struct {
+	Limit   int32
+	Offset  int32
+	Keyword string
+}
+
+type SearchAccountsOrderByCreatedAtRow struct {
+	ID              string
+	IsAdmin         bool
+	UserID          string
+	UserName        string
+	CreatedAt       time.Time
+	Bio             sql.NullString
+	ProfileImageUrl sql.NullString
+	IsPrivate       sql.NullBool
+}
+
+func (q *Queries) SearchAccountsOrderByCreatedAt(ctx context.Context, arg SearchAccountsOrderByCreatedAtParams) ([]SearchAccountsOrderByCreatedAtRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchAccountsOrderByCreatedAt, arg.Limit, arg.Offset, arg.Keyword)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchAccountsOrderByCreatedAtRow
+	for rows.Next() {
+		var i SearchAccountsOrderByCreatedAtRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.IsAdmin,
+			&i.UserID,
+			&i.UserName,
+			&i.CreatedAt,
+			&i.Bio,
+			&i.ProfileImageUrl,
+			&i.IsPrivate,
 		); err != nil {
 			return nil, err
 		}

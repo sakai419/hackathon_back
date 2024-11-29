@@ -1,0 +1,78 @@
+openapi: 3.0.0
+info:
+    title: Search API
+    version: 1.0.0
+    description: API for searching
+
+paths:
+    /search/users:
+        get:
+            summary: Search for users
+            operationId: SearchUsers
+            parameters:
+                - name: sort_type
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                      enum:
+                          - newest
+                          - oldest
+                - name: keyword
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Users found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        UserInfos:
+            type: array
+            items:
+                $ref: "#/components/schemas/UserInfo"
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                bio:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - bio
+                - profile_image_url
+                - is_private
+                - is_admin

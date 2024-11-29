@@ -287,6 +287,41 @@ func (r *Repository) GetAccountInfo(ctx context.Context, accountID string) (*mod
 	return accountInfo, nil
 }
 
+func (r *Repository) SearchUsersOrderByCreatedAt(ctx context.Context, params *model.SearchUsersOrderByCreatedAtParams) ([]*model.UserInfoInternal, error) {
+	// Search users
+	users, err := r.q.SearchAccountsOrderByCreatedAt(ctx, sqlcgen.SearchAccountsOrderByCreatedAtParams{
+		Keyword: params.Keyword,
+		Offset: params.Offset,
+		Limit: params.Limit,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "search users",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	var userInfos []*model.UserInfoInternal
+	for _, u := range users {
+		userInfo := &model.UserInfoInternal{
+			ID: u.ID,
+			UserID: u.UserID,
+			UserName: u.UserName,
+			Bio: u.Bio.String,
+			ProfileImageURL: u.ProfileImageUrl.String,
+			IsPrivate: u.IsPrivate.Bool,
+			IsAdmin: u.IsAdmin,
+			CreatedAt: u.CreatedAt,
+		}
+		userInfos = append(userInfos, userInfo)
+	}
+
+	return userInfos, nil
+}
+
 func (r *Repository) FilterAccessibleAccountIDs(ctx context.Context, params *model.FilterAccesibleAccountIDsParams) ([]string, error) {
 	// Filter accessible account ids
 	accessibleAccountIDs, err := r.q.FilterAccessibleAccountIDs(ctx, sqlcgen.FilterAccessibleAccountIDsParams{

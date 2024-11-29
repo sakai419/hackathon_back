@@ -10,6 +10,7 @@ import (
 	"local-test/internal/handler/notification"
 	"local-test/internal/handler/profile"
 	"local-test/internal/handler/report"
+	"local-test/internal/handler/search"
 	"local-test/internal/handler/setting"
 	"local-test/internal/handler/sidebar"
 	"local-test/internal/handler/tweet"
@@ -243,6 +244,23 @@ func setUpSidebarRoutes(r *mux.Router, repo *repository.Repository, svc *service
 	sidebar.HandlerWithOptions(h, opts)
 }
 
+func setUpSearchRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the search handler
+	h := search.NewSearchHandler(svc)
+
+	// Create options for the search handler
+	opts := search.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []search.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+		},
+	}
+
+	// Register the search handler
+	search.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	r := mux.NewRouter()
 
@@ -272,6 +290,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
 	setUpTweetRoutes(apiV1, repo, svc, client)
 	setUpUserRoutes(apiV1, repo, svc, client)
 	setUpSidebarRoutes(apiV1, repo, svc, client)
+	setUpSearchRoutes(apiV1, repo, svc, client)
 
 	return r
 }

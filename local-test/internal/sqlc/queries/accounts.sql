@@ -43,15 +43,27 @@ WHERE id = $1;
 
 -- name: SearchAccountsByUserID :many
 SELECT * FROM accounts
-WHERE user_id LIKE CONCAT('%', $1, '%')
+WHERE user_id ILIKE CONCAT('%', $1, '%')
 ORDER BY user_id
 LIMIT $2 OFFSET $3;
 
 -- name: SearchAccountsByUserName :many
 SELECT * FROM accounts
-WHERE user_name LIKE CONCAT('%', $1, '%')
+WHERE user_name ILIKE CONCAT('%', $1, '%')
 ORDER BY user_name
 LIMIT $2 OFFSET $3;
+
+-- name: SearchAccountsOrderByCreatedAt :many
+SELECT a.id, a.is_admin, a.user_id, a.user_name, a.created_at, p.bio, p.profile_image_url, s.is_private FROM accounts AS a
+JOIN profiles AS p ON a.id = p.account_id
+JOIN settings AS s ON a.id = s.account_id
+WHERE
+    a.user_id ILIKE CONCAT('%', @keyword::VARCHAR, '%')
+    OR a.user_name ILIKE CONCAT('%', @keyword::VARCHAR, '%')
+    OR p.bio ILIKE CONCAT('%', @keyword::VARCHAR, '%')
+    AND a.is_suspended = FALSE
+ORDER BY a.created_at DESC
+LIMIT $1 OFFSET $2;
 
 -- name: IsAdmin :one
 SELECT is_admin FROM accounts
