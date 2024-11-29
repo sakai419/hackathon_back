@@ -824,6 +824,8 @@ func getTweetLabels(ctx context.Context, params *model.GetTweetLabelsParams) []*
 		log.Println(apperrors.NewInternalAppError("labeling tweet", err))
 	}
 
+	log.Println("Labels: ", labels)
+
 	// Convert to model
 	ret := make([]*model.Label, 3)
 	for i, label := range labels {

@@ -184,7 +184,8 @@ func convertToMessageResponse(messages []*model.MessageResponse) []*MessageRespo
 	var res []*MessageResponse
 	for _, m := range messages {
 		res = append(res, &MessageResponse{
-			SenderAccountId: m.SenderAccountID,
+			Id:              m.ID,
+			SenderUserId:    m.SenderUserID,
 			Content:         m.Content,
 			IsRead:          m.IsRead,
 			CreatedAt:       m.CreatedAt,

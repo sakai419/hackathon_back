@@ -4,9 +4,10 @@ VALUES ($1, $2, $3, FALSE)
 RETURNING id;
 
 -- name: GetMessageList :many
-SELECT * FROM messages
-WHERE conversation_id = $1
-ORDER BY created_at DESC
+SELECT m.id, a.user_id, m.content, m.is_read, m.created_at FROM messages AS m
+INNER JOIN accounts AS a ON m.sender_account_id = a.id
+WHERE m.conversation_id = $1
+ORDER BY m.created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: MarkMessageListAsRead :exec

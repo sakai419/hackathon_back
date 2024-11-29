@@ -175,12 +175,16 @@ components:
         MessageResponse:
             type: object
             required:
-                - sender_account_id
+                - id
+                - sender_user_id
                 - content
                 - is_read
                 - created_at
             properties:
-                sender_account_id:
+                id:
+                    type: integer
+                    format: int64
+                sender_user_id:
                     type: string
                 content:
                     type: string

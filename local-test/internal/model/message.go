@@ -60,7 +60,8 @@ type GetMessageListParams struct {
 }
 
 type MessageResponse struct {
-	SenderAccountID string
+	ID int64
+	SenderUserID string
 	Content string
 	IsRead bool
 	CreatedAt time.Time

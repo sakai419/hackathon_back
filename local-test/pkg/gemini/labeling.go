@@ -38,11 +38,6 @@ func generateCaptionPrompt(url string) string {
 
 func generateLabelingPrompt(content *string, code *model.Code, mediaCaption string) string {
 	prompt := "次のツイート内容に以下のラベルから最大3つを選んでラベル付けしてください:\n"
-	labels := model.GetLabels()
-	for _, label := range labels {
-		prompt += fmt.Sprintf("- %s\n", label)
-	}
-
 
 	if content != nil {
 		contentStr := *content
@@ -54,6 +49,12 @@ func generateLabelingPrompt(content *string, code *model.Code, mediaCaption stri
 	}
 	if mediaCaption != "" {
 		prompt += fmt.Sprintf("メディアキャプション: %s\n", mediaCaption)
+	}
+
+	prompt += "ラベル:\n"
+	labels := model.GetLabels()
+	for _, label := range labels {
+		prompt += fmt.Sprintf("- %s\n", label)
 	}
 
 	return prompt

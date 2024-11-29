@@ -7,6 +7,7 @@ package sqlcgen
 
 import (
 	"context"
+	"time"
 )
 
 const createMessage = `-- name: CreateMessage :one
@@ -29,9 +30,10 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (i
 }
 
 const getMessageList = `-- name: GetMessageList :many
-SELECT id, conversation_id, sender_account_id, content, is_read, created_at FROM messages
-WHERE conversation_id = $1
-ORDER BY created_at DESC
+SELECT m.id, a.user_id, m.content, m.is_read, m.created_at FROM messages AS m
+INNER JOIN accounts AS a ON m.sender_account_id = a.id
+WHERE m.conversation_id = $1
+ORDER BY m.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
@@ -41,19 +43,26 @@ type GetMessageListParams struct {
 	Offset         int32
 }
 
-func (q *Queries) GetMessageList(ctx context.Context, arg GetMessageListParams) ([]Message, error) {
+type GetMessageListRow struct {
+	ID        int64
+	UserID    string
+	Content   string
+	IsRead    bool
+	CreatedAt time.Time
+}
+
+func (q *Queries) GetMessageList(ctx context.Context, arg GetMessageListParams) ([]GetMessageListRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMessageList, arg.ConversationID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Message
+	var items []GetMessageListRow
 	for rows.Next() {
-		var i Message
+		var i GetMessageListRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.ConversationID,
-			&i.SenderAccountID,
+			&i.UserID,
 			&i.Content,
 			&i.IsRead,
 			&i.CreatedAt,

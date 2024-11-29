@@ -87,7 +87,8 @@ func (r *Repository) GetMessageList(ctx context.Context, params *model.GetMessag
 	var items []*model.MessageResponse
 	for _, m := range messages {
 		items = append(items, &model.MessageResponse{
-			SenderAccountID: m.SenderAccountID,
+			ID:              m.ID,
+			SenderUserID:    m.UserID,
 			Content:         m.Content,
 			IsRead:          m.IsRead,
 			CreatedAt:       m.CreatedAt,

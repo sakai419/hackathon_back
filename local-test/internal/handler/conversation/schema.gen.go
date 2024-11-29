@@ -34,10 +34,11 @@ type MessageRequest struct {
 
 // MessageResponse defines model for MessageResponse.
 type MessageResponse struct {
-	Content         string    `json:"content"`
-	CreatedAt       time.Time `json:"created_at"`
-	IsRead          bool      `json:"is_read"`
-	SenderAccountId string    `json:"sender_account_id"`
+	Content      string    `json:"content"`
+	CreatedAt    time.Time `json:"created_at"`
+	Id           int64     `json:"id"`
+	IsRead       bool      `json:"is_read"`
+	SenderUserId string    `json:"sender_user_id"`
 }
 
 // MessageResponses defines model for MessageResponses.
