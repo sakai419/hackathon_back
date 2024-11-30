@@ -16,7 +16,7 @@ paths:
                   schema:
                       type: string
                       enum:
-                          - newest
+                          - latest
                           - oldest
                 - name: keyword
                   in: query

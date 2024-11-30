@@ -14,7 +14,7 @@ func (s *Service) SearchUsers(ctx context.Context, params *model.SearchUsersPara
 
     var users []*model.UserInfoInternal
 	switch params.SortType {
-		case model.SortTypeNewest, "":
+		case model.SortTypeLatest, "":
 			temp, err := s.repo.SearchUsersOrderByCreatedAt(ctx, &model.SearchUsersOrderByCreatedAtParams{
 				Keyword: params.Keyword,
 				Offset: params.Offset,

@@ -13,7 +13,7 @@ import (
 
 // Defines values for SearchUsersParamsSortType.
 const (
-	Newest SearchUsersParamsSortType = "newest"
+	Latest SearchUsersParamsSortType = "latest"
 	Oldest SearchUsersParamsSortType = "oldest"
 )
 
