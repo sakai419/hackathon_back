@@ -83,6 +83,32 @@ LEFT JOIN (
 ) AS r ON t.id = r.original_tweet_id
 WHERE t.id = ANY(@tweet_ids::BIGINT[]);
 
+-- name: SearchTweetsOrderByCreatedAt :many
+SELECT
+    t.*,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = @client_account_id
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = @client_account_id
+) AS r ON t.id = r.original_tweet_id
+WHERE
+    t.content ILIKE CONCAT('%', @keyword::VARCHAR, '%')
+    OR t.code->>'Content' ILIKE CONCAT('%', @keyword::VARCHAR, '%')
+ORDER BY t.created_at DESC
+LIMIT $1 OFFSET $2;
+
 -- name: GetTweetCountByAccountID :one
 SELECT COUNT(*) FROM tweets
 WHERE account_id = $1;

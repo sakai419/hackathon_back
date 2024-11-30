@@ -6,16 +6,64 @@ package search
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for SearchTweetsParamsSortType.
+const (
+	SearchTweetsParamsSortTypeLatest SearchTweetsParamsSortType = "latest"
+	SearchTweetsParamsSortTypeOldest SearchTweetsParamsSortType = "oldest"
+)
+
 // Defines values for SearchUsersParamsSortType.
 const (
-	Latest SearchUsersParamsSortType = "latest"
-	Oldest SearchUsersParamsSortType = "oldest"
+	SearchUsersParamsSortTypeLatest SearchUsersParamsSortType = "latest"
+	SearchUsersParamsSortTypeOldest SearchUsersParamsSortType = "oldest"
 )
+
+// Code defines model for Code.
+type Code struct {
+	Content  string `json:"content"`
+	Language string `json:"language"`
+}
+
+// Media defines model for Media.
+type Media struct {
+	Type string `json:"type"`
+	Url  string `json:"url"`
+}
+
+// TweetInfo defines model for TweetInfo.
+type TweetInfo struct {
+	Code          *Code              `json:"code,omitempty"`
+	Content       *string            `json:"content"`
+	CreatedAt     time.Time          `json:"created_at"`
+	HasLiked      bool               `json:"has_liked"`
+	HasRetweeted  bool               `json:"has_retweeted"`
+	IsPinned      bool               `json:"is_pinned"`
+	IsQuote       bool               `json:"is_quote"`
+	IsReply       bool               `json:"is_reply"`
+	LikesCount    int32              `json:"likes_count"`
+	Media         *Media             `json:"media,omitempty"`
+	RepliesCount  int32              `json:"replies_count"`
+	RetweetsCount int32              `json:"retweets_count"`
+	TweetId       int64              `json:"tweet_id"`
+	UserInfo      UserInfoWithoutBio `json:"user_info"`
+}
+
+// TweetNode defines model for TweetNode.
+type TweetNode struct {
+	OmittedReplyExist *bool      `json:"omitted_reply_exist"`
+	OriginalTweet     *TweetInfo `json:"original_tweet,omitempty"`
+	ParentReply       *TweetInfo `json:"parent_reply,omitempty"`
+	Tweet             TweetInfo  `json:"tweet"`
+}
+
+// TweetNodes defines model for TweetNodes.
+type TweetNodes = []TweetNode
 
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
@@ -27,8 +75,28 @@ type UserInfo struct {
 	UserName        string `json:"user_name"`
 }
 
+// UserInfoWithoutBio defines model for UserInfoWithoutBio.
+type UserInfoWithoutBio struct {
+	IsAdmin         bool   `json:"is_admin"`
+	IsPrivate       bool   `json:"is_private"`
+	ProfileImageUrl string `json:"profile_image_url"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
+}
+
 // UserInfos defines model for UserInfos.
 type UserInfos = []UserInfo
+
+// SearchTweetsParams defines parameters for SearchTweets.
+type SearchTweetsParams struct {
+	SortType SearchTweetsParamsSortType `form:"sort_type" json:"sort_type"`
+	Keyword  string                     `form:"keyword" json:"keyword"`
+	Limit    int32                      `form:"limit" json:"limit"`
+	Offset   int32                      `form:"offset" json:"offset"`
+}
+
+// SearchTweetsParamsSortType defines parameters for SearchTweets.
+type SearchTweetsParamsSortType string
 
 // SearchUsersParams defines parameters for SearchUsers.
 type SearchUsersParams struct {
@@ -43,6 +111,9 @@ type SearchUsersParamsSortType string
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Search for tweets
+	// (GET /search/tweets)
+	SearchTweets(w http.ResponseWriter, r *http.Request, params SearchTweetsParams)
 	// Search for users
 	// (GET /search/users)
 	SearchUsers(w http.ResponseWriter, r *http.Request, params SearchUsersParams)
@@ -56,6 +127,85 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// SearchTweets operation middleware
+func (siw *ServerInterfaceWrapper) SearchTweets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchTweetsParams
+
+	// ------------- Required query parameter "sort_type" -------------
+
+	if paramValue := r.URL.Query().Get("sort_type"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort_type"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "sort_type", r.URL.Query(), &params.SortType)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort_type", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "keyword" -------------
+
+	if paramValue := r.URL.Query().Get("keyword"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "keyword"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "keyword", r.URL.Query(), &params.Keyword)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keyword", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchTweets(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // SearchUsers operation middleware
 func (siw *ServerInterfaceWrapper) SearchUsers(w http.ResponseWriter, r *http.Request) {
@@ -248,6 +398,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		HandlerMiddlewares: options.Middlewares,
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
+
+	r.HandleFunc(options.BaseURL+"/search/tweets", wrapper.SearchTweets).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/search/users", wrapper.SearchUsers).Methods("GET")
 

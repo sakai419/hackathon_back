@@ -479,6 +479,11 @@ func (s *Service) GetTweetInfo(ctx context.Context, params *model.GetTweetInfoPa
 		return nil, apperrors.NewNotFoundAppError("tweet info", "get tweet info internal", err)
 	}
 
+	// unset tweet as pinned
+	if tweet[0].IsPinned {
+		tweet[0].IsPinned = false
+	}
+
 	// Get account id of tweet
 	accountID, err := s.repo.GetAccountIDByTweetID(ctx, params.TweetID)
 	if err != nil {
@@ -603,6 +608,11 @@ func (s *Service) GetReplyTweetInfos(ctx context.Context, params *model.GetReply
 	})
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("get tweet infos by ids", err)
+	}
+
+	// unset tweet as pinned
+	for _, tweet := range tweets {
+		tweet.IsPinned = false
 	}
 
 	// Get account IDs of all tweets

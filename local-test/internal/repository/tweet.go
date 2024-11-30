@@ -297,6 +297,36 @@ func (r *Repository) GetTweetCountByAccountID(ctx context.Context, accountID str
 	return count, nil
 }
 
+func (r *Repository) SearchTweetsOrderByCreatedAt(ctx context.Context, params *model.SearchTweetsOrderByCreatedAtParams) ([]*model.TweetInfoInternal, error) {
+	// Search tweets order by created at
+	tweetInfos, err := r.q.SearchTweetsOrderByCreatedAt(ctx, sqlcgen.SearchTweetsOrderByCreatedAtParams{
+		Keyword: params.Keyword,
+		Offset:  params.Offset,
+		Limit:   params.Limit,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "search tweets order by created at",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
 func (r *Repository) DeleteTweet(ctx context.Context, tweetID int64) error {
 	// Delete tweet
 	res, err := r.q.DeleteTweet(ctx, tweetID)
@@ -446,6 +476,21 @@ func mapRowToTweetInfoInternal(row interface{}) (*model.TweetInfoInternal, error
 		r.Content = t.Content
 		r.Code = t.Code
 		r.Media = t.Media
+	case sqlcgen.SearchTweetsOrderByCreatedAtRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
 	default:
 		return nil, fmt.Errorf("invalid type: %T", t)
 	}
@@ -500,6 +545,14 @@ func convertToTweetInfoInternal(rows interface{}) ([]*model.TweetInfoInternal, e
 			infos = append(infos, info)
 		}
 	case []sqlcgen.GetTweetInfosByIDsRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+	case []sqlcgen.SearchTweetsOrderByCreatedAtRow:
 		for _, r := range typedRows {
 			info, err := mapRowToTweetInfoInternal(r)
 			if err != nil {
