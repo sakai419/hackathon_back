@@ -728,16 +728,22 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	}
 
 	// Get account ids of all tweets
-	accountIDs := make([]string, 0, len(tweets))
+	accontIDsMap := make(map[string]bool)
 	for _, tweet := range tweets {
-		accountIDs = append(accountIDs, tweet.AccountID)
+		accontIDsMap[tweet.AccountID] = true
 	}
 	for _, quotingTweetInfo := range quotingTweetInfos {
-		accountIDs = append(accountIDs, quotingTweetInfo.QuotedTweet.AccountID)
+		accontIDsMap[quotingTweetInfo.QuotedTweet.AccountID] = true
 	}
 	for _, replyTweetInfo := range replyTweetInfos {
-		accountIDs = append(accountIDs, replyTweetInfo.OriginalTweet.AccountID)
-		accountIDs = append(accountIDs, replyTweetInfo.ParentReplyTweet.AccountID)
+		accontIDsMap[replyTweetInfo.OriginalTweet.AccountID] = true
+		if replyTweetInfo.ParentReplyTweet != nil {
+			accontIDsMap[replyTweetInfo.ParentReplyTweet.AccountID] = true
+		}
+	}
+	accountIDs := make([]string, 0, len(accontIDsMap))
+	for accountID := range accontIDsMap {
+		accountIDs = append(accountIDs, accountID)
 	}
 
 	// filter accessible account ids
