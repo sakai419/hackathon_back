@@ -487,6 +487,32 @@ func (h *TweetHandler) GetTimelineTweetInfos(w http.ResponseWriter, r *http.Requ
 	utils.Respond(w, resp)
 }
 
+// Get recent tweets
+// (GET /tweets/recent)
+func (h *TweetHandler) GetRecentTweetInfos(w http.ResponseWriter, r *http.Request, params GetRecentTweetInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get recent tweets
+	recentTweets, err := h.svc.GetRecentTweetInfos(r.Context(), &model.GetRecentTweetInfosParams{
+		ClientAccountID: clientAccountID,
+		Limit:           params.Limit,
+		Offset: 		 params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get recent tweets", err))
+		return
+	}
+
+	// Convert to response
+	resp := convertToTweetNodes(recentTweets)
+
+	utils.Respond(w, resp)
+}
+
 // Delete tweet
 // (DELETE /tweets/{tweet_id})
 func (h *TweetHandler) DeleteTweet(w http.ResponseWriter, r *http.Request, tweetID int64) {

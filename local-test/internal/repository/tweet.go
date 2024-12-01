@@ -222,6 +222,36 @@ func (r *Repository) GetRecentTweetMetadatas(ctx context.Context, params *model.
 	return ret, nil
 }
 
+func (r *Repository) GetRecentTweetInfos(ctx context.Context, params *model.GetRecentTweetInfosParams) ([]*model.TweetInfoInternal, error) {
+	// Get recent tweet infos
+	tweetInfos, err := r.q.GetRecentTweetInfos(ctx, sqlcgen.GetRecentTweetInfosParams{
+		Limit: params.Limit,
+		Offset: params.Offset,
+		ClientAccountID: params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get recent tweet infos",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
 func (r *Repository) GetTweetInfosByAccountID(ctx context.Context, params *model.GetTweetInfosByAccountIDParams) ([]*model.TweetInfoInternal, error) {
 	// Get tweet infos by account id
 	tweetInfos, err := r.q.GetTweetInfosByAccountID(ctx, sqlcgen.GetTweetInfosByAccountIDParams{
@@ -536,6 +566,21 @@ func mapRowToTweetInfoInternal(row interface{}) (*model.TweetInfoInternal, error
 		r.Content = t.Content
 		r.Code = t.Code
 		r.Media = t.Media
+	case sqlcgen.GetRecentTweetInfosRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
 	default:
 		return nil, fmt.Errorf("invalid type: %T", t)
 	}
@@ -606,6 +651,14 @@ func convertToTweetInfoInternal(rows interface{}) ([]*model.TweetInfoInternal, e
 			infos = append(infos, info)
 		}
 	case []sqlcgen.SearchTweetsOrderByEngagementScoreRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+	case []sqlcgen.GetRecentTweetInfosRow:
 		for _, r := range typedRows {
 			info, err := mapRowToTweetInfoInternal(r)
 			if err != nil {

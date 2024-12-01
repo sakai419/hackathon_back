@@ -150,6 +150,92 @@ func (q *Queries) GetPinnedTweetID(ctx context.Context, accountID string) (int64
 	return id, err
 }
 
+const getRecentTweetInfos = `-- name: GetRecentTweetInfos :many
+SELECT
+    t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = $3
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = $3
+) AS r ON t.id = r.original_tweet_id
+WHERE t.account_id != $3
+ORDER BY t.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetRecentTweetInfosParams struct {
+	Limit           int32
+	Offset          int32
+	ClientAccountID string
+}
+
+type GetRecentTweetInfosRow struct {
+	ID            int64
+	AccountID     string
+	IsPinned      bool
+	Content       sql.NullString
+	Code          pqtype.NullRawMessage
+	LikesCount    int32
+	RepliesCount  int32
+	RetweetsCount int32
+	IsReply       bool
+	IsQuote       bool
+	Media         pqtype.NullRawMessage
+	CreatedAt     time.Time
+	HasLiked      bool
+	HasRetweeted  bool
+}
+
+func (q *Queries) GetRecentTweetInfos(ctx context.Context, arg GetRecentTweetInfosParams) ([]GetRecentTweetInfosRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentTweetInfos, arg.Limit, arg.Offset, arg.ClientAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecentTweetInfosRow
+	for rows.Next() {
+		var i GetRecentTweetInfosRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.IsPinned,
+			&i.Content,
+			&i.Code,
+			&i.LikesCount,
+			&i.RepliesCount,
+			&i.RetweetsCount,
+			&i.IsReply,
+			&i.IsQuote,
+			&i.Media,
+			&i.CreatedAt,
+			&i.HasLiked,
+			&i.HasRetweeted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRecentTweetMetadatas = `-- name: GetRecentTweetMetadatas :many
 SELECT
     t.id,

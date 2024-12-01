@@ -398,6 +398,37 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/recent:
+        get:
+            summary: Get recent tweets
+            operationId: GetRecentTweetInfos
+            parameters:
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Recent tweets fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/TweetNodes"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         PostTweetRequest:

@@ -770,6 +770,101 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	return responses, nil
 }
 
+func (s *Service) GetRecentTweetInfos(ctx context.Context, params *model.GetRecentTweetInfosParams) ([]*model.TweetNode, error) {
+	// Validate params
+	if err := params.Validate(); err != nil {
+		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get recent tweets
+	tweets, err := s.repo.GetRecentTweetInfos(ctx, &model.GetRecentTweetInfosParams{
+		ClientAccountID: params.ClientAccountID,
+		Limit:           params.Limit,
+		Offset:          params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get recent tweet infos", err)
+	}
+
+	// unset tweet as pinned
+	for _, tweet := range tweets {
+		tweet.IsPinned = false
+	}
+
+	// Extract quoting and reply tweet ids
+	quotingTweetIDs := make([]int64, 0, len(tweets))
+	replyTweetIDs := make([]int64, 0, len(tweets))
+	for _, tweet := range tweets {
+		if tweet.IsQuote {
+			quotingTweetIDs = append(quotingTweetIDs, tweet.TweetID)
+		}
+		if tweet.IsReply {
+			replyTweetIDs = append(replyTweetIDs, tweet.TweetID)
+		}
+	}
+
+	// Get quoted tweet infos
+	quotedTweetInfos, err := s.repo.GetQuotedTweetInfos(ctx, &model.GetQuotedTweetInfosParams{
+		ClientAccountID: params.ClientAccountID,
+		QuotingTweetIDs: quotingTweetIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("quoted tweet infos", "get quoted tweet infos", err)
+	}
+
+	// Get reply tweet infos
+	replyTweetInfos, err := s.repo.GetRepliedTweetInfos(ctx, &model.GetRepliedTweetInfosParams{
+		ClientAccountID:   params.ClientAccountID,
+		ReplyingTweetIDs:  replyTweetIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("reply tweet infos", "get reply tweet infos", err)
+	}
+
+	// Get account ids of all tweets
+	accountIDsMap := make(map[string]bool)
+	for _, tweet := range tweets {
+		accountIDsMap[tweet.AccountID] = true
+	}
+	for _, quotedTweetInfo := range quotedTweetInfos {
+		accountIDsMap[quotedTweetInfo.QuotedTweet.AccountID] = true
+	}
+	for _, replyTweetInfo := range replyTweetInfos {
+		accountIDsMap[replyTweetInfo.OriginalTweet.AccountID] = true
+		if replyTweetInfo.ParentReplyTweet != nil {
+			accountIDsMap[replyTweetInfo.ParentReplyTweet.AccountID] = true
+		}
+	}
+	accountIDs := make([]string, 0, len(accountIDsMap))
+	for accountID := range accountIDsMap {
+		accountIDs = append(accountIDs, accountID)
+	}
+
+	// Filter accesible account ids
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+		AccountIDs:       accountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("filter accessible account ids", err)
+	}
+
+	// Get user infos
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	if err != nil {
+		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
+	}
+
+	// Convert to response
+	responses, err := convertToTweetNodes(tweets, quotedTweetInfos, replyTweetInfos, userInfos)
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("convert to get user tweets response", err)
+	}
+
+	return responses, nil
+}
+
+
 func (s *Service) DeleteTweet(ctx context.Context, params *model.DeleteTweetParams) error {
 	// Get account id of tweet
 	accountID, err := s.repo.GetAccountIDByTweetID(ctx, params.TweetID)

@@ -192,6 +192,27 @@ type GetRecentTweetMetadatasParams struct {
 	ClientAccountID string
 }
 
+type GetRecentTweetInfosParams struct {
+	Limit  int32
+	Offset int32
+	ClientAccountID string
+}
+
+func (p *GetRecentTweetInfosParams) Validate() error {
+	if p.Limit < 1 {
+		return &apperrors.ErrInvalidInput{
+			Message: "limit must be greater than or equal to 1",
+		}
+	}
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "offset must be greater than or equal to 0",
+		}
+	}
+
+	return nil
+}
+
 type DeleteTweetParams struct {
 	TweetID         int64
 	ClientAccountID string

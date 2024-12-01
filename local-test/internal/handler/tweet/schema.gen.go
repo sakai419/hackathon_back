@@ -72,6 +72,12 @@ type UserInfoWithoutBio struct {
 // UserInfoWithoutBios defines model for UserInfoWithoutBios.
 type UserInfoWithoutBios = []UserInfoWithoutBio
 
+// GetRecentTweetInfosParams defines parameters for GetRecentTweetInfos.
+type GetRecentTweetInfosParams struct {
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
+}
+
 // GetTimelineTweetInfosParams defines parameters for GetTimelineTweetInfos.
 type GetTimelineTweetInfosParams struct {
 	Limit  int32 `form:"limit" json:"limit"`
@@ -116,6 +122,9 @@ type ServerInterface interface {
 	// Create a tweet
 	// (POST /tweets)
 	PostTweet(w http.ResponseWriter, r *http.Request)
+	// Get recent tweets
+	// (GET /tweets/recent)
+	GetRecentTweetInfos(w http.ResponseWriter, r *http.Request, params GetRecentTweetInfosParams)
 	// Get timeline for user
 	// (GET /tweets/timeline)
 	GetTimelineTweetInfos(w http.ResponseWriter, r *http.Request, params GetTimelineTweetInfosParams)
@@ -177,6 +186,55 @@ func (siw *ServerInterfaceWrapper) PostTweet(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostTweet(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRecentTweetInfos operation middleware
+func (siw *ServerInterfaceWrapper) GetRecentTweetInfos(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRecentTweetInfosParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRecentTweetInfos(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -831,6 +889,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/tweets", wrapper.PostTweet).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/tweets/recent", wrapper.GetRecentTweetInfos).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/tweets/timeline", wrapper.GetTimelineTweetInfos).Methods("GET")
 
