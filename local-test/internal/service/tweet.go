@@ -640,7 +640,7 @@ func (s *Service) GetReplyTweetInfos(ctx context.Context, params *model.GetReply
 	return responses, nil
 }
 
-func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTimelineTweetInfosParams) ([]*model.GetTimelineTweetInfosResponse, error) {
+func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTimelineTweetInfosParams) ([]*model.TweetNode, error) {
 	// Get recent tweet metadatas
 	tweetMetadatas, err := s.repo.GetRecentTweetMetadatas(ctx, &model.GetRecentTweetMetadatasParams{
 		Limit:  params.Limit,
@@ -740,14 +740,23 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 		accountIDs = append(accountIDs, replyTweetInfo.ParentReplyTweet.AccountID)
 	}
 
+	// filter accessible account ids
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		AccountIDs:      accountIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("filter accessible account ids", err)
+	}
+
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user info", "get user infos", err)
 	}
 
 	// Convert to model
-	responses, err := convertToGetTimelineTweetInfosResponse(tweets, quotingTweetInfos, replyTweetInfos, userInfos)
+	responses, err := convertToTweetNodes(tweets, quotingTweetInfos, replyTweetInfos, userInfos)
 	if err != nil {
 		return nil, apperrors.NewInternalAppError("convert to get timeline tweet infos", err)
 	}
@@ -828,6 +837,170 @@ func convertToTweetInfos(tweetIDs []int64, tweets []*model.TweetInfoInternal, us
 	return ret, nil
 }
 
+func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*model.QuotedTweetInfoInternal, replyTweetInfos []*model.RepliedTweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.TweetNode, error) {
+	// Create map of user infos
+	userInfoMap := make(map[string]*model.UserInfoInternal)
+	for _, userInfo := range userInfos {
+		userInfoMap[userInfo.ID] = userInfo
+	}
+
+	// Create map of quoted tweet infos
+	quotedTweetInfoMap := make(map[int64]*model.QuotedTweetInfoInternal)
+	for _, quotedTweetInfo := range quotedTweetInfos {
+		quotedTweetInfoMap[quotedTweetInfo.QuotingTweetID] = quotedTweetInfo
+	}
+
+	// Create map of reply tweet infos
+	replyTweetInfoMap := make(map[int64]*model.RepliedTweetInfoInternal)
+	for _, replyTweetInfo := range replyTweetInfos {
+		replyTweetInfoMap[replyTweetInfo.ReplyingTweetID] = replyTweetInfo
+	}
+
+	// Create response
+	responses := make([]*model.TweetNode, 0, len(tweets))
+	for _, tweet := range tweets {
+		// Get user info
+		userInfo, ok := userInfoMap[tweet.AccountID]
+		if !ok {
+			return nil, apperrors.NewInternalAppError("get user info", errors.New("user info not found"))
+		}
+
+		tweetInfo := model.TweetInfo{
+			TweetID:       tweet.TweetID,
+			Content:       tweet.Content,
+			Code:          tweet.Code,
+			Media:         tweet.Media,
+			LikesCount:    tweet.LikesCount,
+			RetweetsCount: tweet.RetweetsCount,
+			RepliesCount:  tweet.RepliesCount,
+			IsQuote:       tweet.IsQuote,
+			IsReply:       tweet.IsReply,
+			IsPinned:      tweet.IsPinned,
+			HasLiked:      tweet.HasLiked,
+			HasRetweeted:  tweet.HasRetweeted,
+			CreatedAt:     tweet.CreatedAt,
+			UserInfo:      model.UserInfoWithoutBio{
+				UserID:          userInfo.UserID,
+				UserName:        userInfo.UserName,
+				ProfileImageURL: userInfo.ProfileImageURL,
+				IsPrivate: 	     userInfo.IsPrivate,
+				IsAdmin: 	     userInfo.IsAdmin,
+			},
+		}
+
+		response := &model.TweetNode{
+			Tweet: tweetInfo,
+		}
+
+		// Get quoted tweet info
+		quotedTweetInfo, ok := quotedTweetInfoMap[tweet.TweetID]
+		if ok {
+			quotedTweet := &model.TweetInfo{}
+			userInfo, ok := userInfoMap[quotedTweetInfo.QuotedTweet.AccountID]
+			if ok {
+				quotedTweet = &model.TweetInfo{
+					TweetID:       quotedTweetInfo.QuotedTweet.TweetID,
+					Content:       quotedTweetInfo.QuotedTweet.Content,
+					Code:          quotedTweetInfo.QuotedTweet.Code,
+					Media:         quotedTweetInfo.QuotedTweet.Media,
+					LikesCount:    quotedTweetInfo.QuotedTweet.LikesCount,
+					RetweetsCount: quotedTweetInfo.QuotedTweet.RetweetsCount,
+					RepliesCount:  quotedTweetInfo.QuotedTweet.RepliesCount,
+					IsQuote:       quotedTweetInfo.QuotedTweet.IsQuote,
+					IsReply:       quotedTweetInfo.QuotedTweet.IsReply,
+					IsPinned:      quotedTweetInfo.QuotedTweet.IsPinned,
+					HasLiked:      quotedTweetInfo.QuotedTweet.HasLiked,
+					HasRetweeted:  quotedTweetInfo.QuotedTweet.HasRetweeted,
+					CreatedAt:     quotedTweetInfo.QuotedTweet.CreatedAt,
+					UserInfo:      model.UserInfoWithoutBio{
+						UserID:          userInfo.UserID,
+						UserName:        userInfo.UserName,
+						ProfileImageURL: userInfo.ProfileImageURL,
+						IsPrivate: 	     userInfo.IsPrivate,
+						IsAdmin: 	     userInfo.IsAdmin,
+					},
+				}
+			}
+
+			response.OriginalTweet = quotedTweet
+		}
+
+		// Get reply tweet info
+		replyTweetInfo, ok := replyTweetInfoMap[tweet.TweetID]
+		if ok {
+			if replyTweetInfo.ParentReplyTweet != nil {
+				parentReplyTweet := &model.TweetInfo{}
+
+				userInfo, ok := userInfoMap[replyTweetInfo.ParentReplyTweet.AccountID]
+				if ok {
+					parentReplyTweet = &model.TweetInfo{
+						TweetID:       replyTweetInfo.ParentReplyTweet.TweetID,
+						Content:       replyTweetInfo.ParentReplyTweet.Content,
+						Code:          replyTweetInfo.ParentReplyTweet.Code,
+						Media:         replyTweetInfo.ParentReplyTweet.Media,
+						LikesCount:    replyTweetInfo.ParentReplyTweet.LikesCount,
+						RetweetsCount: replyTweetInfo.ParentReplyTweet.RetweetsCount,
+						RepliesCount:  replyTweetInfo.ParentReplyTweet.RepliesCount,
+						IsQuote:       replyTweetInfo.ParentReplyTweet.IsQuote,
+						IsReply:       replyTweetInfo.ParentReplyTweet.IsReply,
+						IsPinned:      replyTweetInfo.ParentReplyTweet.IsPinned,
+						HasLiked:      replyTweetInfo.ParentReplyTweet.HasLiked,
+						HasRetweeted:  replyTweetInfo.ParentReplyTweet.HasRetweeted,
+						CreatedAt:     replyTweetInfo.ParentReplyTweet.CreatedAt,
+						UserInfo:      model.UserInfoWithoutBio{
+							UserID:          userInfo.UserID,
+							UserName:        userInfo.UserName,
+							ProfileImageURL: userInfo.ProfileImageURL,
+							IsPrivate: 	     userInfo.IsPrivate,
+							IsAdmin: 	     userInfo.IsAdmin,
+						},
+					}
+				}
+
+				response.ParentReply = parentReplyTweet
+			}
+
+			originalTweet := &model.TweetInfo{}
+
+			userInfo, ok := userInfoMap[replyTweetInfo.OriginalTweet.AccountID]
+			if ok {
+				originalTweet = &model.TweetInfo{
+					TweetID:       replyTweetInfo.OriginalTweet.TweetID,
+					Content:       replyTweetInfo.OriginalTweet.Content,
+					Code:          replyTweetInfo.OriginalTweet.Code,
+					Media:         replyTweetInfo.OriginalTweet.Media,
+					LikesCount:    replyTweetInfo.OriginalTweet.LikesCount,
+					RetweetsCount: replyTweetInfo.OriginalTweet.RetweetsCount,
+					RepliesCount:  replyTweetInfo.OriginalTweet.RepliesCount,
+					IsQuote:       replyTweetInfo.OriginalTweet.IsQuote,
+					IsReply:       replyTweetInfo.OriginalTweet.IsReply,
+					IsPinned:      replyTweetInfo.OriginalTweet.IsPinned,
+					HasLiked:      replyTweetInfo.OriginalTweet.HasLiked,
+					HasRetweeted:  replyTweetInfo.OriginalTweet.HasRetweeted,
+					CreatedAt:     replyTweetInfo.OriginalTweet.CreatedAt,
+					UserInfo:      model.UserInfoWithoutBio{
+						UserID:          userInfo.UserID,
+						UserName:        userInfo.UserName,
+						ProfileImageURL: userInfo.ProfileImageURL,
+						IsPrivate: 	     userInfo.IsPrivate,
+						IsAdmin: 	     userInfo.IsAdmin,
+					},
+				}
+			}
+
+			if replyTweetInfo.OmittedReplyExist != nil {
+				response.OmittedReplyExist = replyTweetInfo.OmittedReplyExist
+			}
+
+			response.OriginalTweet = originalTweet
+		}
+
+		responses = append(responses, response)
+	}
+
+	return responses, nil
+}
+
 func getTweetLabels(ctx context.Context, params *model.GetTweetLabelsParams) []*model.Label{
 	labels, err := gemini.LabelingTweet(ctx, params.Content, params.Code, params.Media)
 	if err != nil {
@@ -900,156 +1073,4 @@ func weightedRandomSample(scores map[int64]int64, m int) []int64 {
 	}
 
 	return result
-}
-
-func convertToGetTimelineTweetInfosResponse(tweets []*model.TweetInfoInternal, quotedTweetInfos []*model.QuotedTweetInfoInternal, replyTweetInfos []*model.RepliedTweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.GetTimelineTweetInfosResponse, error) {
-	// Create map of user infos
-	userInfoMap := make(map[string]*model.UserInfoInternal)
-	for _, userInfo := range userInfos {
-		userInfoMap[userInfo.ID] = userInfo
-	}
-
-	// Create map of quoted tweet infos
-	quotedTweetInfoMap := make(map[int64]*model.QuotedTweetInfoInternal)
-	for _, quotedTweetInfo := range quotedTweetInfos {
-		quotedTweetInfoMap[quotedTweetInfo.QuotingTweetID] = quotedTweetInfo
-	}
-
-	// Create map of reply tweet infos
-	replyTweetInfoMap := make(map[int64]*model.RepliedTweetInfoInternal)
-	for _, replyTweetInfo := range replyTweetInfos {
-		replyTweetInfoMap[replyTweetInfo.ReplyingTweetID] = replyTweetInfo
-	}
-
-	// Create response
-	responses := make([]*model.GetTimelineTweetInfosResponse, 0, len(tweets))
-	for _, tweet := range tweets {
-		// Get user info
-		userInfo, ok := userInfoMap[tweet.AccountID]
-		if !ok {
-			return nil, errors.New("user info not found")
-		}
-
-		tweetInfo := model.TweetInfo{
-			TweetID:       tweet.TweetID,
-			Content:       tweet.Content,
-			Code:          tweet.Code,
-			Media:         tweet.Media,
-			LikesCount:    tweet.LikesCount,
-			RetweetsCount: tweet.RetweetsCount,
-			RepliesCount:  tweet.RepliesCount,
-			IsQuote:       tweet.IsQuote,
-			IsReply:       tweet.IsReply,
-			IsPinned:      tweet.IsPinned,
-			HasLiked:      tweet.HasLiked,
-			HasRetweeted:  tweet.HasRetweeted,
-			CreatedAt:     tweet.CreatedAt,
-			UserInfo:      model.UserInfoWithoutBio{
-				UserID:          userInfo.UserID,
-				UserName:        userInfo.UserName,
-				ProfileImageURL: userInfo.ProfileImageURL,
-			},
-		}
-
-		response := &model.GetTimelineTweetInfosResponse{
-			Tweet: tweetInfo,
-		}
-
-		// Get quoted tweet info
-		quotedTweetInfo, ok := quotedTweetInfoMap[tweet.TweetID]
-		if ok {
-			userInfo, ok := userInfoMap[quotedTweetInfo.QuotedTweet.AccountID]
-			if !ok {
-				return nil, errors.New("user info not found")
-			}
-
-			quotedTweet := &model.TweetInfo{
-				TweetID:       quotedTweetInfo.QuotedTweet.TweetID,
-				Content:       quotedTweetInfo.QuotedTweet.Content,
-				Code:          quotedTweetInfo.QuotedTweet.Code,
-				Media:         quotedTweetInfo.QuotedTweet.Media,
-				LikesCount:    quotedTweetInfo.QuotedTweet.LikesCount,
-				RetweetsCount: quotedTweetInfo.QuotedTweet.RetweetsCount,
-				RepliesCount:  quotedTweetInfo.QuotedTweet.RepliesCount,
-				IsQuote:       quotedTweetInfo.QuotedTweet.IsQuote,
-				IsReply:       quotedTweetInfo.QuotedTweet.IsReply,
-				IsPinned:      quotedTweetInfo.QuotedTweet.IsPinned,
-				HasLiked:      quotedTweetInfo.QuotedTweet.HasLiked,
-				HasRetweeted:  quotedTweetInfo.QuotedTweet.HasRetweeted,
-				CreatedAt:     quotedTweetInfo.QuotedTweet.CreatedAt,
-				UserInfo:      model.UserInfoWithoutBio{
-					UserID:          userInfo.UserID,
-					UserName:        userInfo.UserName,
-					ProfileImageURL: userInfo.ProfileImageURL,
-				},
-			}
-			response.OriginalTweet = quotedTweet
-		}
-
-		// Get reply tweet info
-		replyTweetInfo, ok := replyTweetInfoMap[tweet.TweetID]
-		if ok {
-			if replyTweetInfo.ParentReplyTweet != nil {
-				userInfo, ok := userInfoMap[replyTweetInfo.ParentReplyTweet.AccountID]
-				if !ok {
-					return nil, errors.New("user info not found")
-				}
-
-				parentReplyTweet := &model.TweetInfo{
-					TweetID:       replyTweetInfo.ParentReplyTweet.TweetID,
-					Content:       replyTweetInfo.ParentReplyTweet.Content,
-					Code:          replyTweetInfo.ParentReplyTweet.Code,
-					Media:         replyTweetInfo.ParentReplyTweet.Media,
-					LikesCount:    replyTweetInfo.ParentReplyTweet.LikesCount,
-					RetweetsCount: replyTweetInfo.ParentReplyTweet.RetweetsCount,
-					RepliesCount:  replyTweetInfo.ParentReplyTweet.RepliesCount,
-					IsQuote:       replyTweetInfo.ParentReplyTweet.IsQuote,
-					IsReply:       replyTweetInfo.ParentReplyTweet.IsReply,
-					IsPinned:      replyTweetInfo.ParentReplyTweet.IsPinned,
-					HasLiked:      replyTweetInfo.ParentReplyTweet.HasLiked,
-					HasRetweeted:  replyTweetInfo.ParentReplyTweet.HasRetweeted,
-					CreatedAt:     replyTweetInfo.ParentReplyTweet.CreatedAt,
-					UserInfo:      model.UserInfoWithoutBio{
-						UserID:          userInfo.UserID,
-						UserName:        userInfo.UserName,
-						ProfileImageURL: userInfo.ProfileImageURL,
-					},
-				}
-
-				response.ParentReply = parentReplyTweet
-			}
-
-			userInfo, ok := userInfoMap[replyTweetInfo.OriginalTweet.AccountID]
-			if !ok {
-				return nil, errors.New("user info not found")
-			}
-
-			originalTweet := &model.TweetInfo{
-				TweetID:       replyTweetInfo.OriginalTweet.TweetID,
-				Content:       replyTweetInfo.OriginalTweet.Content,
-				Code:          replyTweetInfo.OriginalTweet.Code,
-				Media:         replyTweetInfo.OriginalTweet.Media,
-				LikesCount:    replyTweetInfo.OriginalTweet.LikesCount,
-				RetweetsCount: replyTweetInfo.OriginalTweet.RetweetsCount,
-				RepliesCount:  replyTweetInfo.OriginalTweet.RepliesCount,
-				IsQuote:       replyTweetInfo.OriginalTweet.IsQuote,
-				IsReply:       replyTweetInfo.OriginalTweet.IsReply,
-				IsPinned:      replyTweetInfo.OriginalTweet.IsPinned,
-				HasLiked:      replyTweetInfo.OriginalTweet.HasLiked,
-				HasRetweeted:  replyTweetInfo.OriginalTweet.HasRetweeted,
-				CreatedAt:     replyTweetInfo.OriginalTweet.CreatedAt,
-				UserInfo:      model.UserInfoWithoutBio{
-					UserID:          userInfo.UserID,
-					UserName:        userInfo.UserName,
-					ProfileImageURL: userInfo.ProfileImageURL,
-				},
-			}
-
-			response.OriginalTweet = originalTweet
-		}
-
-		responses = append(responses, response)
-	}
-
-	return responses, nil
 }

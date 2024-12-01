@@ -482,7 +482,7 @@ func (h *TweetHandler) GetTimelineTweetInfos(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Convert to response
-	resp := convertToGetTimelineTweetInfosResponse(timelineTweets)
+	resp := convertToTweetNodes(timelineTweets)
 
 	utils.Respond(w, resp)
 }
@@ -602,19 +602,6 @@ func convertToTweetNodes(tweets []*model.TweetNode) []TweetNode {
 			OriginalTweet:     convertToTweetInfo(t.OriginalTweet),
 			ParentReply:       convertToTweetInfo(t.ParentReply),
 			OmittedReplyExist: t.OmittedReplyExist,
-		})
-	}
-	return resp
-}
-
-func convertToGetTimelineTweetInfosResponse(tweets []*model.GetTimelineTweetInfosResponse) []TweetNode {
-	resp := make([]TweetNode, 0, len(tweets))
-	for _, tweet := range tweets {
-		resp = append(resp, TweetNode{
-			Tweet:             *convertToTweetInfo(&tweet.Tweet),
-			OriginalTweet:     convertToTweetInfo(tweet.OriginalTweet),
-			ParentReply:       convertToTweetInfo(tweet.ParentReply),
-			OmittedReplyExist: tweet.OmittedReplyExist,
 		})
 	}
 	return resp

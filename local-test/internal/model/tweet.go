@@ -186,13 +186,6 @@ func (p *GetTimelineTweetInfosParams) Validate() error {
 	return nil
 }
 
-type GetTimelineTweetInfosResponse struct {
-	Tweet             TweetInfo
-	OriginalTweet     *TweetInfo
-	ParentReply       *TweetInfo
-	OmittedReplyExist *bool
-}
-
 type GetRecentTweetMetadatasParams struct {
 	Limit  int32
 	Offset int32
