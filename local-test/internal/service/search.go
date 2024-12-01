@@ -70,6 +70,16 @@ func (s *Service) SearchTweets(ctx context.Context, params *model.SearchTweetsPa
 				return nil, apperrors.NewInternalAppError("Failed to search tweets", err)
 			}
 			tweets = temp
+		case model.SortTypePopular:
+			temp, err := s.repo.SearchTweetsOrderByEngagementScore(ctx, &model.SearchTweetsOrderByEngagementScoreParams{
+				Keyword: params.Keyword,
+				Offset: params.Offset,
+				Limit: params.Limit,
+			})
+			if err != nil {
+				return nil, apperrors.NewInternalAppError("Failed to search tweets", err)
+			}
+			tweets = temp
 		default:
 			return nil, apperrors.NewInternalAppError("SortType is not supported", errors.New("SortType is not supported"))
 	}

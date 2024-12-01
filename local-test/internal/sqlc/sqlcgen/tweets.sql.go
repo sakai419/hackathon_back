@@ -554,6 +554,102 @@ func (q *Queries) SearchTweetsOrderByCreatedAt(ctx context.Context, arg SearchTw
 	return items, nil
 }
 
+const searchTweetsOrderByEngagementScore = `-- name: SearchTweetsOrderByEngagementScore :many
+SELECT
+    t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = $3
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = $3
+) AS r ON t.id = r.original_tweet_id
+WHERE
+    t.content ILIKE CONCAT('%', $4::VARCHAR, '%')
+    OR t.code->>'Content' ILIKE CONCAT('%', $4::VARCHAR, '%')
+ORDER BY
+    (t.likes_count * 30 + t.retweets_count * 20 + t.replies_count * 1) DESC,
+    t.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type SearchTweetsOrderByEngagementScoreParams struct {
+	Limit           int32
+	Offset          int32
+	ClientAccountID string
+	Keyword         string
+}
+
+type SearchTweetsOrderByEngagementScoreRow struct {
+	ID            int64
+	AccountID     string
+	IsPinned      bool
+	Content       sql.NullString
+	Code          pqtype.NullRawMessage
+	LikesCount    int32
+	RepliesCount  int32
+	RetweetsCount int32
+	IsReply       bool
+	IsQuote       bool
+	Media         pqtype.NullRawMessage
+	CreatedAt     time.Time
+	HasLiked      bool
+	HasRetweeted  bool
+}
+
+func (q *Queries) SearchTweetsOrderByEngagementScore(ctx context.Context, arg SearchTweetsOrderByEngagementScoreParams) ([]SearchTweetsOrderByEngagementScoreRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchTweetsOrderByEngagementScore,
+		arg.Limit,
+		arg.Offset,
+		arg.ClientAccountID,
+		arg.Keyword,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchTweetsOrderByEngagementScoreRow
+	for rows.Next() {
+		var i SearchTweetsOrderByEngagementScoreRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.IsPinned,
+			&i.Content,
+			&i.Code,
+			&i.LikesCount,
+			&i.RepliesCount,
+			&i.RetweetsCount,
+			&i.IsReply,
+			&i.IsQuote,
+			&i.Media,
+			&i.CreatedAt,
+			&i.HasLiked,
+			&i.HasRetweeted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setTweetAsPinned = `-- name: SetTweetAsPinned :execresult
 UPDATE tweets
 SET is_pinned = TRUE

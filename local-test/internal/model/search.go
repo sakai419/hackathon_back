@@ -5,13 +5,14 @@ import "local-test/pkg/apperrors"
 const (
 	SortTypeLatest  SortType = "latest"
 	SortTypeOldest  SortType = "oldest"
+	SortTypePopular SortType = "popular"
 )
 
 type SortType string
 
 func (s SortType) IsValid() bool {
 	switch s {
-	case SortTypeLatest, SortTypeOldest:
+	case SortTypeLatest, SortTypeOldest, SortTypePopular:
 		return true
 	}
 	return false
@@ -90,6 +91,12 @@ func (p *SearchTweetsParams) Validate() error {
 }
 
 type SearchTweetsOrderByCreatedAtParams struct {
+	Keyword string
+	Offset int32
+	Limit int32
+}
+
+type SearchTweetsOrderByEngagementScoreParams struct {
 	Keyword string
 	Offset int32
 	Limit int32
