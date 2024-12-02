@@ -18,14 +18,15 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	log.Printf("DB Config: %v", cfg.DBConfig)
-
 	// Connect to database
 	db, err := database.ConnectToDB(cfg.DBConfig)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 
+	log.Println("Firebase config: ", cfg.FirebaseConfig)
+
+	// Initialize Firebase client
 	firebaseClient, err := firebase.InitFirebaseClient(cfg.FirebaseConfig)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
