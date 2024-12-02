@@ -72,7 +72,7 @@ func generateDBConfig(v *viper.Viper) (*DBConfig, error) {
 		Timeout: v.GetInt("db.timeout"),
 		ReadTimeout: v.GetInt("db.read_timeout"),
 		WriteTimeout: v.GetInt("db.write_timeout"),
-		RequiredTables: v.GetStringSlice("db.required_tables"),
+		RequiredTables: v.GetStringSlice("db.required_table"),
 	}, nil
 }
 
