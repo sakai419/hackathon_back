@@ -429,6 +429,29 @@ paths:
                 "500":
                     description: Internal server error
 
+    /tweets/recent/labels:
+        get:
+            summary: Get recent tweet labels
+            operationId: GetRecentLabels
+            parameters:
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Label summary fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/LabelCounts"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         PostTweetRequest:
@@ -533,6 +556,21 @@ components:
             required:
                 - type
                 - url
+        LabelCounts:
+            type: array
+            items:
+                $ref: "#/components/schemas/LabelCount"
+        LabelCount:
+            type: object
+            properties:
+                label:
+                    type: string
+                count:
+                    type: integer
+                    format: int64
+            required:
+                - label
+                - count
         UserInfoWithoutBio:
             type: object
             properties:
