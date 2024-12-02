@@ -441,7 +441,7 @@ CREATE TABLE tweets (
 
 CREATE INDEX idx_tweets_account_id ON tweets(account_id);
 CREATE INDEX idx_tweets_created_at ON tweets(created_at);
-CREATE INDEX idx_tweets_type ON tweets(is_retweet, is_reply, is_quote);
+CREATE INDEX idx_tweets_type ON tweets(is_reply, is_quote);
 
 ---Define foreign keys---
 
