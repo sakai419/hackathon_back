@@ -18,6 +18,15 @@ type Code struct {
 	Language string `json:"language"`
 }
 
+// LabelCount defines model for LabelCount.
+type LabelCount struct {
+	Count int64  `json:"count"`
+	Label string `json:"label"`
+}
+
+// LabelCounts defines model for LabelCounts.
+type LabelCounts = []LabelCount
+
 // Media defines model for Media.
 type Media struct {
 	Type string `json:"type"`
@@ -78,6 +87,11 @@ type GetRecentTweetInfosParams struct {
 	Offset int32 `form:"offset" json:"offset"`
 }
 
+// GetRecentLabelsParams defines parameters for GetRecentLabels.
+type GetRecentLabelsParams struct {
+	Limit int32 `form:"limit" json:"limit"`
+}
+
 // GetTimelineTweetInfosParams defines parameters for GetTimelineTweetInfos.
 type GetTimelineTweetInfosParams struct {
 	Limit  int32 `form:"limit" json:"limit"`
@@ -125,6 +139,9 @@ type ServerInterface interface {
 	// Get recent tweets
 	// (GET /tweets/recent)
 	GetRecentTweetInfos(w http.ResponseWriter, r *http.Request, params GetRecentTweetInfosParams)
+	// Get recent tweet labels
+	// (GET /tweets/recent/labels)
+	GetRecentLabels(w http.ResponseWriter, r *http.Request, params GetRecentLabelsParams)
 	// Get timeline for user
 	// (GET /tweets/timeline)
 	GetTimelineTweetInfos(w http.ResponseWriter, r *http.Request, params GetTimelineTweetInfosParams)
@@ -235,6 +252,40 @@ func (siw *ServerInterfaceWrapper) GetRecentTweetInfos(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetRecentTweetInfos(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRecentLabels operation middleware
+func (siw *ServerInterfaceWrapper) GetRecentLabels(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetRecentLabelsParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRecentLabels(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -891,6 +942,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/tweets", wrapper.PostTweet).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/tweets/recent", wrapper.GetRecentTweetInfos).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/tweets/recent/labels", wrapper.GetRecentLabels).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/tweets/timeline", wrapper.GetTimelineTweetInfos).Methods("GET")
 

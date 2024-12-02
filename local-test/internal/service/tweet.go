@@ -864,6 +864,16 @@ func (s *Service) GetRecentTweetInfos(ctx context.Context, params *model.GetRece
 	return responses, nil
 }
 
+func (s *Service) GetRecentLabels(ctx context.Context, limit int32) ([]*model.LabelCount, error) {
+	// Get recent labels
+	labels, err := s.repo.GetRecentLabels(ctx, limit)
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get recent labels", err)
+	}
+
+	return labels, nil
+}
+
 
 func (s *Service) DeleteTweet(ctx context.Context, params *model.DeleteTweetParams) error {
 	// Get account id of tweet

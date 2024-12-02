@@ -6,6 +6,7 @@ import (
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
+	"log"
 	"net/http"
 )
 
@@ -509,6 +510,36 @@ func (h *TweetHandler) GetRecentTweetInfos(w http.ResponseWriter, r *http.Reques
 
 	// Convert to response
 	resp := convertToTweetNodes(recentTweets)
+
+	utils.Respond(w, resp)
+}
+
+// Get recent tweet labels
+// (GET /tweets/recent/labels)
+func (h *TweetHandler) GetRecentLabels(w http.ResponseWriter, r *http.Request, params GetRecentLabelsParams) {
+	// Get recent tweet labels
+	labels, err := h.svc.GetRecentLabels(r.Context(), params.Limit)
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get recent tweet labels", err))
+		return
+	}
+
+	for _, label := range labels {
+		log.Println(label.Label, label.Count)
+	}
+
+	// convert to response
+	resp := make([]*LabelCount, 0, len(labels))
+	for _, label := range labels {
+		if model.Label(label.Label).Validate() != nil {
+			utils.RespondError(w, apperrors.NewUnexpectedError(errors.New("label is invalid")))
+			return
+		}
+		resp = append(resp, &LabelCount{
+			Label: string(label.Label),
+			Count: label.Count,
+		})
+	}
 
 	utils.Respond(w, resp)
 }

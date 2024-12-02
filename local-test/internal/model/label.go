@@ -337,3 +337,8 @@ type LabelTweetParams struct {
 	Label2  *Label
 	Label3  *Label
 }
+
+type LabelCount struct {
+	Label Label
+	Count int64
+}

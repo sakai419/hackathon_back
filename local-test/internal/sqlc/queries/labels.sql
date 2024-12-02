@@ -28,3 +28,24 @@ LEFT JOIN labels l ON t.id = l.tweet_id
 WHERE l.tweet_id IS NULL
 ORDER BY t.created_at DESC
 LIMIT $1 OFFSET $2;
+
+-- name: GetRecentLabels :many
+WITH all_labels AS (
+    SELECT label1 AS label FROM labels
+    UNION ALL
+    SELECT label2 AS label FROM labels
+    UNION ALL
+    SELECT label3 AS label FROM labels
+)
+SELECT
+    label,
+    COUNT(*) AS label_count
+FROM
+    all_labels
+WHERE
+    label IS NOT NULL
+GROUP BY
+    label
+ORDER BY
+    label_count DESC
+LIMIT $1;

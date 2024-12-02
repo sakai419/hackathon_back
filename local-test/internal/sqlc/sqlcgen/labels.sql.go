@@ -59,6 +59,56 @@ func (q *Queries) GetLabelsByTweetID(ctx context.Context, tweetID int64) (Label,
 	return i, err
 }
 
+const getRecentLabels = `-- name: GetRecentLabels :many
+WITH all_labels AS (
+    SELECT label1 AS label FROM labels
+    UNION ALL
+    SELECT label2 AS label FROM labels
+    UNION ALL
+    SELECT label3 AS label FROM labels
+)
+SELECT
+    label,
+    COUNT(*) AS label_count
+FROM
+    all_labels
+WHERE
+    label IS NOT NULL
+GROUP BY
+    label
+ORDER BY
+    label_count DESC
+LIMIT $1
+`
+
+type GetRecentLabelsRow struct {
+	Label      NullTweetLabel
+	LabelCount int64
+}
+
+func (q *Queries) GetRecentLabels(ctx context.Context, limit int32) ([]GetRecentLabelsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentLabels, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecentLabelsRow
+	for rows.Next() {
+		var i GetRecentLabelsRow
+		if err := rows.Scan(&i.Label, &i.LabelCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTweetsByLabel = `-- name: GetTweetsByLabel :many
 SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at FROM tweets t
 JOIN labels l ON t.id = l.tweet_id
