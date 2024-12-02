@@ -9,6 +9,7 @@ import (
 	"log"
 )
 
+// main is the entrypoint of the application
 func main() {
 	// Load config
 	cfg, err := config.LoadConfig()
