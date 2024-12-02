@@ -2,6 +2,7 @@ package config
 
 import (
 	"local-test/pkg/apperrors"
+	"log"
 	"os"
 	"strings"
 
@@ -130,6 +131,17 @@ func LoadConfig() (*Config, error) {
 	v := viper.New()
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, apperrors.WrapConfigError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get current working directory",
+				Err: err,
+			},
+		)
+	}
+	log.Println("Current working directory: ", dir)
 
 	// Load config file
 	v.SetConfigName("config")
