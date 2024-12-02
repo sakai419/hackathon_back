@@ -18,6 +18,8 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
+	log.Printf("DB Config: %v", cfg.DBConfig)
+
 	// Connect to database
 	db, err := database.ConnectToDB(cfg.DBConfig)
 	if err != nil {
