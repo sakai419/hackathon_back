@@ -23,8 +23,6 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	log.Println("Firebase config: ", cfg.FirebaseConfig)
-
 	// Initialize Firebase client
 	firebaseClient, err := firebase.InitFirebaseClient(cfg.FirebaseConfig)
 	if err != nil {
