@@ -6,7 +6,6 @@ import (
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
-	"log"
 	"net/http"
 )
 
@@ -522,10 +521,6 @@ func (h *TweetHandler) GetRecentLabels(w http.ResponseWriter, r *http.Request, p
 	if err != nil {
 		utils.RespondError(w, apperrors.NewHandlerError("get recent tweet labels", err))
 		return
-	}
-
-	for _, label := range labels {
-		log.Println(label.Label, label.Count)
 	}
 
 	// convert to response
