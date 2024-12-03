@@ -1,0 +1,47 @@
+db:
+    driver: postgres
+    user: user
+    password: ${DB_PASSWORD}
+    host: localhost
+    port: 5432
+    ssl_mode: disable
+    database: mydatabase
+    charset: utf8mb4
+    timeout: 30
+    max_open_conns: 10
+    max_idle_conns: 10
+    conn_max_idle_time: 5
+    conn_max_lifetime: 5
+    read_timeout: 30
+    write_timeout: 30
+    required_table:
+        - "accounts"
+        - "blocks"
+        - "follows"
+        - "hashtags"
+        - "interests"
+        - "likes"
+        - "messages"
+        - "notifications"
+        - "profiles"
+        - "replies"
+        - "reports"
+        - "settings"
+        - "tweet_hashtags"
+        - "tweets"
+firebase:
+    type: ${FIREBASE_TYPE}
+    project_id: ${FIREBASE_PROJECT_ID}
+    private_key_id: ${FIREBASE_PRIVATE_KEY_ID}
+    private_key: ${FIREBASE_PRIVATE_KEY}
+    client_email: ${FIREBASE_CLIENT_EMAIL}
+    client_id: ${FIREBASE_CLIENT_ID}
+    auth_uri: https://accounts.google.com/o/oauth2/auth
+    token_uri: https://oauth2.googleapis.com/token
+    auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+    client_x509_cert_url: ${FIREBASE_CLIENT_X509_CERT_URL}
+    universe_domain: gogoleapis.com
+server:
+    port: 8080
+gemini:
+    api_key: ${GEMINI_API_KEY}

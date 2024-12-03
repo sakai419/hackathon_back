@@ -1,0 +1,5 @@
+package: conversation
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/conversation/schema.gen.go

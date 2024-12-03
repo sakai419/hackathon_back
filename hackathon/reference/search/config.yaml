@@ -1,0 +1,5 @@
+package: search
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/search/schema.gen.go

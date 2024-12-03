@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+    title: Setting Management API
+    version: 1.0.0
+    description: API for managing settings
+
+paths:
+    /settings:
+        patch:
+            summary: Update settings
+            operationId: UpdateSettings
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/UpdateSettingsRequest"
+            responses:
+                "200":
+                    description: Settings updated successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        UpdateSettingsRequest:
+            type: object
+            properties:
+                is_private:
+                    type: boolean
+                    nullable: true

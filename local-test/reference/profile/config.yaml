@@ -1,0 +1,5 @@
+package: profile
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/profile/schema.gen.go

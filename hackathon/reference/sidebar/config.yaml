@@ -1,0 +1,5 @@
+package: sidebar
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/sidebar/schema.gen.go

@@ -1,0 +1,5 @@
+package: notification
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/notification/schema.gen.go

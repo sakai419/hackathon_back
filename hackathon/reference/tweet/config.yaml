@@ -1,0 +1,5 @@
+package: tweet
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/tweet/schema.gen.go

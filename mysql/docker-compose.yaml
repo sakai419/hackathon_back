@@ -1,0 +1,23 @@
+services:
+    hackathon_test:
+        container_name: hackathon_test
+        build:
+            context: .
+            dockerfile: Dockerfile
+        platform: linux/x86_64
+        tty: true
+        ports:
+            - "3306:3306"
+        env_file:
+            - .env
+        volumes:
+            - type: volume
+              source: hackathon_test
+              target: /var/lib/mysql
+            - type: bind
+              source: ./init
+              target: /docker-entrypoint-initdb.d
+
+volumes:
+    hackathon_test:
+        name: hackathon_test

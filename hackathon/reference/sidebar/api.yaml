@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+    title: Sidebar API
+    version: 1.0.0
+    description: API for managing sidebar content
+
+paths:
+    /sidebar:
+        get:
+            summary: Get sidebar information
+            operationId: GetSidebarInfo
+            responses:
+                "200":
+                    description: Sidebar content retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SidebarInfo"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        SidebarInfo:
+            type: object
+            properties:
+                unread_conversation_count:
+                    type: integer
+                    format: int64
+                unread_notification_count:
+                    type: integer
+                    format: int64
+            required:
+                - unread_conversation_count
+                - unread_notification_count

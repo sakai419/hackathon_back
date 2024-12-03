@@ -1,0 +1,318 @@
+openapi: 3.0.0
+info:
+    title: User Management API
+    version: 1.0.0
+    description: API for managing users
+
+paths:
+    /users/me:
+        get:
+            summary: Get client profile
+            operationId: GetClientProfile
+            responses:
+                "200":
+                    description: User profile retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserProfile"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}:
+        get:
+            summary: Get user profile
+            operationId: GetUserProfile
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User profile retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserProfile"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/tweets:
+        get:
+            summary: Get tweets by user
+            operationId: GetUserTweets
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Tweets retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetNodes"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/likes:
+        get:
+            summary: Get liked tweets by user
+            operationId: GetUserLikes
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Liked tweets retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetNodes"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /users/{user_id}/retweets:
+        get:
+            summary: Get retweeted tweets by user
+            operationId: GetUserRetweets
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Retweeted tweets retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetNodes"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        TweetNodes:
+            type: array
+            items:
+                $ref: "#/components/schemas/TweetNode"
+        TweetNode:
+            type: object
+            properties:
+                tweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                original_tweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                parent_reply:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                omitted_reply_exist:
+                    type: boolean
+                    nullable: true
+                    x-omitempty: true
+            required:
+                - tweet
+        TweetInfo:
+            type: object
+            properties:
+                tweet_id:
+                    type: integer
+                    format: int64
+                user_info:
+                    $ref: "#/components/schemas/UserInfoWithoutBio"
+                content:
+                    type: string
+                    nullable: true
+                    x-omitempty: true
+                code:
+                    $ref: "#/components/schemas/Code"
+                    nullable: true
+                    x-omitempty: true
+                media:
+                    $ref: "#/components/schemas/Media"
+                    nullable: true
+                    x-omitempty: true
+                likes_count:
+                    type: integer
+                    format: int32
+                retweets_count:
+                    type: integer
+                    format: int32
+                replies_count:
+                    type: integer
+                    format: int32
+                is_quote:
+                    type: boolean
+                is_reply:
+                    type: boolean
+                is_pinned:
+                    type: boolean
+                has_liked:
+                    type: boolean
+                has_retweeted:
+                    type: boolean
+                created_at:
+                    type: string
+                    format: date-time
+            required:
+                - tweet_id
+                - user_info
+                - likes_count
+                - retweets_count
+                - replies_count
+                - is_quote
+                - is_reply
+                - is_pinned
+                - has_liked
+                - has_retweeted
+                - created_at
+        UserProfile:
+            type: object
+            properties:
+                user_info:
+                    $ref: "#/components/schemas/UserInfo"
+                banner_image_url:
+                    type: string
+                    format: uri
+                tweet_count:
+                    type: integer
+                    format: int64
+                following_count:
+                    type: integer
+                    format: int64
+                follower_count:
+                    type: integer
+                    format: int64
+                is_followed:
+                    type: boolean
+                created_at:
+                    type: string
+                    format: date-time
+            required:
+                - user_info
+                - banner_image_url
+                - tweet_count
+                - following_count
+                - follower_count
+                - is_followed
+                - created_at
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                bio:
+                    type: string
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - bio
+                - is_private
+                - is_admin
+        UserInfoWithoutBio:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - is_private
+                - is_admin
+        Code:
+            type: object
+            properties:
+                language:
+                    type: string
+                content:
+                    type: string
+            required:
+                - language
+                - content
+        Media:
+            type: object
+            properties:
+                url:
+                    type: string
+                    format: uri
+                type:
+                    type: string
+            required:
+                - url
+                - type

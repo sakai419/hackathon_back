@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+    title: Account Management API
+    version: 1.0.0
+    description: API for managing user accounts
+
+paths:
+    /accounts:
+        post:
+            summary: Create a new account
+            operationId: CreateAccount
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/CreateAccountRequest"
+            responses:
+                "200":
+                    description: Account created successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+        delete:
+            summary: Delete my account
+            operationId: DeleteMyAccount
+            responses:
+                "200":
+                    description: Account deleted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        CreateAccountRequest:
+            type: object
+            required:
+                - user_id
+                - user_name
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string

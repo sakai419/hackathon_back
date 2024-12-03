@@ -1,0 +1,5 @@
+package: follow
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/follow/schema.gen.go

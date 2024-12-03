@@ -1,0 +1,231 @@
+openapi: 3.0.0
+info:
+    title: Search API
+    version: 1.0.0
+    description: API for searching
+
+paths:
+    /search/users:
+        get:
+            summary: Search for users
+            operationId: SearchUsers
+            parameters:
+                - name: sort_type
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                      enum:
+                          - latest
+                          - oldest
+                - name: keyword
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Users found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /search/tweets:
+        get:
+            summary: Search for tweets
+            operationId: SearchTweets
+            parameters:
+                - name: sort_type
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                      enum:
+                          - latest
+                          - oldest
+                - name: keyword
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Tweets found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetNodes"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        UserInfos:
+            type: array
+            items:
+                $ref: "#/components/schemas/UserInfo"
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                bio:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - bio
+                - profile_image_url
+                - is_private
+                - is_admin
+        TweetNodes:
+            type: array
+            items:
+                $ref: "#/components/schemas/TweetNode"
+        TweetNode:
+            type: object
+            properties:
+                tweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                original_tweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                parent_reply:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                omitted_reply_exist:
+                    type: boolean
+                    nullable: true
+            required:
+                - tweet
+        TweetInfo:
+            type: object
+            properties:
+                tweet_id:
+                    type: integer
+                    format: int64
+                user_info:
+                    $ref: "#/components/schemas/UserInfoWithoutBio"
+                content:
+                    type: string
+                    nullable: true
+                code:
+                    $ref: "#/components/schemas/Code"
+                    nullable: true
+                media:
+                    $ref: "#/components/schemas/Media"
+                    nullable: true
+                likes_count:
+                    type: integer
+                    format: int32
+                retweets_count:
+                    type: integer
+                    format: int32
+                replies_count:
+                    type: integer
+                    format: int32
+                is_quote:
+                    type: boolean
+                is_reply:
+                    type: boolean
+                is_pinned:
+                    type: boolean
+                has_liked:
+                    type: boolean
+                has_retweeted:
+                    type: boolean
+                created_at:
+                    type: string
+                    format: date-time
+            required:
+                - tweet_id
+                - user_info
+                - likes_count
+                - retweets_count
+                - replies_count
+                - is_quote
+                - is_reply
+                - is_pinned
+                - has_liked
+                - has_retweeted
+                - created_at
+        Code:
+            type: object
+            properties:
+                language:
+                    type: string
+                content:
+                    type: string
+            required:
+                - language
+                - content
+        Media:
+            type: object
+            properties:
+                type:
+                    type: string
+                url:
+                    type: string
+            required:
+                - type
+                - url
+        UserInfoWithoutBio:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - is_private
+                - is_admin

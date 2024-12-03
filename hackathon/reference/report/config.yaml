@@ -1,0 +1,5 @@
+package: report
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/report/schema.gen.go

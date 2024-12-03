@@ -1,0 +1,620 @@
+openapi: 3.0.0
+info:
+    title: Tweet Management API
+    version: 1.0.0
+    description: API for managing tweets
+
+paths:
+    /tweets:
+        post:
+            summary: Create a tweet
+            operationId: PostTweet
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/PostTweetRequest"
+            responses:
+                "201":
+                    description: Tweet created successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}:
+        get:
+            summary: Get tweet by ID
+            operationId: GetTweetNode
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Replies fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetNode"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Delete a tweet
+            operationId: DeleteTweet
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet deleted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/replies:
+        get:
+            summary: Get replies for a tweet
+            operationId: GetReplyTweetInfos
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Replies fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/TweetInfo"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/like:
+        post:
+            summary: Like a tweet and notify poster
+            operationId: LikeTweetAndNotify
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet liked successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Unlike a tweet
+            operationId: UnlikeTweet
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet unliked successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/retweet:
+        post:
+            summary: Retweet and notify poster
+            operationId: RetweetAndNotify
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Retweet successful
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Delete retweet
+            operationId: Unretweet
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Retweet deleted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/quote:
+        post:
+            summary: Quote retweet and notify poster
+            operationId: PostQuoteAndNotify
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/PostTweetRequest"
+            responses:
+                "201":
+                    description: Quote retweet successful
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/pin:
+        patch:
+            summary: Pin a tweet
+            operationId: SetTweetAsPinned
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet pinned successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Unpin a tweet
+            operationId: UnsetTweetAsPinned
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Tweet unpinned successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/reply:
+        post:
+            summary: Reply to a tweet
+            operationId: PostReplyAndNotify
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/PostTweetRequest"
+            responses:
+                "201":
+                    description: Reply created successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/retweets:
+        get:
+            summary: Get retweets for a tweet
+            operationId: GetRetweetingUserInfos
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Retweets fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/likes:
+        get:
+            summary: Get likes for a tweet
+            operationId: GetLikingUserInfos
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Likes fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/{tweet_id}/quotes:
+        get:
+            summary: Get quotes for a tweet
+            operationId: GetQuotingUserInfos
+            parameters:
+                - name: tweet_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Quotes fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/timeline:
+        get:
+            summary: Get timeline for user
+            operationId: GetTimelineTweetInfos
+            parameters:
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Timeline fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TweetNodes"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/recent:
+        get:
+            summary: Get recent tweets
+            operationId: GetRecentTweetInfos
+            parameters:
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Recent tweets fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/TweetNodes"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /tweets/recent/labels:
+        get:
+            summary: Get recent tweet labels
+            operationId: GetRecentLabels
+            parameters:
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Label summary fetched successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/LabelCounts"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        PostTweetRequest:
+            type: object
+            properties:
+                content:
+                    type: string
+                code:
+                    $ref: "#/components/schemas/Code"
+                media:
+                    $ref: "#/components/schemas/Media"
+            required:
+                - tweet
+        TweetNodes:
+            type: array
+            items:
+                $ref: "#/components/schemas/TweetNode"
+        TweetNode:
+            type: object
+            properties:
+                tweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                original_tweet:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                parent_reply:
+                    $ref: "#/components/schemas/TweetInfo"
+                    nullable: true
+                omitted_reply_exist:
+                    type: boolean
+                    nullable: true
+            required:
+                - tweet
+        TweetInfo:
+            type: object
+            properties:
+                tweet_id:
+                    type: integer
+                    format: int64
+                user_info:
+                    $ref: "#/components/schemas/UserInfoWithoutBio"
+                content:
+                    type: string
+                    nullable: true
+                code:
+                    $ref: "#/components/schemas/Code"
+                    nullable: true
+                media:
+                    $ref: "#/components/schemas/Media"
+                    nullable: true
+                likes_count:
+                    type: integer
+                    format: int32
+                retweets_count:
+                    type: integer
+                    format: int32
+                replies_count:
+                    type: integer
+                    format: int32
+                is_quote:
+                    type: boolean
+                is_reply:
+                    type: boolean
+                is_pinned:
+                    type: boolean
+                has_liked:
+                    type: boolean
+                has_retweeted:
+                    type: boolean
+                created_at:
+                    type: string
+                    format: date-time
+            required:
+                - tweet_id
+                - user_info
+                - likes_count
+                - retweets_count
+                - replies_count
+                - is_quote
+                - is_reply
+                - is_pinned
+                - has_liked
+                - has_retweeted
+                - created_at
+        Code:
+            type: object
+            properties:
+                language:
+                    type: string
+                content:
+                    type: string
+            required:
+                - language
+                - content
+        Media:
+            type: object
+            properties:
+                type:
+                    type: string
+                url:
+                    type: string
+            required:
+                - type
+                - url
+        LabelCounts:
+            type: array
+            items:
+                $ref: "#/components/schemas/LabelCount"
+        LabelCount:
+            type: object
+            properties:
+                label:
+                    type: string
+                count:
+                    type: integer
+                    format: int64
+            required:
+                - label
+                - count
+        UserInfoWithoutBio:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - is_private
+                - is_admin
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                bio:
+                    type: string
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - bio
+                - is_private
+                - is_admin
+        UserInfos:
+            type: array
+            items:
+                $ref: "#/components/schemas/UserInfo"

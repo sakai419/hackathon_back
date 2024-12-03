@@ -1,0 +1,250 @@
+openapi: 3.0.0
+info:
+    title: Follow Management API
+    version: 1.0.0
+    description: API for managing user follows
+
+paths:
+    /follows/{user_id}:
+        post:
+            summary: Follow a user
+            operationId: FollowAndNotify
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User followed successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+        delete:
+            summary: Unfollow a user
+            operationId: Unfollow
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: User unfollowed successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/requests/{user_id}:
+        post:
+            summary: Send a follow request to a user
+            operationId: RequestFollowAndNotify
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request sent successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/requests/received/{user_id}/accept:
+        patch:
+            summary: Accept a follow request
+            operationId: AcceptFollowRequestAndNotify
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request accepted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/requests/received/{user_id}:
+        delete:
+            summary: Reject a follow request
+            operationId: RejectFollowRequest
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follow request rejected successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/followers/{user_id}:
+        get:
+            summary: Get followers of a user
+            operationId: GetFollowerInfos
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      format: int32
+                  required: true
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+                      format: int32
+                  required: true
+            responses:
+                "200":
+                    description: Followers retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/following/{user_id}:
+        get:
+            summary: Get users followed by a user
+            operationId: GetFollowingInfos
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      format: int32
+                  required: true
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+                      format: int32
+                  required: true
+            responses:
+                "200":
+                    description: Users followed retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/UserInfos"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/count/{user_id}:
+        get:
+            summary: Get the number of followers and following of a user
+            operationId: GetFollowCounts
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: Follower count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/FollowCounts"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /follows/requests/received/count:
+        get:
+            summary: Get the number of follow requests sent to the user
+            operationId: GetFollowRequestCount
+            responses:
+                "200":
+                    description: Follow request count retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Count"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                bio:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - bio
+                - profile_image_url
+                - is_private
+                - is_admin
+        UserInfos:
+            type: array
+            items:
+                $ref: "#/components/schemas/UserInfo"
+        Count:
+            type: object
+            properties:
+                count:
+                    type: integer
+                    format: int64
+            required:
+                - count
+        FollowCounts:
+            type: object
+            properties:
+                followers_count:
+                    type: integer
+                    format: int64
+                following_count:
+                    type: integer
+                    format: int64
+            required:
+                - followers_count
+                - following_count
