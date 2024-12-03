@@ -166,6 +166,7 @@ func convertToNotificationResponse(notifications []*model.NotificationResponse) 
 				IsAdmin: 	     notification.SenderInfo.IsAdmin,
 				IsFollowing:     notification.SenderInfo.IsFollowing,
 				IsFollowed:      notification.SenderInfo.IsFollowed,
+				IsPending:       notification.SenderInfo.IsPending,
 			}
 		}
 
@@ -180,6 +181,7 @@ func convertToNotificationResponse(notifications []*model.NotificationResponse) 
 					IsAdmin: 	     notification.RelatedTweet.UserInfo.IsAdmin,
 					IsFollowing:     notification.RelatedTweet.UserInfo.IsFollowing,
 					IsFollowed:      notification.RelatedTweet.UserInfo.IsFollowed,
+					IsPending:       notification.RelatedTweet.UserInfo.IsPending,
 				},
 				Content:       notification.RelatedTweet.Content,
 				LikesCount:    notification.RelatedTweet.LikesCount,

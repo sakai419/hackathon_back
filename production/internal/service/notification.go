@@ -20,7 +20,10 @@ func (s *Service) GetNotifications(ctx context.Context, params *model.GetNotific
 
 	// Get sender info
 	senderAccountIDs := convertToSenderAccountIDs(notifications)
-	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs, params.ClientAccountID)
+	senderInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: senderAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
@@ -36,7 +39,10 @@ func (s *Service) GetNotifications(ctx context.Context, params *model.GetNotific
 	}
 
 	// Get client user info
-	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.ClientAccountID)
+	clientUserInfo, err := s.repo.GetUserInfo(ctx, &model.GetUserInfoParams{
+		TargetAccountID: params.ClientAccountID,
+		ClientAccountID: params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("client user info", "get client user info", err)
 	}
@@ -61,7 +67,10 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, params *model.GetU
 
 	// Get sender info
     senderAccountIDs := convertToSenderAccountIDs(notifications)
-	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs, params.ClientAccountID)
+	senderInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: senderAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
@@ -77,7 +86,10 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, params *model.GetU
 	}
 
 	// Get client user info
-	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.ClientAccountID)
+	clientUserInfo, err := s.repo.GetUserInfo(ctx, &model.GetUserInfoParams{
+		TargetAccountID: params.ClientAccountID,
+		ClientAccountID: params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("client user info", "get client user info", err)
 	}

@@ -41,7 +41,7 @@ type GetBlockedAccountIDsParams struct {
 }
 
 type GetBlockedInfosParams struct {
-	BlockerAccountID string
+	ClientAccountID string
 	Limit            int32
 	Offset           int32
 }

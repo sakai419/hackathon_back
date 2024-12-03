@@ -27,7 +27,10 @@ func (s *Service) GetConversations(ctx context.Context, params *model.GetConvers
 	for _, conversation := range conversations {
 		ids = append(ids, conversation.OpponentID)
 	}
-	opponentInfos, err := s.repo.GetUserInfos(ctx, ids, params.ClientAccountID)
+	opponentInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: ids,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("opponent info", "get opponent infos", err)
 	}

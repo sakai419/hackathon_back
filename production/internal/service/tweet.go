@@ -383,7 +383,10 @@ func (s *Service) GetLikingUserInfos(ctx context.Context, params *model.GetLikin
 	}
 
 	// Get user infos
-	infos, err := s.repo.GetUserInfos(ctx, likingAccountIDs, params.ClientAccountID)
+	infos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: likingAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("liking user info", "get liking user infos", err)
 	}
@@ -421,7 +424,10 @@ func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetR
 	}
 
 	// Get user infos
-	infos, err := s.repo.GetUserInfos(ctx, retweetingAccountIDs, params.ClientAccountID)
+	infos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: retweetingAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("retweeting user info", "get retweeting user infos", err)
 	}
@@ -459,7 +465,10 @@ func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuot
 	}
 
 	// Get user infos
-	infos, err := s.repo.GetUserInfos(ctx, quotingAccountIDs, params.ClientAccountID)
+	infos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: quotingAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("quoting user info", "get quoting user infos", err)
 	}
@@ -571,7 +580,10 @@ func (s *Service) GetTweetInfo(ctx context.Context, params *model.GetTweetInfoPa
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: accessibleAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user info", "get user info", err)
 	}
@@ -625,8 +637,20 @@ func (s *Service) GetReplyTweetInfos(ctx context.Context, params *model.GetReply
 		accountIDs = append(accountIDs, accountID)
 	}
 
+	// Filter accessible account ids
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+		ClientAccountID: params.ClientAccountID,
+		AccountIDs:      accountIDs,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("filter accessible account ids", err)
+	}
+
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs, params.ClientAccountID)
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: accessibleAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user info", "get user infos", err)
 	}
@@ -756,7 +780,10 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: accessibleAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user info", "get user infos", err)
 	}
@@ -850,7 +877,10 @@ func (s *Service) GetRecentTweetInfos(ctx context.Context, params *model.GetRece
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: accessibleAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}

@@ -28,6 +28,7 @@ type UserInfo struct {
 	IsAdmin         bool   `json:"is_admin"`
 	IsFollowed      bool   `json:"is_followed"`
 	IsFollowing     bool   `json:"is_following"`
+	IsPending       bool   `json:"is_pending"`
 	IsPrivate       bool   `json:"is_private"`
 	ProfileImageUrl string `json:"profile_image_url"`
 	UserId          string `json:"user_id"`

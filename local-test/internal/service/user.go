@@ -9,7 +9,10 @@ import (
 
 func (s *Service) GetClientProfile(ctx context.Context, params *model.GetClientProfileParams) (*model.UserProfile, error) {
 	// Get user infos
-	userInfo, err := s.repo.GetUserInfo(ctx, params.ClientAccountID)
+	userInfo, err := s.repo.GetUserInfo(ctx, &model.GetUserInfoParams{
+		TargetAccountID: params.ClientAccountID,
+		ClientAccountID: params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -64,7 +67,10 @@ func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfi
 	}
 
 	// Get user infos
-	userInfo, err := s.repo.GetUserInfo(ctx, params.TargetAccountID)
+	userInfo, err := s.repo.GetUserInfo(ctx, &model.GetUserInfoParams{
+		TargetAccountID: params.TargetAccountID,
+		ClientAccountID: params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -221,7 +227,10 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: accessibleAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -305,7 +314,10 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: accessibleAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -394,7 +406,10 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: accessibleAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}

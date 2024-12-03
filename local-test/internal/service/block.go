@@ -42,7 +42,7 @@ func (s *Service) GetBlockedInfos(ctx context.Context, params *model.GetBlockedI
 
 	// Get blocked account ids
 	blockedAccountIDs, err := s.repo.GetBlockedAccountIDs(ctx, &model.GetBlockedAccountIDsParams{
-		BlockerAccountID: params.BlockerAccountID,
+		BlockerAccountID: params.ClientAccountID,
 		Limit:            params.Limit,
 		Offset:           params.Offset,
 	})
@@ -51,7 +51,10 @@ func (s *Service) GetBlockedInfos(ctx context.Context, params *model.GetBlockedI
 	}
 
 	// Get user and profile info
-	infos, err := s.repo.GetUserInfos(ctx, blockedAccountIDs, "dammy")
+	infos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: blockedAccountIDs,
+		ClientAccountID:  params.ClientAccountID,
+	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("blocked info", "get blocked infos", err)
 	}

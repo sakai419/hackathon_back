@@ -95,7 +95,7 @@ func (h *BlockHandler) GetBlockedInfos(w http.ResponseWriter, r *http.Request, p
 
 	// Get blocked users
 	blockedInfos, err := h.svc.GetBlockedInfos(r.Context(), &model.GetBlockedInfosParams{
-		BlockerAccountID: clientAccountID,
+		ClientAccountID: clientAccountID,
 		Limit:            params.Limit,
 		Offset:           params.Offset,
 	})
@@ -161,6 +161,7 @@ func convertToUserInfos(blockedInfos []*model.UserInfo) []UserInfo {
 			IsAdmin:         blockedInfo.IsAdmin,
 			IsFollowing:     blockedInfo.IsFollowing,
 			IsFollowed:      blockedInfo.IsFollowed,
+			IsPending:       blockedInfo.IsPending,
 		})
 	}
 	return resp

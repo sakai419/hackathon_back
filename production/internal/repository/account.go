@@ -180,10 +180,25 @@ func (r *Repository) GetAccountIDByUserID(ctx context.Context, userId string) (s
 	return AccountID, nil
 }
 
-func (r *Repository) GetUserInfo(ctx context.Context, id string) (*model.UserInfoInternal, error) {
-	// Get user info
-	res, err := r.q.GetUserInfo(ctx, id)
+func (r *Repository) GetUserInfo(ctx context.Context, params *model.GetUserInfoParams) (*model.UserInfoInternal, error) {
+	// Begin transaction
+	tx, err := r.db.Begin()
 	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "begin transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Create query object with transaction
+	q := r.q.WithTx(tx)
+
+	// Get user info
+	res, err := q.GetUserInfo(ctx, params.TargetAccountID)
+	if err != nil {
+		tx.Rollback()
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, apperrors.WrapRepositoryError(
 				&apperrors.ErrRecordNotFound{
@@ -200,6 +215,32 @@ func (r *Repository) GetUserInfo(ctx context.Context, id string) (*model.UserInf
 		)
 	}
 
+	// Get follow status
+	followStatus, err := q.CheckFollowStatus(ctx, sqlcgen.CheckFollowStatusParams{
+		ClientAccountID: params.ClientAccountID,
+		TargetAccountID: params.TargetAccountID,
+	})
+	if err != nil {
+		tx.Rollback()
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check follow status",
+				Err: err,
+			},
+		)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "commit transaction",
+				Err: err,
+			},
+		)
+	}
+
 	// Convert to model
 	userInfo := &model.UserInfoInternal{
 		ID: res.ID,
@@ -210,13 +251,16 @@ func (r *Repository) GetUserInfo(ctx context.Context, id string) (*model.UserInf
 		BannerImageURL: res.BannerImageUrl.String,
 		IsPrivate: res.IsPrivate.Bool,
 		IsAdmin: res.IsAdmin,
+		IsFollowing: followStatus.IsFollowing,
+		IsFollowed: followStatus.IsFollowed,
+		IsPending: followStatus.IsPending,
 		CreatedAt: res.CreatedAt,
 	}
 
 	return userInfo, nil
 }
 
-func (r *Repository) GetUserInfos(ctx context.Context, ids []string, clientAccountID string) ([]*model.UserInfoInternal, error) {
+func (r *Repository) GetUserInfos(ctx context.Context, params *model.GetUserInfosParams) ([]*model.UserInfoInternal, error) {
 	// Begin transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -232,7 +276,7 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string, clientAccou
 	q := r.q.WithTx(tx)
 
 	// Get user infos
-	res, err := q.GetUserInfos(ctx, ids)
+	res, err := q.GetUserInfos(ctx, params.TargetAccountIDs)
 	if err != nil {
 		tx.Rollback()
 		return nil, apperrors.WrapRepositoryError(
@@ -244,7 +288,7 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string, clientAccou
 	}
 
 	// Check if all accounts are found
-	if len(res) != len(ids) {
+	if len(res) != len(params.TargetAccountIDs) {
 		tx.Rollback()
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrRecordNotFound{
@@ -255,8 +299,8 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string, clientAccou
 
 	// Get follow status
 	followStatuses, err := q.CheckMultipleFollowStatus(ctx, sqlcgen.CheckMultipleFollowStatusParams{
-		ClientAccountID: clientAccountID,
-		AccountIds: ids,
+		ClientAccountID: params.ClientAccountID,
+		AccountIds: params.TargetAccountIDs,
 	})
 	if err != nil {
 		tx.Rollback()
@@ -301,6 +345,7 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string, clientAccou
 		}
 		userAndProfileInfo.IsFollowing = followStatusMap[r.ID].IsFollowing
 		userAndProfileInfo.IsFollowed = followStatusMap[r.ID].IsFollowed
+		userAndProfileInfo.IsPending = followStatusMap[r.ID].IsPending
 		userAndProfileInfos = append(userAndProfileInfos, userAndProfileInfo)
 	}
 
@@ -421,6 +466,7 @@ func (r *Repository) SearchUsersOrderByCreatedAt(ctx context.Context, params *mo
 		}
 		userInfo.IsFollowing = followStatusMap[u.ID].IsFollowing
 		userInfo.IsFollowed = followStatusMap[u.ID].IsFollowed
+		userInfo.IsPending = followStatusMap[u.ID].IsPending
 		userInfos = append(userInfos, userInfo)
 	}
 

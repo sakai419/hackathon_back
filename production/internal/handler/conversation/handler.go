@@ -207,6 +207,7 @@ func convertToConversationResponse(conversations []*model.ConversationResponse) 
 				IsAdmin: 		 c.OpponentInfo.IsAdmin,
 				IsFollowing:     c.OpponentInfo.IsFollowing,
 				IsFollowed:      c.OpponentInfo.IsFollowed,
+				IsPending:       c.OpponentInfo.IsPending,
 			},
 			LastMessageTime: c.LastMessageTime,
 			Content: 		 c.Content,

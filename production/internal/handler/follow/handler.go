@@ -321,6 +321,7 @@ func convertToUserInfos(followerInfos []*model.UserInfo) []UserInfo {
 			IsAdmin: followerInfo.IsAdmin,
 			IsFollowing: followerInfo.IsFollowing,
 			IsFollowed: followerInfo.IsFollowed,
+			IsPending: followerInfo.IsPending,
 		})
 	}
 	return resp

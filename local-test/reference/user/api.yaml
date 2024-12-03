@@ -272,6 +272,8 @@ components:
                     type: boolean
                 is_followed:
                     type: boolean
+                is_pending:
+                    type: boolean
             required:
                 - user_id
                 - user_name
@@ -281,6 +283,7 @@ components:
                 - is_admin
                 - is_following
                 - is_followed
+                - is_pending
         UserInfoWithoutBio:
             type: object
             properties:
@@ -299,6 +302,8 @@ components:
                     type: boolean
                 is_followed:
                     type: boolean
+                is_pending:
+                    type: boolean
             required:
                 - user_id
                 - user_name
@@ -307,6 +312,7 @@ components:
                 - is_admin
                 - is_following
                 - is_followed
+                - is_pending
         Code:
             type: object
             properties:

@@ -53,6 +53,7 @@ func convertToUserInfo(userInfo *model.UserInfoInternal) *model.UserInfo {
 		IsAdmin:         userInfo.IsAdmin,
 		IsFollowing:     userInfo.IsFollowing,
 		IsFollowed:      userInfo.IsFollowed,
+		IsPending:       userInfo.IsPending,
 	}
 }
 
@@ -74,6 +75,7 @@ func convertToUserInfoWithoutBio(userInfo *model.UserInfoInternal) *model.UserIn
 		IsAdmin:         userInfo.IsAdmin,
 		IsFollowing:     userInfo.IsFollowing,
 		IsFollowed:      userInfo.IsFollowed,
+		IsPending:       userInfo.IsPending,
 	}
 }
 

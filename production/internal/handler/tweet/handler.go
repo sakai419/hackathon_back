@@ -598,6 +598,7 @@ func convertToUserInfos(infos []*model.UserInfo) []*UserInfo {
 			IsAdmin:   info.IsAdmin,
 			IsFollowing: info.IsFollowing,
 			IsFollowed:  info.IsFollowed,
+			IsPending:   info.IsPending,
 		})
 	}
 
@@ -618,6 +619,7 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 			IsAdmin:         t.UserInfo.IsAdmin,
 			IsFollowing:     t.UserInfo.IsFollowing,
 			IsFollowed:      t.UserInfo.IsFollowed,
+			IsPending:       t.UserInfo.IsPending,
 		},
 		LikesCount:    t.LikesCount,
 		RetweetsCount: t.RetweetsCount,

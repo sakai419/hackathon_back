@@ -46,7 +46,18 @@ type UserInfoInternal struct {
 	IsAdmin		    bool
 	IsFollowing     bool
 	IsFollowed      bool
+	IsPending       bool
 	CreatedAt	    time.Time
+}
+
+type GetUserInfoParams struct {
+	TargetAccountID string
+	ClientAccountID string
+}
+
+type GetUserInfosParams struct {
+	TargetAccountIDs []string
+	ClientAccountID string
 }
 
 type UserInfo struct {
@@ -58,6 +69,7 @@ type UserInfo struct {
 	IsAdmin		    bool
 	IsFollowing     bool
 	IsFollowed      bool
+	IsPending       bool
 }
 
 type UserInfoWithoutBio struct {
@@ -68,6 +80,7 @@ type UserInfoWithoutBio struct {
 	IsAdmin		    bool
 	IsFollowing     bool
 	IsFollowed      bool
+	IsPending       bool
 }
 
 type AccountInfo struct {

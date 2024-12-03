@@ -28,6 +28,48 @@ func (q *Queries) AcceptFollowRequest(ctx context.Context, arg AcceptFollowReque
 	return q.db.ExecContext(ctx, acceptFollowRequest, arg.FollowerAccountID, arg.FollowingAccountID)
 }
 
+const checkFollowStatus = `-- name: CheckFollowStatus :one
+SELECT EXISTS(
+    SELECT 1
+    FROM follows as f1
+    WHERE f1.follower_account_id = $1
+      AND f1.following_account_id = $2
+      AND f1.status = 'accepted'
+) AS is_following,
+EXISTS(
+    SELECT 1
+    FROM follows as f2
+    WHERE f2.follower_account_id = $2
+      AND f2.following_account_id = $1
+      AND f2.status = 'accepted'
+) AS is_followed,
+EXISTS(
+    SELECT 1
+    FROM follows as f3
+    WHERE f3.follower_account_id = $1
+      AND f3.following_account_id = $2
+      AND f3.status = 'pending'
+) AS is_pending
+`
+
+type CheckFollowStatusParams struct {
+	ClientAccountID string
+	TargetAccountID string
+}
+
+type CheckFollowStatusRow struct {
+	IsFollowing bool
+	IsFollowed  bool
+	IsPending   bool
+}
+
+func (q *Queries) CheckFollowStatus(ctx context.Context, arg CheckFollowStatusParams) (CheckFollowStatusRow, error) {
+	row := q.db.QueryRowContext(ctx, checkFollowStatus, arg.ClientAccountID, arg.TargetAccountID)
+	var i CheckFollowStatusRow
+	err := row.Scan(&i.IsFollowing, &i.IsFollowed, &i.IsPending)
+	return i, err
+}
+
 const checkIsFollowed = `-- name: CheckIsFollowed :one
 SELECT EXISTS(
     SELECT 1
@@ -64,7 +106,14 @@ SELECT
         WHERE f2.follower_account_id = account_id
           AND f2.following_account_id = $1
           AND f2.status = 'accepted'
-    ) AS is_followed
+    ) AS is_followed,
+    EXISTS(
+        SELECT 1
+        FROM follows as f3
+        WHERE f3.follower_account_id = $1
+          AND f3.following_account_id = account_id
+          AND f3.status = 'pending'
+    ) AS is_pending
 FROM UNNEST($2::VARCHAR[]) AS account_id
 `
 
@@ -77,6 +126,7 @@ type CheckMultipleFollowStatusRow struct {
 	AccountID   interface{}
 	IsFollowing bool
 	IsFollowed  bool
+	IsPending   bool
 }
 
 func (q *Queries) CheckMultipleFollowStatus(ctx context.Context, arg CheckMultipleFollowStatusParams) ([]CheckMultipleFollowStatusRow, error) {
@@ -88,7 +138,12 @@ func (q *Queries) CheckMultipleFollowStatus(ctx context.Context, arg CheckMultip
 	var items []CheckMultipleFollowStatusRow
 	for rows.Next() {
 		var i CheckMultipleFollowStatusRow
-		if err := rows.Scan(&i.AccountID, &i.IsFollowing, &i.IsFollowed); err != nil {
+		if err := rows.Scan(
+			&i.AccountID,
+			&i.IsFollowing,
+			&i.IsFollowed,
+			&i.IsPending,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

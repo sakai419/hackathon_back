@@ -215,6 +215,8 @@ components:
                     type: boolean
                 is_followed:
                     type: boolean
+                is_pending:
+                    type: boolean
             required:
                 - user_id
                 - user_name
@@ -223,3 +225,4 @@ components:
                 - is_admin
                 - is_following
                 - is_followed
+                - is_pending

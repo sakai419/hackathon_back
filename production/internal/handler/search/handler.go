@@ -53,6 +53,7 @@ func (h *SearchHandler) SearchUsers(w http.ResponseWriter, r *http.Request, para
 			IsAdmin:         u.IsAdmin,
 			IsFollowing:     u.IsFollowing,
 			IsFollowed:      u.IsFollowed,
+			IsPending:       u.IsPending,
 		}
 	}
 
@@ -122,6 +123,7 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 			IsAdmin: 	 t.UserInfo.IsAdmin,
 			IsFollowing:     t.UserInfo.IsFollowing,
 			IsFollowed:      t.UserInfo.IsFollowed,
+			IsPending:       t.UserInfo.IsPending,
 		},
 		LikesCount:    t.LikesCount,
 		RetweetsCount: t.RetweetsCount,
