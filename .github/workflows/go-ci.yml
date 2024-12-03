@@ -3,7 +3,7 @@ name: Go
 on:
     push:
         paths:
-            - "api/**/*.go"
+            - "production/**/*.go"
 
 jobs:
     build:
@@ -17,4 +17,4 @@ jobs:
                   go-version: "1.23"
 
             - name: Test
-              run: cd api && go test -v ./...
+              run: cd production && go test -v ./...
