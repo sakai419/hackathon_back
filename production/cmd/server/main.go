@@ -3,13 +3,14 @@ package main
 import (
 	v1 "local-test/api/v1"
 	"local-test/internal/config"
+
+	// "local-test/internal/model"
 	"local-test/pkg/database"
 	"local-test/pkg/firebase"
 	"local-test/pkg/utils"
 	"log"
 )
 
-// main is the entrypoint of the application
 func main() {
 	// Load config
 	cfg, err := config.LoadConfig()
@@ -23,7 +24,6 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	// Initialize Firebase client
 	firebaseClient, err := firebase.InitFirebaseClient(cfg.FirebaseConfig)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
@@ -33,10 +33,10 @@ func main() {
 	utils.CloseDBWithSysCall(db)
 
 	// Setup server
-	server := v1.NewServer(db, firebaseClient)
+	server := v1.NewServer(db, firebaseClient, cfg.ServerConfig)
 
 	// Start server
-	if err := server.Start(cfg.ServerConfig.Port); err != nil {
+	if err := server.Start(); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }

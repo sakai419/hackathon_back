@@ -43,5 +43,6 @@ firebase:
     universe_domain: gogoleapis.com
 server:
     port: 8080
+    cors_origin: ${SERVER_CORS_ORIGIN}
 gemini:
     api_key: ${GEMINI_API_KEY}

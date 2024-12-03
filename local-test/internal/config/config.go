@@ -53,6 +53,7 @@ type GeminiConfig struct {
 
 type ServerConfig struct {
 	Port int
+	CorsOrigin string
 }
 
 func generateDBConfig(v *viper.Viper) (*DBConfig, error) {
@@ -94,6 +95,7 @@ func generateFirebaseConfig(v *viper.Viper) (*FirebaseConfig, error) {
 func generateServerConfig(v *viper.Viper) (*ServerConfig, error) {
 	return &ServerConfig{
 		Port: v.GetInt("server.port"),
+		CorsOrigin: v.GetString("server.cors_origin"),
 	}, nil
 }
 

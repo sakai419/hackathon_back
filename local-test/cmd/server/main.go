@@ -33,10 +33,10 @@ func main() {
 	utils.CloseDBWithSysCall(db)
 
 	// Setup server
-	server := v1.NewServer(db, firebaseClient)
+	server := v1.NewServer(db, firebaseClient, cfg.ServerConfig)
 
 	// Start server
-	if err := server.Start(cfg.ServerConfig.Port); err != nil {
+	if err := server.Start(); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }

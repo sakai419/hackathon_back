@@ -3,6 +3,7 @@ package v1
 import (
 	"database/sql"
 	"fmt"
+	"local-test/internal/config"
 	"local-test/internal/handler/account"
 	"local-test/internal/handler/block"
 	"local-test/internal/handler/conversation"
@@ -27,19 +28,20 @@ import (
 
 type Server struct {
 	router *mux.Router
+	port   int
 }
 
-func NewServer(db *sql.DB, client *auth.Client) *Server {
-	r := SetupRoutes(db, client)
-	return &Server{router: r}
+func NewServer(db *sql.DB, client *auth.Client, cfg *config.ServerConfig) *Server {
+	r := SetupRoutes(db, client, cfg.CorsOrigin)
+	return &Server{router: r, port: cfg.Port}
 }
 
 func (s *Server) Router() *mux.Router {
 	return s.router
 }
 
-func (s *Server) Start(port int) error {
-	addr := fmt.Sprintf(":%d", port)
+func (s *Server) Start() error {
+	addr := fmt.Sprintf(":%d", s.port)
 	log.Printf("Starting server on %s", addr)
 	return http.ListenAndServe(addr, s.router)
 }
@@ -261,13 +263,13 @@ func setUpSearchRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 	search.HandlerWithOptions(h, opts)
 }
 
-func SetupRoutes(db *sql.DB, client *auth.Client) *mux.Router {
+func SetupRoutes(db *sql.DB, client *auth.Client, corsOrigin string) *mux.Router {
 	r := mux.NewRouter()
 
 	// Create a new router for the /api/v1 path
 	apiV1 := r.PathPrefix("/api/v1").Subrouter()
 	apiV1.Use(middleware.LoggingMiddleware)
-    apiV1.Use(middleware.EnableCorsMiddleware)
+    apiV1.Use(middleware.EnableCorsMiddleware(corsOrigin))
 
     // Handle OPTIONS requests
     apiV1.HandleFunc("/{any:.*}", func(w http.ResponseWriter, r *http.Request) {
