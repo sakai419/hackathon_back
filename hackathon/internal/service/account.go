@@ -47,22 +47,3 @@ func sortUserInfos(userInfos []*model.UserInfoInternal, ids []string) []*model.U
 
 	return sortedUserInfos
 }
-
-func sortUserInfoWithoutBios(userInfos []*model.UserInfoInternal, ids []string) []*model.UserInfoWithoutBio {
-	userInfoMap := make(map[string]*model.UserInfoInternal)
-	for _, userInfo := range userInfos {
-		userInfoMap[userInfo.ID] = userInfo
-	}
-
-	sortedUserInfos := make([]*model.UserInfoWithoutBio, len(ids))
-	for i, id := range ids {
-		temp := userInfoMap[id]
-		sortedUserInfos[i] = &model.UserInfoWithoutBio{
-			UserID:          temp.UserID,
-			UserName:        temp.UserName,
-			ProfileImageURL: temp.ProfileImageURL,
-		}
-	}
-
-	return sortedUserInfos
-}

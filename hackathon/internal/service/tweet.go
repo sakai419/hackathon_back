@@ -355,7 +355,7 @@ func (s *Service) UnsetTweetAsPinned(ctx context.Context, params *model.UnsetTwe
 	return nil
 }
 
-func (s *Service) GetLikingUserInfos(ctx context.Context, params *model.GetLikingUserInfosParams) ([]*model.UserInfoWithoutBio, error) {
+func (s *Service) GetLikingUserInfos(ctx context.Context, params *model.GetLikingUserInfosParams) ([]*model.UserInfo, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
@@ -388,12 +388,12 @@ func (s *Service) GetLikingUserInfos(ctx context.Context, params *model.GetLikin
 		return nil, apperrors.NewNotFoundAppError("liking user info", "get liking user infos", err)
 	}
 
-	likingUserInfos := sortUserInfoWithoutBios(infos, likingAccountIDs)
+	likingUserInfos := sortUserInfos(infos, likingAccountIDs)
 
 	return likingUserInfos, nil
 }
 
-func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetRetweetingUserInfosParams) ([]*model.UserInfoWithoutBio, error) {
+func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetRetweetingUserInfosParams) ([]*model.UserInfo, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
@@ -426,12 +426,12 @@ func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetR
 		return nil, apperrors.NewNotFoundAppError("retweeting user info", "get retweeting user infos", err)
 	}
 
-	retweetingUserInfos := sortUserInfoWithoutBios(infos, retweetingAccountIDs)
+	retweetingUserInfos := sortUserInfos(infos, retweetingAccountIDs)
 
 	return retweetingUserInfos, nil
 }
 
-func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuotingUserInfosParams) ([]*model.UserInfoWithoutBio, error) {
+func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuotingUserInfosParams) ([]*model.UserInfo, error) {
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
@@ -464,7 +464,7 @@ func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuot
 		return nil, apperrors.NewNotFoundAppError("quoting user info", "get quoting user infos", err)
 	}
 
-	quotingUserInfos := sortUserInfoWithoutBios(infos, quotingAccountIDs)
+	quotingUserInfos := sortUserInfos(infos, quotingAccountIDs)
 
 	return quotingUserInfos, nil
 }
