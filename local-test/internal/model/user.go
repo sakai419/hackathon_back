@@ -89,6 +89,5 @@ type UserProfile struct {
 	TweetCount     int64
 	FollowerCount  int64
 	FollowingCount int64
-	IsFollowed     bool
 	CreatedAt	   time.Time
 }

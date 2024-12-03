@@ -205,6 +205,8 @@ func convertToConversationResponse(conversations []*model.ConversationResponse) 
 				ProfileImageUrl: c.OpponentInfo.ProfileImageURL,
 				IsPrivate: 		 c.OpponentInfo.IsPrivate,
 				IsAdmin: 		 c.OpponentInfo.IsAdmin,
+				IsFollowing:     c.OpponentInfo.IsFollowing,
+				IsFollowed:      c.OpponentInfo.IsFollowed,
 			},
 			LastMessageTime: c.LastMessageTime,
 			Content: 		 c.Content,

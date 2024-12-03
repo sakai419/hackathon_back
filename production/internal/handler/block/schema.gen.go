@@ -19,17 +19,14 @@ type Count struct {
 
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
-	// Bio The bio of the user.
-	Bio string `json:"bio"`
-
-	// ProfileImageUrl URL of the user's profile image.
+	Bio             string `json:"bio"`
+	IsAdmin         bool   `json:"is_admin"`
+	IsFollowed      bool   `json:"is_followed"`
+	IsFollowing     bool   `json:"is_following"`
+	IsPrivate       bool   `json:"is_private"`
 	ProfileImageUrl string `json:"profile_image_url"`
-
-	// UserId The ID of the user.
-	UserId string `json:"user_id"`
-
-	// UserName The name of the user.
-	UserName string `json:"user_name"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
 }
 
 // UserInfos defines model for UserInfos.

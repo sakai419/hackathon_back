@@ -20,7 +20,7 @@ func (s *Service) GetNotifications(ctx context.Context, params *model.GetNotific
 
 	// Get sender info
 	senderAccountIDs := convertToSenderAccountIDs(notifications)
-	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
+	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
@@ -29,14 +29,14 @@ func (s *Service) GetNotifications(ctx context.Context, params *model.GetNotific
 	tweetIDs := extractTweetIDs(notifications)
 	tweetInfos, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
 		TweetIDs: tweetIDs,
-		ClientAccountID: params.RecipientAccountID,
+		ClientAccountID: params.ClientAccountID,
 	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("tweet info", "get tweet infos", err)
 	}
 
 	// Get client user info
-	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.RecipientAccountID)
+	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("client user info", "get client user info", err)
 	}
@@ -61,7 +61,7 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, params *model.GetU
 
 	// Get sender info
     senderAccountIDs := convertToSenderAccountIDs(notifications)
-	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs)
+	senderInfos, err := s.repo.GetUserInfos(ctx, senderAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("sender info", "get sender infos", err)
 	}
@@ -70,14 +70,14 @@ func (s *Service) GetUnreadNotifications(ctx context.Context, params *model.GetU
 	tweetIDs := extractTweetIDs(notifications)
 	tweetInfos, err := s.repo.GetTweetInfosByIDs(ctx, &model.GetTweetInfosByIDsParams{
 		TweetIDs: tweetIDs,
-		ClientAccountID: params.RecipientAccountID,
+		ClientAccountID: params.ClientAccountID,
 	})
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("tweet info", "get tweet infos", err)
 	}
 
 	// Get client user info
-	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.RecipientAccountID)
+	clientUserInfo, err := s.repo.GetUserInfo(ctx, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("client user info", "get client user info", err)
 	}
@@ -173,14 +173,7 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 		if notification.SenderAccountID != nil {
 			senderInfo, ok := userInfoMap[*notification.SenderAccountID]
 			if ok {
-				item.SenderInfo = &model.UserInfo{
-					UserID:          senderInfo.UserID,
-					UserName:        senderInfo.UserName,
-					Bio:             senderInfo.Bio,
-					ProfileImageURL: senderInfo.ProfileImageURL,
-					IsPrivate:       senderInfo.IsPrivate,
-					IsAdmin:         senderInfo.IsAdmin,
-				}
+				item.SenderInfo = convertToUserInfo(senderInfo)
 			}
 		}
 
@@ -189,13 +182,7 @@ func convertToNotificationResponse(notifications []*model.Notification, senderIn
 			if ok {
 				item.RelatedTweet = &model.TweetInfo{
 					TweetID:       tweetInfo.TweetID,
-					UserInfo:      model.UserInfoWithoutBio{
-						UserID:          clientUserInfo.UserID,
-						UserName: 	     clientUserInfo.UserName,
-						ProfileImageURL: clientUserInfo.ProfileImageURL,
-						IsPrivate: 	     clientUserInfo.IsPrivate,
-						IsAdmin: 	     clientUserInfo.IsAdmin,
-					},
+					UserInfo:      *convertToUserInfoWithoutBio(clientUserInfo),
 					Content:       tweetInfo.Content,
 					Code:          tweetInfo.Code,
 					Media:         tweetInfo.Media,

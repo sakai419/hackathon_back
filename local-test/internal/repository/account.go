@@ -216,10 +216,25 @@ func (r *Repository) GetUserInfo(ctx context.Context, id string) (*model.UserInf
 	return userInfo, nil
 }
 
-func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.UserInfoInternal, error) {
-	// Get user infos
-	res, err := r.q.GetUserInfos(ctx, ids)
+func (r *Repository) GetUserInfos(ctx context.Context, ids []string, clientAccountID string) ([]*model.UserInfoInternal, error) {
+	// Begin transaction
+	tx, err := r.db.Begin()
 	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "begin transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Create query object with transaction
+	q := r.q.WithTx(tx)
+
+	// Get user infos
+	res, err := q.GetUserInfos(ctx, ids)
+	if err != nil {
+		tx.Rollback()
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "get user and profile info by account ids",
@@ -230,11 +245,44 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.U
 
 	// Check if all accounts are found
 	if len(res) != len(ids) {
+		tx.Rollback()
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrRecordNotFound{
 				Condition: "account id",
 			},
 		)
+	}
+
+	// Get follow status
+	followStatuses, err := q.CheckMultipleFollowStatus(ctx, sqlcgen.CheckMultipleFollowStatusParams{
+		ClientAccountID: clientAccountID,
+		AccountIds: ids,
+	})
+	if err != nil {
+		tx.Rollback()
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check multiple follow status",
+				Err: err,
+			},
+		)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "commit transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to map
+	followStatusMap := make(map[string]sqlcgen.CheckMultipleFollowStatusRow)
+	for _, f := range followStatuses {
+		followStatusMap[f.AccountID.(string)] = f
 	}
 
 	// Convert to model
@@ -251,6 +299,8 @@ func (r *Repository) GetUserInfos(ctx context.Context, ids []string) ([]*model.U
 			IsAdmin: r.IsAdmin,
 			CreatedAt: r.CreatedAt,
 		}
+		userAndProfileInfo.IsFollowing = followStatusMap[r.ID].IsFollowing
+		userAndProfileInfo.IsFollowed = followStatusMap[r.ID].IsFollowed
 		userAndProfileInfos = append(userAndProfileInfos, userAndProfileInfo)
 	}
 
@@ -288,19 +338,72 @@ func (r *Repository) GetAccountInfo(ctx context.Context, accountID string) (*mod
 }
 
 func (r *Repository) SearchUsersOrderByCreatedAt(ctx context.Context, params *model.SearchUsersOrderByCreatedAtParams) ([]*model.UserInfoInternal, error) {
+	// Begin transaction
+	tx, err := r.db.Begin()
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "begin transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Create query object with transaction
+	q := r.q.WithTx(tx)
+
 	// Search users
-	users, err := r.q.SearchAccountsOrderByCreatedAt(ctx, sqlcgen.SearchAccountsOrderByCreatedAtParams{
+	users, err := q.SearchAccountsOrderByCreatedAt(ctx, sqlcgen.SearchAccountsOrderByCreatedAtParams{
 		Keyword: params.Keyword,
 		Offset: params.Offset,
 		Limit: params.Limit,
 	})
 	if err != nil {
+		tx.Rollback()
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "search users",
 				Err: err,
 			},
 		)
+	}
+
+	// extract accountIDs
+	accountIDs := make([]string, 0)
+	for _, u := range users {
+		accountIDs = append(accountIDs, u.ID)
+	}
+
+	// Get follow status
+	followStatuses, err := q.CheckMultipleFollowStatus(ctx, sqlcgen.CheckMultipleFollowStatusParams{
+		ClientAccountID: params.ClientAccountID,
+		AccountIds: accountIDs,
+	})
+	if err != nil {
+		tx.Rollback()
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "check multiple follow status",
+				Err: err,
+			},
+		)
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "commit transaction",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to map
+	followStatusMap := make(map[string]sqlcgen.CheckMultipleFollowStatusRow)
+	for _, f := range followStatuses {
+		followStatusMap[f.AccountID.(string)] = f
 	}
 
 	// Convert to model
@@ -316,6 +419,8 @@ func (r *Repository) SearchUsersOrderByCreatedAt(ctx context.Context, params *mo
 			IsAdmin: u.IsAdmin,
 			CreatedAt: u.CreatedAt,
 		}
+		userInfo.IsFollowing = followStatusMap[u.ID].IsFollowing
+		userInfo.IsFollowed = followStatusMap[u.ID].IsFollowed
 		userInfos = append(userInfos, userInfo)
 	}
 

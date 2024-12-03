@@ -383,7 +383,7 @@ func (s *Service) GetLikingUserInfos(ctx context.Context, params *model.GetLikin
 	}
 
 	// Get user infos
-	infos, err := s.repo.GetUserInfos(ctx, likingAccountIDs)
+	infos, err := s.repo.GetUserInfos(ctx, likingAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("liking user info", "get liking user infos", err)
 	}
@@ -421,7 +421,7 @@ func (s *Service) GetRetweetingUserInfos(ctx context.Context, params *model.GetR
 	}
 
 	// Get user infos
-	infos, err := s.repo.GetUserInfos(ctx, retweetingAccountIDs)
+	infos, err := s.repo.GetUserInfos(ctx, retweetingAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("retweeting user info", "get retweeting user infos", err)
 	}
@@ -459,7 +459,7 @@ func (s *Service) GetQuotingUserInfos(ctx context.Context, params *model.GetQuot
 	}
 
 	// Get user infos
-	infos, err := s.repo.GetUserInfos(ctx, quotingAccountIDs)
+	infos, err := s.repo.GetUserInfos(ctx, quotingAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("quoting user info", "get quoting user infos", err)
 	}
@@ -571,7 +571,7 @@ func (s *Service) GetTweetInfo(ctx context.Context, params *model.GetTweetInfoPa
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user info", "get user info", err)
 	}
@@ -626,7 +626,7 @@ func (s *Service) GetReplyTweetInfos(ctx context.Context, params *model.GetReply
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user info", "get user infos", err)
 	}
@@ -756,7 +756,7 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user info", "get user infos", err)
 	}
@@ -850,7 +850,7 @@ func (s *Service) GetRecentTweetInfos(ctx context.Context, params *model.GetRece
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -895,6 +895,25 @@ func (s *Service) DeleteTweet(ctx context.Context, params *model.DeleteTweetPara
 	return nil
 }
 
+func convertToTweetInfo(tweet *model.TweetInfoInternal, userInfo *model.UserInfoInternal) *model.TweetInfo {
+	return &model.TweetInfo{
+		TweetID:       tweet.TweetID,
+		Content:       tweet.Content,
+		Code:          tweet.Code,
+		LikesCount:    tweet.LikesCount,
+		RepliesCount:  tweet.RepliesCount,
+		RetweetsCount: tweet.RetweetsCount,
+		IsReply:       tweet.IsReply,
+		IsQuote:       tweet.IsQuote,
+		IsPinned:      tweet.IsPinned,
+		HasLiked:      tweet.HasLiked,
+		HasRetweeted:  tweet.HasRetweeted,
+		Media:         tweet.Media,
+		UserInfo:      *convertToUserInfoWithoutBio(userInfo),
+		CreatedAt:    tweet.CreatedAt,
+	}
+}
+
 func convertToTweetInfos(tweetIDs []int64, tweets []*model.TweetInfoInternal, userInfos []*model.UserInfoInternal) ([]*model.TweetInfo, error) {
 	// Create map of user info
 	userInfoMap := make(map[string]*model.UserInfoInternal)
@@ -921,26 +940,7 @@ func convertToTweetInfos(tweetIDs []int64, tweets []*model.TweetInfoInternal, us
 			return nil, apperrors.NewNotFoundAppError("user info", "convert to tweet info", nil)
 		}
 
-		info := &model.TweetInfo{
-			TweetID:       tweet.TweetID,
-			Content:       tweet.Content,
-			Code:          tweet.Code,
-			LikesCount:    tweet.LikesCount,
-			RepliesCount:  tweet.RepliesCount,
-			RetweetsCount: tweet.RetweetsCount,
-			IsReply:       tweet.IsReply,
-			IsQuote:       tweet.IsQuote,
-			IsPinned:      tweet.IsPinned,
-			HasLiked:      tweet.HasLiked,
-			HasRetweeted:  tweet.HasRetweeted,
-			Media:         tweet.Media,
-			UserInfo:      model.UserInfoWithoutBio{
-				UserID:          userInfo.UserID,
-				UserName:        userInfo.UserName,
-				ProfileImageURL: userInfo.ProfileImageURL,
-			},
-			CreatedAt:    tweet.CreatedAt,
-		}
+		info := convertToTweetInfo(tweet, userInfo)
 
 		ret = append(ret, info)
 	}
@@ -976,31 +976,10 @@ func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*
 			return nil, apperrors.NewInternalAppError("get user info", errors.New("user info not found"))
 		}
 
-		tweetInfo := model.TweetInfo{
-			TweetID:       tweet.TweetID,
-			Content:       tweet.Content,
-			Code:          tweet.Code,
-			Media:         tweet.Media,
-			LikesCount:    tweet.LikesCount,
-			RetweetsCount: tweet.RetweetsCount,
-			RepliesCount:  tweet.RepliesCount,
-			IsQuote:       tweet.IsQuote,
-			IsReply:       tweet.IsReply,
-			IsPinned:      tweet.IsPinned,
-			HasLiked:      tweet.HasLiked,
-			HasRetweeted:  tweet.HasRetweeted,
-			CreatedAt:     tweet.CreatedAt,
-			UserInfo:      model.UserInfoWithoutBio{
-				UserID:          userInfo.UserID,
-				UserName:        userInfo.UserName,
-				ProfileImageURL: userInfo.ProfileImageURL,
-				IsPrivate: 	     userInfo.IsPrivate,
-				IsAdmin: 	     userInfo.IsAdmin,
-			},
-		}
+		tweetInfo := convertToTweetInfo(tweet, userInfo)
 
 		response := &model.TweetNode{
-			Tweet: tweetInfo,
+			Tweet: *tweetInfo,
 		}
 
 		// Get quoted tweet info
@@ -1009,28 +988,7 @@ func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*
 			quotedTweet := &model.TweetInfo{}
 			userInfo, ok := userInfoMap[quotedTweetInfo.QuotedTweet.AccountID]
 			if ok {
-				quotedTweet = &model.TweetInfo{
-					TweetID:       quotedTweetInfo.QuotedTweet.TweetID,
-					Content:       quotedTweetInfo.QuotedTweet.Content,
-					Code:          quotedTweetInfo.QuotedTweet.Code,
-					Media:         quotedTweetInfo.QuotedTweet.Media,
-					LikesCount:    quotedTweetInfo.QuotedTweet.LikesCount,
-					RetweetsCount: quotedTweetInfo.QuotedTweet.RetweetsCount,
-					RepliesCount:  quotedTweetInfo.QuotedTweet.RepliesCount,
-					IsQuote:       quotedTweetInfo.QuotedTweet.IsQuote,
-					IsReply:       quotedTweetInfo.QuotedTweet.IsReply,
-					IsPinned:      quotedTweetInfo.QuotedTweet.IsPinned,
-					HasLiked:      quotedTweetInfo.QuotedTweet.HasLiked,
-					HasRetweeted:  quotedTweetInfo.QuotedTweet.HasRetweeted,
-					CreatedAt:     quotedTweetInfo.QuotedTweet.CreatedAt,
-					UserInfo:      model.UserInfoWithoutBio{
-						UserID:          userInfo.UserID,
-						UserName:        userInfo.UserName,
-						ProfileImageURL: userInfo.ProfileImageURL,
-						IsPrivate: 	     userInfo.IsPrivate,
-						IsAdmin: 	     userInfo.IsAdmin,
-					},
-				}
+				quotedTweet = convertToTweetInfo(&quotedTweetInfo.QuotedTweet, userInfo)
 			}
 
 			response.OriginalTweet = quotedTweet
@@ -1044,28 +1002,7 @@ func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*
 
 				userInfo, ok := userInfoMap[replyTweetInfo.ParentReplyTweet.AccountID]
 				if ok {
-					parentReplyTweet = &model.TweetInfo{
-						TweetID:       replyTweetInfo.ParentReplyTweet.TweetID,
-						Content:       replyTweetInfo.ParentReplyTweet.Content,
-						Code:          replyTweetInfo.ParentReplyTweet.Code,
-						Media:         replyTweetInfo.ParentReplyTweet.Media,
-						LikesCount:    replyTweetInfo.ParentReplyTweet.LikesCount,
-						RetweetsCount: replyTweetInfo.ParentReplyTweet.RetweetsCount,
-						RepliesCount:  replyTweetInfo.ParentReplyTweet.RepliesCount,
-						IsQuote:       replyTweetInfo.ParentReplyTweet.IsQuote,
-						IsReply:       replyTweetInfo.ParentReplyTweet.IsReply,
-						IsPinned:      replyTweetInfo.ParentReplyTweet.IsPinned,
-						HasLiked:      replyTweetInfo.ParentReplyTweet.HasLiked,
-						HasRetweeted:  replyTweetInfo.ParentReplyTweet.HasRetweeted,
-						CreatedAt:     replyTweetInfo.ParentReplyTweet.CreatedAt,
-						UserInfo:      model.UserInfoWithoutBio{
-							UserID:          userInfo.UserID,
-							UserName:        userInfo.UserName,
-							ProfileImageURL: userInfo.ProfileImageURL,
-							IsPrivate: 	     userInfo.IsPrivate,
-							IsAdmin: 	     userInfo.IsAdmin,
-						},
-					}
+					parentReplyTweet = convertToTweetInfo(replyTweetInfo.ParentReplyTweet, userInfo)
 				}
 
 				response.ParentReply = parentReplyTweet
@@ -1075,28 +1012,7 @@ func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*
 
 			userInfo, ok := userInfoMap[replyTweetInfo.OriginalTweet.AccountID]
 			if ok {
-				originalTweet = &model.TweetInfo{
-					TweetID:       replyTweetInfo.OriginalTweet.TweetID,
-					Content:       replyTweetInfo.OriginalTweet.Content,
-					Code:          replyTweetInfo.OriginalTweet.Code,
-					Media:         replyTweetInfo.OriginalTweet.Media,
-					LikesCount:    replyTweetInfo.OriginalTweet.LikesCount,
-					RetweetsCount: replyTweetInfo.OriginalTweet.RetweetsCount,
-					RepliesCount:  replyTweetInfo.OriginalTweet.RepliesCount,
-					IsQuote:       replyTweetInfo.OriginalTweet.IsQuote,
-					IsReply:       replyTweetInfo.OriginalTweet.IsReply,
-					IsPinned:      replyTweetInfo.OriginalTweet.IsPinned,
-					HasLiked:      replyTweetInfo.OriginalTweet.HasLiked,
-					HasRetweeted:  replyTweetInfo.OriginalTweet.HasRetweeted,
-					CreatedAt:     replyTweetInfo.OriginalTweet.CreatedAt,
-					UserInfo:      model.UserInfoWithoutBio{
-						UserID:          userInfo.UserID,
-						UserName:        userInfo.UserName,
-						ProfileImageURL: userInfo.ProfileImageURL,
-						IsPrivate: 	     userInfo.IsPrivate,
-						IsAdmin: 	     userInfo.IsAdmin,
-					},
-				}
+				originalTweet = convertToTweetInfo(&replyTweetInfo.OriginalTweet, userInfo)
 			}
 
 			if replyTweetInfo.OmittedReplyExist != nil {

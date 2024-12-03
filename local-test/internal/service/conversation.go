@@ -27,7 +27,7 @@ func (s *Service) GetConversations(ctx context.Context, params *model.GetConvers
 	for _, conversation := range conversations {
 		ids = append(ids, conversation.OpponentID)
 	}
-	opponentInfos, err := s.repo.GetUserInfos(ctx, ids)
+	opponentInfos, err := s.repo.GetUserInfos(ctx, ids, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("opponent info", "get opponent infos", err)
 	}
@@ -140,15 +140,10 @@ func convertToConversationResponse(conversations []*model.Conversation, opponent
 	// convert conversations to response
 	for _, conversation := range conversations {
 		if opponentInfo, exists := opponentInfoMap[conversation.OpponentID]; exists {
-			info := model.UserInfoWithoutBio{
-				UserID:          opponentInfo.UserID,
-				UserName:        opponentInfo.UserName,
-				ProfileImageURL: opponentInfo.ProfileImageURL,
-			}
 
 			conversationResponses = append(conversationResponses, &model.ConversationResponse{
 				ID:              conversation.ID,
-				OpponentInfo:    info,
+				OpponentInfo:    *convertToUserInfoWithoutBio(opponentInfo),
 				LastMessageTime: conversation.LastMessageTime,
 				Content:         conversation.Content,
 				SenderUserID:    conversation.SenderUserID,

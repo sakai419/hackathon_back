@@ -268,6 +268,10 @@ components:
                     type: boolean
                 is_admin:
                     type: boolean
+                is_following:
+                    type: boolean
+                is_followed:
+                    type: boolean
             required:
                 - user_id
                 - user_name
@@ -275,6 +279,8 @@ components:
                 - bio
                 - is_private
                 - is_admin
+                - is_following
+                - is_followed
         UserInfoWithoutBio:
             type: object
             properties:
@@ -289,12 +295,18 @@ components:
                     type: boolean
                 is_admin:
                     type: boolean
+                is_following:
+                    type: boolean
+                is_followed:
+                    type: boolean
             required:
                 - user_id
                 - user_name
                 - profile_image_url
                 - is_private
                 - is_admin
+                - is_following
+                - is_followed
         Code:
             type: object
             properties:

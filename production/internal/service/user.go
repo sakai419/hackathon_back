@@ -27,7 +27,7 @@ func (s *Service) GetClientProfile(ctx context.Context, params *model.GetClientP
 	}
 
 	// Convert to response
-	resp := convertToUserProfile(userInfo, tweetCount, followCounts, false)
+	resp := convertToUserProfile(userInfo, tweetCount, followCounts)
 
 	return resp, nil
 }
@@ -69,15 +69,6 @@ func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfi
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
 
-	// Get is followed
-	isFollowed, err := s.repo.CheckIsFollowed(ctx, &model.CheckIsFollowedParams{
-		FollowerAccountID: params.ClientAccountID,
-		FollowingAccountID: params.TargetAccountID,
-	})
-	if err != nil {
-		return nil, apperrors.NewInternalAppError("check if followed", err)
-	}
-
 	// Get tweet count
 	tweetCount, err := s.repo.GetTweetCountByAccountID(ctx, params.TargetAccountID)
 	if err != nil {
@@ -91,7 +82,7 @@ func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfi
 	}
 
 	// Convert to response
-	resp := convertToUserProfile(userInfo, tweetCount, followCounts, isFollowed)
+	resp := convertToUserProfile(userInfo, tweetCount, followCounts)
 
 	return resp, nil
 }
@@ -230,7 +221,7 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -314,7 +305,7 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -403,7 +394,7 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -417,21 +408,13 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 	return responses, nil
 }
 
-func convertToUserProfile(userInfo *model.UserInfoInternal, tweetCount int64, followCounts *model.FollowCounts, isFollowed bool) *model.UserProfile {
+func convertToUserProfile(userInfo *model.UserInfoInternal, tweetCount int64, followCounts *model.FollowCounts) *model.UserProfile {
 	return &model.UserProfile{
-		UserInfo:    model.UserInfo{
-			UserID:          userInfo.UserID,
-			UserName:        userInfo.UserName,
-			Bio:             userInfo.Bio,
-			ProfileImageURL: userInfo.ProfileImageURL,
-			IsPrivate:       userInfo.IsPrivate,
-			IsAdmin:         userInfo.IsAdmin,
-		},
+		UserInfo:    *convertToUserInfo(userInfo),
 		BannerImageURL: userInfo.BannerImageURL,
 		TweetCount:     tweetCount,
 		FollowerCount:  followCounts.FollowersCount,
 		FollowingCount: followCounts.FollowingCount,
-		IsFollowed:     isFollowed,
 		CreatedAt: 	    userInfo.CreatedAt,
 	}
 }

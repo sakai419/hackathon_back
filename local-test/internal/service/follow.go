@@ -114,7 +114,7 @@ func (s *Service) GetFollowerInfos(ctx context.Context, params *model.GetFollowe
 	}
 
 	// Get user and profile info
-	infos, err := s.repo.GetUserInfos(ctx, followerAccountIDs)
+	infos, err := s.repo.GetUserInfos(ctx, followerAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("follower info", "get follower infos", err)
 	}
@@ -142,7 +142,7 @@ func (s *Service) GetFollowingInfos(ctx context.Context, params *model.GetFollow
 	}
 
 	// Get user info
-	infos, err := s.repo.GetUserInfos(ctx, followingAccountIDs)
+	infos, err := s.repo.GetUserInfos(ctx, followingAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("following user info", "get following user infos", err)
 	}

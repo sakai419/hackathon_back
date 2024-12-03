@@ -121,13 +121,6 @@ components:
                     format: int64
         UserInfo:
             type: object
-            required:
-                - user_id
-                - user_name
-                - bio
-                - profile_image_url
-                - is_private
-                - is_admin
             properties:
                 user_id:
                     type: string
@@ -142,6 +135,19 @@ components:
                     type: boolean
                 is_admin:
                     type: boolean
+                is_following:
+                    type: boolean
+                is_followed:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - bio
+                - profile_image_url
+                - is_private
+                - is_admin
+                - is_following
+                - is_followed
         Notifications:
             type: array
             items:
@@ -247,9 +253,15 @@ components:
                     type: boolean
                 is_admin:
                     type: boolean
+                is_following:
+                    type: boolean
+                is_followed:
+                    type: boolean
             required:
                 - user_id
                 - user_name
                 - profile_image_url
                 - is_private
                 - is_admin
+                - is_following
+                - is_followed

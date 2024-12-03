@@ -46,12 +46,13 @@ func (h *UserHandler) GetClientProfile(w http.ResponseWriter, r *http.Request) {
 			ProfileImageUrl: profile.UserInfo.ProfileImageURL,
 			IsPrivate:       profile.UserInfo.IsPrivate,
 			IsAdmin:         profile.UserInfo.IsAdmin,
+			IsFollowing:     profile.UserInfo.IsFollowing,
+			IsFollowed:      profile.UserInfo.IsFollowed,
 		},
 		BannerImageUrl: profile.BannerImageURL,
 		TweetCount:     profile.TweetCount,
 		FollowerCount:  profile.FollowerCount,
 		FollowingCount: profile.FollowingCount,
-		IsFollowed:     profile.IsFollowed,
 		CreatedAt:      profile.CreatedAt,
 	}
 
@@ -92,12 +93,13 @@ func (h *UserHandler) GetUserProfile(w http.ResponseWriter, r *http.Request, _ s
 			ProfileImageUrl: profile.UserInfo.ProfileImageURL,
 			IsPrivate:       profile.UserInfo.IsPrivate,
 			IsAdmin:         profile.UserInfo.IsAdmin,
+			IsFollowing:     profile.UserInfo.IsFollowing,
+			IsFollowed:      profile.UserInfo.IsFollowed,
 		},
 		BannerImageUrl: profile.BannerImageURL,
 		TweetCount:     profile.TweetCount,
 		FollowerCount:  profile.FollowerCount,
 		FollowingCount: profile.FollowingCount,
-		IsFollowed:     profile.IsFollowed,
 		CreatedAt: 	    profile.CreatedAt,
 	}
 
@@ -247,6 +249,8 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 			ProfileImageUrl: t.UserInfo.ProfileImageURL,
 			IsPrivate: 	 t.UserInfo.IsPrivate,
 			IsAdmin: 	 t.UserInfo.IsAdmin,
+			IsFollowing:     t.UserInfo.IsFollowing,
+			IsFollowed:      t.UserInfo.IsFollowed,
 		},
 		LikesCount:    t.LikesCount,
 		RetweetsCount: t.RetweetsCount,

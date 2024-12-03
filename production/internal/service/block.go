@@ -51,7 +51,7 @@ func (s *Service) GetBlockedInfos(ctx context.Context, params *model.GetBlockedI
 	}
 
 	// Get user and profile info
-	infos, err := s.repo.GetUserInfos(ctx, blockedAccountIDs)
+	infos, err := s.repo.GetUserInfos(ctx, blockedAccountIDs, "dammy")
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("blocked info", "get blocked infos", err)
 	}

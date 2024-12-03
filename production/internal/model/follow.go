@@ -33,9 +33,10 @@ func (p *UnfollowParams) Validate() error {
 }
 
 type GetFollowerInfosParams struct {
+	ClientAccountID	      string
 	FollowingAccountID    string
-	Limit			   int32
-	Offset			   int32
+	Limit			      int32
+	Offset			      int32
 }
 
 func (p *GetFollowerInfosParams) Validate() error {
@@ -59,6 +60,7 @@ type GetFollowerAccountIDsParams struct {
 }
 
 type GetFollowingInfosParams struct {
+	ClientAccountID    string
 	FollowerAccountID  string
 	Limit			   int32
 	Offset			   int32

@@ -51,6 +51,8 @@ func (h *SearchHandler) SearchUsers(w http.ResponseWriter, r *http.Request, para
 			ProfileImageUrl: u.ProfileImageURL,
 			IsPrivate:       u.IsPrivate,
 			IsAdmin:         u.IsAdmin,
+			IsFollowing:     u.IsFollowing,
+			IsFollowed:      u.IsFollowed,
 		}
 	}
 
@@ -118,6 +120,8 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 			ProfileImageUrl: t.UserInfo.ProfileImageURL,
 			IsPrivate: 	 t.UserInfo.IsPrivate,
 			IsAdmin: 	 t.UserInfo.IsAdmin,
+			IsFollowing:     t.UserInfo.IsFollowing,
+			IsFollowed:      t.UserInfo.IsFollowed,
 		},
 		LikesCount:    t.LikesCount,
 		RetweetsCount: t.RetweetsCount,

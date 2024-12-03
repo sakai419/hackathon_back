@@ -26,7 +26,7 @@ type NotificationResponse struct {
 }
 
 type GetNotificationsParams struct {
-	RecipientAccountID string
+	ClientAccountID string
 	Limit			   int32
 	Offset			   int32
 }
@@ -48,7 +48,7 @@ func (p GetNotificationsParams) Validate() error {
 }
 
 type GetUnreadNotificationsParams struct {
-	RecipientAccountID string
+	ClientAccountID string
 	Limit			   int32
 	Offset			   int32
 }

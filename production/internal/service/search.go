@@ -18,6 +18,7 @@ func (s *Service) SearchUsers(ctx context.Context, params *model.SearchUsersPara
 	switch params.SortType {
 		case model.SortTypeLatest, "":
 			temp, err := s.repo.SearchUsersOrderByCreatedAt(ctx, &model.SearchUsersOrderByCreatedAtParams{
+				ClientAccountID: params.ClientAccountID,
 				Keyword: params.Keyword,
 				Offset: params.Offset,
 				Limit: params.Limit,
@@ -148,7 +149,7 @@ func (s *Service) SearchTweets(ctx context.Context, params *model.SearchTweetsPa
 	}
 
 	// Get user infos
-	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs)
+	userInfos, err := s.repo.GetUserInfos(ctx, accessibleAccountIDs, params.ClientAccountID)
 	if err != nil {
 		return nil, apperrors.NewNotFoundAppError("user infos", "get user infos", err)
 	}
@@ -172,14 +173,7 @@ func filterUsers(users []*model.UserInfoInternal, accessibleAccountIDs []string)
 	filteredUsers := make([]*model.UserInfo, 0)
 	for _, u := range users {
 		if _, ok := accessibleAccountIDsMap[u.ID]; ok {
-			filteredUsers = append(filteredUsers, &model.UserInfo{
-				UserID: u.UserID,
-				UserName: u.UserName,
-				Bio: u.Bio,
-				ProfileImageURL: u.ProfileImageURL,
-				IsPrivate: u.IsPrivate,
-				IsAdmin: u.IsAdmin,
-			})
+			filteredUsers = append(filteredUsers, convertToUserInfo(u))
 		}
 	}
 	return filteredUsers

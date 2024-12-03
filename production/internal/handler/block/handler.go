@@ -153,10 +153,14 @@ func convertToUserInfos(blockedInfos []*model.UserInfo) []UserInfo {
 	var resp []UserInfo
 	for _, blockedInfo := range blockedInfos {
 		resp = append(resp, UserInfo{
-			Bio:	         blockedInfo.Bio,
-			ProfileImageUrl: blockedInfo.ProfileImageURL,
 			UserId:          blockedInfo.UserID,
 			UserName:        blockedInfo.UserName,
+			Bio:	         blockedInfo.Bio,
+			ProfileImageUrl: blockedInfo.ProfileImageURL,
+			IsPrivate:       blockedInfo.IsPrivate,
+			IsAdmin:         blockedInfo.IsAdmin,
+			IsFollowing:     blockedInfo.IsFollowing,
+			IsFollowed:      blockedInfo.IsFollowed,
 		})
 	}
 	return resp

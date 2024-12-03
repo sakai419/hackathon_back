@@ -95,22 +95,30 @@ components:
             properties:
                 user_id:
                     type: string
-                    description: The ID of the user.
                 user_name:
                     type: string
-                    description: The name of the user.
                 bio:
                     type: string
-                    description: The bio of the user.
                 profile_image_url:
                     type: string
                     format: uri
-                    description: URL of the user's profile image.
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+                is_following:
+                    type: boolean
+                is_followed:
+                    type: boolean
             required:
                 - user_id
                 - user_name
-                - bio
                 - profile_image_url
+                - bio
+                - is_private
+                - is_admin
+                - is_following
+                - is_followed
         Count:
             type: object
             properties:

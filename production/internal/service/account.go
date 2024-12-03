@@ -37,13 +37,51 @@ func sortUserInfos(userInfos []*model.UserInfoInternal, ids []string) []*model.U
 	sortedUserInfos := make([]*model.UserInfo, len(ids))
 	for i, id := range ids {
 		temp := userInfoMap[id]
-		sortedUserInfos[i] = &model.UserInfo{
-			UserID:          temp.UserID,
-			UserName:        temp.UserName,
-			Bio:             temp.Bio,
-			ProfileImageURL: temp.ProfileImageURL,
-		}
+		sortedUserInfos[i] = convertToUserInfo(temp)
 	}
 
 	return sortedUserInfos
+}
+
+func convertToUserInfo(userInfo *model.UserInfoInternal) *model.UserInfo {
+	return &model.UserInfo{
+		UserID:          userInfo.UserID,
+		UserName:        userInfo.UserName,
+		Bio:             userInfo.Bio,
+		ProfileImageURL: userInfo.ProfileImageURL,
+		IsPrivate:       userInfo.IsPrivate,
+		IsAdmin:         userInfo.IsAdmin,
+		IsFollowing:     userInfo.IsFollowing,
+		IsFollowed:      userInfo.IsFollowed,
+	}
+}
+
+func convertToUserInfos(userInfos []*model.UserInfoInternal) []*model.UserInfo {
+	userInfo := make([]*model.UserInfo, len(userInfos))
+	for i, u := range userInfos {
+		userInfo[i] = convertToUserInfo(u)
+	}
+
+	return userInfo
+}
+
+func convertToUserInfoWithoutBio(userInfo *model.UserInfoInternal) *model.UserInfoWithoutBio {
+	return &model.UserInfoWithoutBio{
+		UserID:          userInfo.UserID,
+		UserName:        userInfo.UserName,
+		ProfileImageURL: userInfo.ProfileImageURL,
+		IsPrivate:       userInfo.IsPrivate,
+		IsAdmin:         userInfo.IsAdmin,
+		IsFollowing:     userInfo.IsFollowing,
+		IsFollowed:      userInfo.IsFollowed,
+	}
+}
+
+func convertToUserInfoWithoutBios(userInfos []*model.UserInfoInternal) []*model.UserInfoWithoutBio {
+	userInfo := make([]*model.UserInfoWithoutBio, len(userInfos))
+	for i, u := range userInfos {
+		userInfo[i] = convertToUserInfoWithoutBio(u)
+	}
+
+	return userInfo
 }

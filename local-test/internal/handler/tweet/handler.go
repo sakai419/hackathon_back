@@ -596,6 +596,8 @@ func convertToUserInfos(infos []*model.UserInfo) []*UserInfo {
 			Bio:             info.Bio,
 			IsPrivate: info.IsPrivate,
 			IsAdmin:   info.IsAdmin,
+			IsFollowing: info.IsFollowing,
+			IsFollowed:  info.IsFollowed,
 		})
 	}
 
@@ -614,6 +616,8 @@ func convertToTweetInfo(t *model.TweetInfo) *TweetInfo {
 			ProfileImageUrl: t.UserInfo.ProfileImageURL,
 			IsPrivate:       t.UserInfo.IsPrivate,
 			IsAdmin:         t.UserInfo.IsAdmin,
+			IsFollowing:     t.UserInfo.IsFollowing,
+			IsFollowed:      t.UserInfo.IsFollowed,
 		},
 		LikesCount:    t.LikesCount,
 		RetweetsCount: t.RetweetsCount,

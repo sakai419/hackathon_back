@@ -9,6 +9,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 const acceptFollowRequest = `-- name: AcceptFollowRequest :execresult
@@ -44,6 +46,60 @@ func (q *Queries) CheckIsFollowed(ctx context.Context, arg CheckIsFollowedParams
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const checkMultipleFollowStatus = `-- name: CheckMultipleFollowStatus :many
+SELECT
+    account_id,
+    EXISTS(
+        SELECT 1
+        FROM follows as f1
+        WHERE f1.follower_account_id = $1
+          AND f1.following_account_id = account_id
+          AND f1.status = 'accepted'
+    ) AS is_following,
+    EXISTS(
+        SELECT 1
+        FROM follows as f2
+        WHERE f2.follower_account_id = account_id
+          AND f2.following_account_id = $1
+          AND f2.status = 'accepted'
+    ) AS is_followed
+FROM UNNEST($2::VARCHAR[]) AS account_id
+`
+
+type CheckMultipleFollowStatusParams struct {
+	ClientAccountID string
+	AccountIds      []string
+}
+
+type CheckMultipleFollowStatusRow struct {
+	AccountID   interface{}
+	IsFollowing bool
+	IsFollowed  bool
+}
+
+func (q *Queries) CheckMultipleFollowStatus(ctx context.Context, arg CheckMultipleFollowStatusParams) ([]CheckMultipleFollowStatusRow, error) {
+	rows, err := q.db.QueryContext(ctx, checkMultipleFollowStatus, arg.ClientAccountID, pq.Array(arg.AccountIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CheckMultipleFollowStatusRow
+	for rows.Next() {
+		var i CheckMultipleFollowStatusRow
+		if err := rows.Scan(&i.AccountID, &i.IsFollowing, &i.IsFollowed); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const createFollow = `-- name: CreateFollow :exec

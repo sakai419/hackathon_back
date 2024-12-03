@@ -52,6 +52,7 @@ func (p *SearchUsersParams) Validate() error {
 }
 
 type SearchUsersOrderByCreatedAtParams struct {
+	ClientAccountID string
 	Keyword string
 	Offset int32
 	Limit int32

@@ -30,7 +30,7 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 
 	// Get notifications
 	notifications, err := h.svc.GetNotifications(r.Context(), &model.GetNotificationsParams{
-		RecipientAccountID: clientAccountID,
+		ClientAccountID: clientAccountID,
 		Limit:              params.Limit,
 		Offset:             params.Offset,
 	})
@@ -53,7 +53,7 @@ func (h *NotificationHandler) GetUnreadNotifications(w http.ResponseWriter, r *h
 
 	// Get unread notifications
 	notifications, err := h.svc.GetUnreadNotifications(r.Context(), &model.GetUnreadNotificationsParams{
-		RecipientAccountID: clientAccountID,
+		ClientAccountID: clientAccountID,
 		Limit:              params.Limit,
 		Offset:             params.Offset,
 	})
@@ -164,6 +164,8 @@ func convertToNotificationResponse(notifications []*model.NotificationResponse) 
 				Bio: 		     notification.SenderInfo.Bio,
 				IsPrivate: 	     notification.SenderInfo.IsPrivate,
 				IsAdmin: 	     notification.SenderInfo.IsAdmin,
+				IsFollowing:     notification.SenderInfo.IsFollowing,
+				IsFollowed:      notification.SenderInfo.IsFollowed,
 			}
 		}
 
@@ -176,6 +178,8 @@ func convertToNotificationResponse(notifications []*model.NotificationResponse) 
 					ProfileImageUrl: notification.RelatedTweet.UserInfo.ProfileImageURL,
 					IsPrivate: 	     notification.RelatedTweet.UserInfo.IsPrivate,
 					IsAdmin: 	     notification.RelatedTweet.UserInfo.IsAdmin,
+					IsFollowing:     notification.RelatedTweet.UserInfo.IsFollowing,
+					IsFollowed:      notification.RelatedTweet.UserInfo.IsFollowed,
 				},
 				Content:       notification.RelatedTweet.Content,
 				LikesCount:    notification.RelatedTweet.LikesCount,

@@ -52,6 +52,8 @@ type UnreadConversationCountResponse struct {
 // UserInfoWithoutBio defines model for UserInfoWithoutBio.
 type UserInfoWithoutBio struct {
 	IsAdmin         bool   `json:"is_admin"`
+	IsFollowed      bool   `json:"is_followed"`
+	IsFollowing     bool   `json:"is_following"`
 	IsPrivate       bool   `json:"is_private"`
 	ProfileImageUrl string `json:"profile_image_url"`
 	UserId          string `json:"user_id"`

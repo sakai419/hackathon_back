@@ -61,6 +61,27 @@ SELECT EXISTS(
     WHERE follower_account_id = $1 AND following_account_id = $2 AND status = 'accepted'
 );
 
+-- name: CheckMultipleFollowStatus :many
+SELECT
+    account_id,
+    EXISTS(
+        SELECT 1
+        FROM follows as f1
+        WHERE f1.follower_account_id = @client_account_id
+          AND f1.following_account_id = account_id
+          AND f1.status = 'accepted'
+    ) AS is_following,
+    EXISTS(
+        SELECT 1
+        FROM follows as f2
+        WHERE f2.follower_account_id = account_id
+          AND f2.following_account_id = @client_account_id
+          AND f2.status = 'accepted'
+    ) AS is_followed
+FROM UNNEST(@account_ids::VARCHAR[]) AS account_id;
+
+
+
 -- name: IsPrivateAndNotFollowing :one
 SELECT
     CASE

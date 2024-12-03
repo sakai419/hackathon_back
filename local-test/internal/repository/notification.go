@@ -10,7 +10,7 @@ import (
 func (r *Repository) GetNotifications(ctx context.Context, params *model.GetNotificationsParams) ([]*model.Notification, error) {
 	// Get notifications
 	notifications, err := r.q.GetNotifications(ctx, sqlcgen.GetNotificationsParams{
-		RecipientAccountID: params.RecipientAccountID,
+		RecipientAccountID: params.ClientAccountID,
 		Limit:              params.Limit,
 		Offset:             params.Offset,
 	})
@@ -32,7 +32,7 @@ func (r *Repository) GetNotifications(ctx context.Context, params *model.GetNoti
 func (r *Repository) GetUnreadNotifications(ctx context.Context, params *model.GetUnreadNotificationsParams) ([]*model.Notification, error) {
 	// Get unread notifications
 	notifications, err := r.q.GetUnreadNotifications(ctx, sqlcgen.GetUnreadNotificationsParams{
-		RecipientAccountID: params.RecipientAccountID,
+		RecipientAccountID: params.ClientAccountID,
 		Limit:              params.Limit,
 		Offset:             params.Offset,
 	})

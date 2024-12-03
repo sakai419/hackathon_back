@@ -182,6 +182,12 @@ func (h *FollowHandler) RejectFollowRequest(w http.ResponseWriter, r *http.Reque
 // Get followers
 // (GET /follows/followers/{user_id})
 func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowerInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
 	// Get tager account ID
 	targetAccountID, ok := utils.GetTargetAccountID(w, r)
 	if !ok {
@@ -190,6 +196,7 @@ func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request,
 
 	// Get followers
 	followerInfos, err := h.svc.GetFollowerInfos(r.Context(), &model.GetFollowerInfosParams{
+		ClientAccountID:    clientAccountID,
 		FollowingAccountID: targetAccountID,
 		Limit:              params.Limit,
 		Offset:             params.Offset,
@@ -209,6 +216,12 @@ func (h *FollowHandler) GetFollowerInfos(w http.ResponseWriter, r *http.Request,
 // Get followings
 // (GET /follows/following/{user_id})
 func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request, _ string, params GetFollowingInfosParams) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
 	// Get target account ID
 	targetAccountID, ok := utils.GetTargetAccountID(w, r)
 	if !ok {
@@ -217,6 +230,7 @@ func (h *FollowHandler) GetFollowingInfos(w http.ResponseWriter, r *http.Request
 
 	// Get followings
 	followingInfos, err := h.svc.GetFollowingInfos(r.Context(), &model.GetFollowingInfosParams{
+		ClientAccountID:   clientAccountID,
 		FollowerAccountID: targetAccountID,
 		Limit:             params.Limit,
 		Offset: 		   params.Offset,
@@ -305,6 +319,8 @@ func convertToUserInfos(followerInfos []*model.UserInfo) []UserInfo {
 			UserName: followerInfo.UserName,
 			IsPrivate: followerInfo.IsPrivate,
 			IsAdmin: followerInfo.IsAdmin,
+			IsFollowing: followerInfo.IsFollowing,
+			IsFollowed: followerInfo.IsFollowed,
 		})
 	}
 	return resp

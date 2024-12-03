@@ -44,6 +44,8 @@ type UserInfoInternal struct {
 	BannerImageURL  string
 	IsPrivate       bool
 	IsAdmin		    bool
+	IsFollowing     bool
+	IsFollowed      bool
 	CreatedAt	    time.Time
 }
 
@@ -54,6 +56,8 @@ type UserInfo struct {
 	ProfileImageURL string
 	IsPrivate       bool
 	IsAdmin		    bool
+	IsFollowing     bool
+	IsFollowed      bool
 }
 
 type UserInfoWithoutBio struct {
@@ -62,6 +66,8 @@ type UserInfoWithoutBio struct {
 	ProfileImageURL string
 	IsPrivate       bool
 	IsAdmin		    bool
+	IsFollowing     bool
+	IsFollowed      bool
 }
 
 type AccountInfo struct {
