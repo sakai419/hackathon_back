@@ -2,6 +2,7 @@ package config
 
 import (
 	"local-test/pkg/apperrors"
+	"os"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -105,9 +106,20 @@ func generateGeminiConfig(v *viper.Viper) (*GeminiConfig, error) {
 	}, nil
 }
 
+func loadEnv() error {
+	// Check if running in Cloud Run (assuming "K_SERVICE" is set in Cloud Run)
+	if _, exists := os.LookupEnv("K_SERVICE"); exists {
+		// In Cloud Run, skip loading .env file
+		return nil
+	}
+
+	// Load .env file for local development
+	return godotenv.Load(".env")
+}
+
 func LoadConfig() (*Config, error) {
     // Load environment variables from .env file
-    if err := godotenv.Load(".env"); err != nil {
+    if err := loadEnv(); err != nil {
         return nil, apperrors.WrapConfigError(
 			&apperrors.ErrOperationFailed{
 				Operation: "load .env file",
