@@ -289,7 +289,7 @@ paths:
                             schema:
                                 type: array
                                 items:
-                                    $ref: "#/components/schemas/UserInfoWithoutBios"
+                                    $ref: "#/components/schemas/UserInfos"
                 "400":
                     description: Bad request
                 "500":
@@ -326,7 +326,7 @@ paths:
                             schema:
                                 type: array
                                 items:
-                                    $ref: "#/components/schemas/UserInfoWithoutBios"
+                                    $ref: "#/components/schemas/UserInfos"
                 "400":
                     description: Bad request
                 "500":
@@ -363,7 +363,7 @@ paths:
                             schema:
                                 type: array
                                 items:
-                                    $ref: "#/components/schemas/UserInfoWithoutBios"
+                                    $ref: "#/components/schemas/UserInfos"
                 "400":
                     description: Bad request
                 "500":
@@ -591,7 +591,30 @@ components:
                 - profile_image_url
                 - is_private
                 - is_admin
-        UserInfoWithoutBios:
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                bio:
+                    type: string
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - bio
+                - is_private
+                - is_admin
+        UserInfos:
             type: array
             items:
-                $ref: "#/components/schemas/UserInfoWithoutBio"
+                $ref: "#/components/schemas/UserInfo"

@@ -372,7 +372,7 @@ func (h *TweetHandler) GetLikingUserInfos(w http.ResponseWriter, r *http.Request
 	}
 
 	// Convert to response
-	resp := convertToUserInfoWithoutBios(likingUserInfos)
+	resp := convertToUserInfos(likingUserInfos)
 
 	utils.Respond(w, resp)
 }
@@ -399,7 +399,7 @@ func (h *TweetHandler) GetRetweetingUserInfos(w http.ResponseWriter, r *http.Req
 	}
 
 	// Convert to response
-	resp := convertToUserInfoWithoutBios(retweetingUserInfos)
+	resp := convertToUserInfos(retweetingUserInfos)
 
 	utils.Respond(w, resp)
 }
@@ -426,7 +426,7 @@ func (h *TweetHandler) GetQuotingUserInfos(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Convert to response
-	resp := convertToUserInfoWithoutBios(quotingUserInfos)
+	resp := convertToUserInfos(quotingUserInfos)
 
 	utils.Respond(w, resp)
 }
@@ -591,13 +591,14 @@ func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	utils.RespondError(w, apperrors.NewUnexpectedError(err))
 }
 
-func convertToUserInfoWithoutBios(infos []*model.UserInfoWithoutBio) []*UserInfoWithoutBio {
-	var resp []*UserInfoWithoutBio
+func convertToUserInfos(infos []*model.UserInfo) []*UserInfo {
+	var resp []*UserInfo
 	for _, info := range infos {
-		resp = append(resp, &UserInfoWithoutBio{
+		resp = append(resp, &UserInfo{
 			UserId:   info.UserID,
 			UserName: info.UserName,
 			ProfileImageUrl: info.ProfileImageURL,
+			Bio:             info.Bio,
 			IsPrivate: info.IsPrivate,
 			IsAdmin:   info.IsAdmin,
 		})

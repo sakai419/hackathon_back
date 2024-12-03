@@ -69,6 +69,16 @@ type TweetNode struct {
 // TweetNodes defines model for TweetNodes.
 type TweetNodes = []TweetNode
 
+// UserInfo defines model for UserInfo.
+type UserInfo struct {
+	Bio             string `json:"bio"`
+	IsAdmin         bool   `json:"is_admin"`
+	IsPrivate       bool   `json:"is_private"`
+	ProfileImageUrl string `json:"profile_image_url"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
+}
+
 // UserInfoWithoutBio defines model for UserInfoWithoutBio.
 type UserInfoWithoutBio struct {
 	IsAdmin         bool   `json:"is_admin"`
@@ -78,8 +88,8 @@ type UserInfoWithoutBio struct {
 	UserName        string `json:"user_name"`
 }
 
-// UserInfoWithoutBios defines model for UserInfoWithoutBios.
-type UserInfoWithoutBios = []UserInfoWithoutBio
+// UserInfos defines model for UserInfos.
+type UserInfos = []UserInfo
 
 // GetRecentTweetInfosParams defines parameters for GetRecentTweetInfos.
 type GetRecentTweetInfosParams struct {
