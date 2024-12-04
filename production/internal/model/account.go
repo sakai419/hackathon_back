@@ -18,6 +18,9 @@ func validateUserID(userID string) error {
 	if !validPattern.MatchString(userID) {
 		return errors.New("invalid user_id: only alphanumeric characters, '-', '_', and '.' are allowed")
 	}
+	if userID == "me" {
+		return errors.New("invalid user_id: 'me' is a reserved word")
+	}
 	return nil
 }
 
