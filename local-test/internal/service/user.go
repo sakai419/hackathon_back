@@ -36,34 +36,37 @@ func (s *Service) GetClientProfile(ctx context.Context, params *model.GetClientP
 }
 
 func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfileParams) (*model.UserProfile, error) {
-	// Check if the client is blocked by the target
-	if blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
-		BlockerAccountID: params.TargetAccountID,
-		BlockedAccountID: params.ClientAccountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if blocked", err)
-	} else if blocked {
-		return nil, apperrors.NewBlockedAppError("get user profile", errors.New("client is blocked by target"))
-	}
+	// Check if the target and client are the same
+	if params.ClientAccountID != params.TargetAccountID {
+		// Check if the client is blocked by the target
+		if blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+			BlockerAccountID: params.TargetAccountID,
+			BlockedAccountID: params.ClientAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocked", err)
+		} else if blocked {
+			return nil, apperrors.NewBlockedAppError("get user profile", errors.New("client is blocked by target"))
+		}
 
-	// Check if the client is blocking the target
-	if blocking, err := s.repo.IsBlocking(ctx, &model.IsBlockingParams{
-		BlockerAccountID: params.ClientAccountID,
-		BlockedAccountID: params.TargetAccountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if blocking", err)
-	} else if blocking {
-		return nil, apperrors.NewBlockingAppError("get user profile", errors.New("client is blocking target"))
-	}
+		// Check if the client is blocking the target
+		if blocking, err := s.repo.IsBlocking(ctx, &model.IsBlockingParams{
+			BlockerAccountID: params.ClientAccountID,
+			BlockedAccountID: params.TargetAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocking", err)
+		} else if blocking {
+			return nil, apperrors.NewBlockingAppError("get user profile", errors.New("client is blocking target"))
+		}
 
-	// Check if the target is private and the client is not following
-	if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
-		ClientAccountID: params.ClientAccountID,
-		TargetAccountID: params.TargetAccountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if private and not following", err)
-	} else if isPrivateAndNotFollowing {
-		return nil, apperrors.NewForbiddenAppError("get user profile", errors.New("target is private and client is not following"))
+		// Check if the target is private and the client is not following
+		if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
+			ClientAccountID: params.ClientAccountID,
+			TargetAccountID: params.TargetAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if private and not following", err)
+		} else if isPrivateAndNotFollowing {
+			return nil, apperrors.NewForbiddenAppError("get user profile", errors.New("target is private and client is not following"))
+		}
 	}
 
 	// Get user infos
@@ -99,34 +102,37 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 		return nil, apperrors.NewValidateAppError(err)
 	}
 
-	// Check if the client is blocked by the target
-	if blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
-		BlockerAccountID: params.TargetAccountID,
-		BlockedAccountID: params.ClientAccountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if blocked", err)
-	} else if blocked {
-		return nil, apperrors.NewBlockedAppError("get user tweets", errors.New("client is blocked by target"))
-	}
+	// Check if the target and client are the same
+	if params.ClientAccountID != params.TargetAccountID {
+		// Check if the client is blocked by the target
+		if blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+			BlockerAccountID: params.TargetAccountID,
+			BlockedAccountID: params.ClientAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocked", err)
+		} else if blocked {
+			return nil, apperrors.NewBlockedAppError("get user tweets", errors.New("client is blocked by target"))
+		}
 
-	// Check if the client is blocking the target
-	if blocking, err := s.repo.IsBlocking(ctx, &model.IsBlockingParams{
-		BlockerAccountID: params.ClientAccountID,
-		BlockedAccountID: params.TargetAccountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if blocking", err)
-	} else if blocking {
-		return nil, apperrors.NewBlockingAppError("get user tweets", errors.New("client is blocking target"))
-	}
+		// Check if the client is blocking the target
+		if blocking, err := s.repo.IsBlocking(ctx, &model.IsBlockingParams{
+			BlockerAccountID: params.ClientAccountID,
+			BlockedAccountID: params.TargetAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocking", err)
+		} else if blocking {
+			return nil, apperrors.NewBlockingAppError("get user tweets", errors.New("client is blocking target"))
+		}
 
-	// Check if the target is private and the client is not following
-	if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
-		ClientAccountID: params.ClientAccountID,
-		TargetAccountID: params.TargetAccountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if private and not following", err)
-	} else if isPrivateAndNotFollowing {
-		return nil, apperrors.NewForbiddenAppError("get user tweets", errors.New("target is private and client is not following"))
+		// Check if the target is private and the client is not following
+		if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
+			ClientAccountID: params.ClientAccountID,
+			TargetAccountID: params.TargetAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if private and not following", err)
+		} else if isPrivateAndNotFollowing {
+			return nil, apperrors.NewForbiddenAppError("get user tweets", errors.New("target is private and client is not following"))
+		}
 	}
 
 	// Get user tweets
@@ -335,6 +341,39 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 	// Validate params
 	if err := params.Validate(); err != nil {
 		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Check if the target and client are the same
+	if params.ClientAccountID != params.TargetAccountID {
+		// Check if the client is blocked by the target
+		if blocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+			BlockerAccountID: params.TargetAccountID,
+			BlockedAccountID: params.ClientAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocked", err)
+		} else if blocked {
+			return nil, apperrors.NewBlockedAppError("get user tweets", errors.New("client is blocked by target"))
+		}
+
+		// Check if the client is blocking the target
+		if blocking, err := s.repo.IsBlocking(ctx, &model.IsBlockingParams{
+			BlockerAccountID: params.ClientAccountID,
+			BlockedAccountID: params.TargetAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocking", err)
+		} else if blocking {
+			return nil, apperrors.NewBlockingAppError("get user tweets", errors.New("client is blocking target"))
+		}
+
+		// Check if the target is private and the client is not following
+		if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
+			ClientAccountID: params.ClientAccountID,
+			TargetAccountID: params.TargetAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if private and not following", err)
+		} else if isPrivateAndNotFollowing {
+			return nil, apperrors.NewForbiddenAppError("get user tweets", errors.New("target is private and client is not following"))
+		}
 	}
 
 	// Check if the client is blocked by the target

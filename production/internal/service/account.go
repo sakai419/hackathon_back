@@ -57,15 +57,6 @@ func convertToUserInfo(userInfo *model.UserInfoInternal) *model.UserInfo {
 	}
 }
 
-func convertToUserInfos(userInfos []*model.UserInfoInternal) []*model.UserInfo {
-	userInfo := make([]*model.UserInfo, len(userInfos))
-	for i, u := range userInfos {
-		userInfo[i] = convertToUserInfo(u)
-	}
-
-	return userInfo
-}
-
 func convertToUserInfoWithoutBio(userInfo *model.UserInfoInternal) *model.UserInfoWithoutBio {
 	return &model.UserInfoWithoutBio{
 		UserID:          userInfo.UserID,
@@ -77,13 +68,4 @@ func convertToUserInfoWithoutBio(userInfo *model.UserInfoInternal) *model.UserIn
 		IsFollowed:      userInfo.IsFollowed,
 		IsPending:       userInfo.IsPending,
 	}
-}
-
-func convertToUserInfoWithoutBios(userInfos []*model.UserInfoInternal) []*model.UserInfoWithoutBio {
-	userInfo := make([]*model.UserInfoWithoutBio, len(userInfos))
-	for i, u := range userInfos {
-		userInfo[i] = convertToUserInfoWithoutBio(u)
-	}
-
-	return userInfo
 }
