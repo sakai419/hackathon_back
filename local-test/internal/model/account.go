@@ -1,7 +1,9 @@
 package model
 
 import (
+	"errors"
 	"local-test/pkg/apperrors"
+	"regexp"
 	"time"
 )
 
@@ -9,6 +11,14 @@ type CreateAccountParams struct {
 	ID       string
 	UserID   string
 	UserName string
+}
+
+func validateUserID(userID string) error {
+	var validPattern = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
+	if !validPattern.MatchString(userID) {
+		return errors.New("invalid user_id: only alphanumeric characters, '-', '_', and '.' are allowed")
+	}
+	return nil
 }
 
 func (p *CreateAccountParams) Validate() error {
@@ -20,6 +30,11 @@ func (p *CreateAccountParams) Validate() error {
 	if len(p.UserID) > 30 {
 		return &apperrors.ErrInvalidInput{
 			Message: "UserID must be less than 30 characters",
+		}
+	}
+	if err := validateUserID(p.UserID); err != nil {
+		return &apperrors.ErrInvalidInput{
+			Message: err.Error(),
 		}
 	}
 	if len(p.UserName) > 30 {
