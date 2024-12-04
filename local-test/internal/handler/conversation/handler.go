@@ -133,7 +133,7 @@ func (h *ConversationHandler) SendMessage(w http.ResponseWriter, r *http.Request
 }
 
 // Mark message as read
-// (PATCH /conversations/{user_id}/messages)
+// (PATCH /conversations/{user_id}/messages/read)
 func (h *ConversationHandler) MarkMessagesAsRead(w http.ResponseWriter, r *http.Request, _ string) {
 	// Get client account ID
 	clidentAccountID, ok := utils.GetClientAccountID(w, r)

@@ -14,6 +14,6 @@ LIMIT $2 OFFSET $3;
 UPDATE messages
 SET is_read = TRUE
 WHERE conversation_id = $1
-  AND sender_account_id <> $2
+  AND sender_account_id = $2
   AND is_read = FALSE
   AND created_at <= NOW();
