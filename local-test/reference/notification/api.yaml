@@ -97,6 +97,7 @@ paths:
                     description: Bad request
                 "500":
                     description: Internal server error
+
     /notifications/read/all:
         patch:
             summary: Mark all notifications as read
