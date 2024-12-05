@@ -51,9 +51,10 @@ LEFT JOIN settings AS s
 LEFT JOIN follows AS f
     ON f.following_account_id = a.id
     AND f.follower_account_id = $2
+    AND f.status = 'accepted'
 WHERE
     b.blocked_account_id IS NULL
-    AND (s.is_private = FALSE OR f.follower_account_id IS NOT NULL)
+    AND (s.is_private = FALSE OR f.follower_account_id IS NOT NULL OR a.id = $2)
 `
 
 type FilterAccessibleAccountIDsParams struct {
