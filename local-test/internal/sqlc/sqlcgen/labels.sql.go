@@ -59,6 +59,55 @@ func (q *Queries) GetLabelsByTweetID(ctx context.Context, tweetID int64) (Label,
 	return i, err
 }
 
+const getLikedTweetLabelsCount = `-- name: GetLikedTweetLabelsCount :many
+WITH liked_tweets AS (
+    SELECT l.original_tweet_id
+    FROM likes l
+    WHERE l.liking_account_id = $1
+    ORDER BY l.created_at DESC
+    LIMIT 100
+)
+SELECT
+    label,
+    COUNT(*) AS label_count
+FROM (
+    SELECT label1 AS label FROM labels WHERE tweet_id IN (SELECT original_tweet_id FROM liked_tweets)
+    UNION ALL
+    SELECT label2 AS label FROM labels WHERE tweet_id IN (SELECT original_tweet_id FROM liked_tweets)
+    UNION ALL
+    SELECT label3 AS label FROM labels WHERE tweet_id IN (SELECT original_tweet_id FROM liked_tweets)
+) labels_combined
+GROUP BY label
+`
+
+type GetLikedTweetLabelsCountRow struct {
+	Label      NullTweetLabel
+	LabelCount int64
+}
+
+func (q *Queries) GetLikedTweetLabelsCount(ctx context.Context, likingAccountID string) ([]GetLikedTweetLabelsCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getLikedTweetLabelsCount, likingAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLikedTweetLabelsCountRow
+	for rows.Next() {
+		var i GetLikedTweetLabelsCountRow
+		if err := rows.Scan(&i.Label, &i.LabelCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getRecentLabels = `-- name: GetRecentLabels :many
 WITH all_labels AS (
     SELECT label1 AS label FROM labels

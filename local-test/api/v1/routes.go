@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"local-test/internal/config"
 	"local-test/internal/handler/account"
+	"local-test/internal/handler/batch"
 	"local-test/internal/handler/block"
 	"local-test/internal/handler/conversation"
 	"local-test/internal/handler/follow"
@@ -263,6 +264,23 @@ func setUpSearchRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 	search.HandlerWithOptions(h, opts)
 }
 
+func setUpBatchRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the batch handler
+	h := batch.NewBatchHandler(svc)
+
+	// Create options for the batch handler
+	opts := batch.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []batch.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+		},
+	}
+
+	// Register the batch handler
+	batch.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client, corsOrigin string) *mux.Router {
 	r := mux.NewRouter()
 
@@ -293,6 +311,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client, corsOrigin string) *mux.Router
 	setUpUserRoutes(apiV1, repo, svc, client)
 	setUpSidebarRoutes(apiV1, repo, svc, client)
 	setUpSearchRoutes(apiV1, repo, svc, client)
+	setUpBatchRoutes(apiV1, repo, svc, client)
 
 	return r
 }

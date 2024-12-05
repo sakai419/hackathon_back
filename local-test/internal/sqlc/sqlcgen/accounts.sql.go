@@ -137,6 +137,39 @@ func (q *Queries) GetAccountIDByUserID(ctx context.Context, userID string) (stri
 	return id, err
 }
 
+const getAccountIDs = `-- name: GetAccountIDs :many
+SELECT id::VARCHAR as account_id FROM accounts
+LIMIT $1 OFFSET $2
+`
+
+type GetAccountIDsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetAccountIDs(ctx context.Context, arg GetAccountIDsParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getAccountIDs, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var account_id string
+		if err := rows.Scan(&account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, account_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAccountInfo = `-- name: GetAccountInfo :one
 SELECT a.is_suspended, a.is_admin, s.is_private
 FROM accounts a

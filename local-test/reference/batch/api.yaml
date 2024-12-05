@@ -1,0 +1,18 @@
+openapi: 3.0.0
+info:
+    title: Batch API
+    version: 1.0.0
+    description: API for batch processing
+
+paths:
+    /batch/users/interests/update:
+        post:
+            summary: Calculate interest score for a batch of users
+            operationId: UpdateUserInterests
+            responses:
+                "200":
+                    description: Interest score calculated successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error

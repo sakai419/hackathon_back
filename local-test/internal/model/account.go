@@ -73,6 +73,11 @@ type UserInfoInternal struct {
 	CreatedAt	    time.Time
 }
 
+type GetAccountIDsParams struct {
+	Limit int32
+	Offset int32
+}
+
 type GetUserInfoParams struct {
 	TargetAccountID string
 	ClientAccountID string

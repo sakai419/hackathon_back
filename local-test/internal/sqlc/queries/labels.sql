@@ -49,3 +49,23 @@ GROUP BY
 ORDER BY
     label_count DESC
 LIMIT $1;
+
+-- name: GetLikedTweetLabelsCount :many
+WITH liked_tweets AS (
+    SELECT l.original_tweet_id
+    FROM likes l
+    WHERE l.liking_account_id = $1
+    ORDER BY l.created_at DESC
+    LIMIT 100
+)
+SELECT
+    label,
+    COUNT(*) AS label_count
+FROM (
+    SELECT label1 AS label FROM labels WHERE tweet_id IN (SELECT original_tweet_id FROM liked_tweets)
+    UNION ALL
+    SELECT label2 AS label FROM labels WHERE tweet_id IN (SELECT original_tweet_id FROM liked_tweets)
+    UNION ALL
+    SELECT label3 AS label FROM labels WHERE tweet_id IN (SELECT original_tweet_id FROM liked_tweets)
+) labels_combined
+GROUP BY label;

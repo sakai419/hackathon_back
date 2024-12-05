@@ -6,6 +6,10 @@ VALUES ($1, $2, $3);
 SELECT id FROM accounts
 WHERE user_id = $1;
 
+-- name: GetAccountIDs :many
+SELECT id::VARCHAR as account_id FROM accounts
+LIMIT $1 OFFSET $2;
+
 -- name: GetUserInfo :one
 SELECT a.id, a.user_id, a.user_name, a.is_admin, a.created_at, p.bio, p.profile_image_url, p.banner_image_url, s.is_private
 FROM accounts a

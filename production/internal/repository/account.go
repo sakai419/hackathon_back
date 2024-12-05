@@ -180,6 +180,24 @@ func (r *Repository) GetAccountIDByUserID(ctx context.Context, userId string) (s
 	return AccountID, nil
 }
 
+func (r *Repository) GetAccountIDs(ctx context.Context, params *model.GetAccountIDsParams) ([]string, error) {
+	// Get account IDs
+	accountIDs, err := r.q.GetAccountIDs(ctx, sqlcgen.GetAccountIDsParams{
+		Limit: params.Limit,
+		Offset: params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get account ids",
+				Err: err,
+			},
+		)
+	}
+
+	return accountIDs, nil
+}
+
 func (r *Repository) GetUserInfo(ctx context.Context, params *model.GetUserInfoParams) (*model.UserInfoInternal, error) {
 	// Begin transaction
 	tx, err := r.db.Begin()

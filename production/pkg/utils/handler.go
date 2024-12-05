@@ -183,3 +183,37 @@ func IsNotTargetPrivate(w http.ResponseWriter, r *http.Request) bool {
 
 	return false
 }
+
+func IsClientAdmin(w http.ResponseWriter, r *http.Request) bool {
+	isClientAdmin, err := key.GetIsClientAdmin(r.Context())
+	if err != nil {
+		RespondError(w, &apperrors.AppError{
+			Status:  http.StatusInternalServerError,
+			Code:    "INTERNAL_SERVER_ERROR",
+			Message: "Failed to get is_admin",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrOperationFailed{
+					Operation: "get is_admin",
+					Err: err,
+				},
+			),
+		})
+		return false
+	}
+
+	if !isClientAdmin {
+		RespondError(w, &apperrors.AppError{
+			Status:  http.StatusForbidden,
+			Code:    "FORBIDDEN",
+			Message: "User is not admin",
+			Err:     apperrors.WrapHandlerError(
+				&apperrors.ErrForbidden{
+					Message: "User is not admin",
+				},
+			),
+		})
+		return false
+	}
+
+	return true
+}
