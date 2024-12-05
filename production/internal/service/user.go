@@ -57,16 +57,6 @@ func (s *Service) GetUserProfile(ctx context.Context, params *model.GetUserProfi
 		} else if blocking {
 			return nil, apperrors.NewBlockingAppError("get user profile", errors.New("client is blocking target"))
 		}
-
-		// Check if the target is private and the client is not following
-		if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
-			ClientAccountID: params.ClientAccountID,
-			TargetAccountID: params.TargetAccountID,
-		}); err != nil {
-			return nil, apperrors.NewInternalAppError("check if private and not following", err)
-		} else if isPrivateAndNotFollowing {
-			return nil, apperrors.NewForbiddenAppError("get user profile", errors.New("target is private and client is not following"))
-		}
 	}
 
 	// Get user infos
@@ -131,7 +121,7 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 		}); err != nil {
 			return nil, apperrors.NewInternalAppError("check if private and not following", err)
 		} else if isPrivateAndNotFollowing {
-			return nil, apperrors.NewForbiddenAppError("get user tweets", errors.New("target is private and client is not following"))
+			return nil, apperrors.NewPrivateAccountAccessError("get user tweets", errors.New("target is private and client is not following"))
 		}
 	}
 

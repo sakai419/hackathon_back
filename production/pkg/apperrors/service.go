@@ -76,6 +76,20 @@ func NewBlockingAppError(operation string, err error) *AppError {
 	}
 }
 
+func NewPrivateAccountAccessError(operation string, err error) *AppError {
+	return &AppError{
+		Status:  http.StatusForbidden,
+		Code:    "PRIVATE_ACCOUNT",
+		Message: "You are not allowed to access this private account",
+		Err:     WrapServiceError(
+			&ErrOperationFailed{
+				Operation: operation,
+				Err:       err,
+			},
+		),
+	}
+}
+
 func NewDuplicateEntryAppError(entity, operation string, err error) *AppError {
 	var duplicateErr *ErrDuplicateEntry
 	if errors.As(err, &duplicateErr) {
