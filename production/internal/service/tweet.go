@@ -291,10 +291,13 @@ func (s *Service) SetTweetAsPinned(ctx context.Context, params *model.SetTweetAs
 	if err != nil {
 		return apperrors.NewInternalAppError("get pinned tweet id", err)
 	} else if pinnedTweetID != nil {
-		return apperrors.NewDuplicateEntryAppError("pinned tweet", "set tweet as pinned", &apperrors.ErrDuplicateEntry{
-			Entity: "pinned tweet",
-			Err:    errors.New("pinned tweet already exists"),
-		})
+		// Unset tweet as pinned
+		if err := s.repo.UnsetTweetAsPinned(ctx, &model.UnsetTweetAsPinnedParams{
+			ClientAccountID: params.ClientAccountID,
+			TweetID:         *pinnedTweetID,
+		}); err != nil {
+			return apperrors.NewNotFoundAppError("tweet", "unset tweet as pinned", err)
+		}
 	}
 
 	// Set tweet as pinned
@@ -1003,7 +1006,7 @@ func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*
 		// Get user info
 		userInfo, ok := userInfoMap[tweet.AccountID]
 		if !ok {
-			return nil, apperrors.NewInternalAppError("get user info", errors.New("user info not found"))
+			continue
 		}
 
 		tweetInfo := convertToTweetInfo(tweet, userInfo)
