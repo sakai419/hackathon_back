@@ -352,6 +352,7 @@ LEFT JOIN
 ON
     s.account_id = f.following_account_id
     AND f.follower_account_id = $1
+    AND f.status = 'accepted'
 WHERE
     s.account_id = $2
 `
