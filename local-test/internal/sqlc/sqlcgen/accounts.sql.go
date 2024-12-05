@@ -53,7 +53,7 @@ LEFT JOIN follows AS f
     AND f.follower_account_id = $2
 WHERE
     b.blocked_account_id IS NULL
-    AND (s.is_private = FALSE OR f.follower_account_id IS NOT NULL)
+    AND (s.is_private = FALSE OR f.follower_account_id IS NOT NULL OR a.id = $2)
 `
 
 type FilterAccessibleAccountIDsParams struct {

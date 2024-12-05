@@ -1003,7 +1003,7 @@ func convertToTweetNodes(tweets []*model.TweetInfoInternal, quotedTweetInfos []*
 		// Get user info
 		userInfo, ok := userInfoMap[tweet.AccountID]
 		if !ok {
-			return nil, apperrors.NewInternalAppError("get user info", errors.New("user info not found"))
+			continue
 		}
 
 		tweetInfo := convertToTweetInfo(tweet, userInfo)

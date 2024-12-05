@@ -250,7 +250,7 @@ FROM tweets AS t
 INNER JOIN labels AS l ON t.id = l.tweet_id
 INNER JOIN settings AS s ON t.account_id = s.account_id
 INNER JOIN accounts AS a ON t.account_id = a.id
-WHERE s.is_private = FALSE AND a.is_suspended = FALSE AND a.id != $3
+WHERE a.is_suspended = FALSE AND a.id != $3
 ORDER BY t.created_at DESC
 LIMIT $1 OFFSET $2
 `
