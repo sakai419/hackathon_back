@@ -84,6 +84,46 @@ func (q *Queries) FilterAccessibleAccountIDs(ctx context.Context, arg FilterAcce
 	return items, nil
 }
 
+const filterAccessibleAccountIDsByBlockStatus = `-- name: FilterAccessibleAccountIDsByBlockStatus :many
+SELECT a.id::VARCHAR as account_id
+FROM unnest($1::VARCHAR[]) AS a(id)
+LEFT JOIN blocks AS b
+    ON (b.blocked_account_id = a.id
+    AND b.blocker_account_id = $2)
+    OR (b.blocked_account_id = $2
+    AND b.blocker_account_id = a.id)
+WHERE
+    b.blocked_account_id IS NULL
+`
+
+type FilterAccessibleAccountIDsByBlockStatusParams struct {
+	AccountIds      []string
+	ClientAccountID string
+}
+
+func (q *Queries) FilterAccessibleAccountIDsByBlockStatus(ctx context.Context, arg FilterAccessibleAccountIDsByBlockStatusParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, filterAccessibleAccountIDsByBlockStatus, pq.Array(arg.AccountIds), arg.ClientAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var account_id string
+		if err := rows.Scan(&account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, account_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAccountIDByUserID = `-- name: GetAccountIDByUserID :one
 SELECT id FROM accounts
 WHERE user_id = $1

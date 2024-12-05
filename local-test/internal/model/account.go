@@ -48,7 +48,12 @@ func (p *CreateAccountParams) Validate() error {
 	return nil
 }
 
-type FilterAccesibleAccountIDsParams struct {
+type FilterAccessibleAccountIDsParams struct {
+	AccountIDs []string
+	ClientAccountID string
+}
+
+type FilterAccessibleAccountIDsByBlockStatusParams struct {
 	AccountIDs []string
 	ClientAccountID string
 }

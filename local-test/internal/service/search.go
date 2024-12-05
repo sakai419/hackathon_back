@@ -38,7 +38,7 @@ func (s *Service) SearchUsers(ctx context.Context, params *model.SearchUsersPara
 	}
 
 	// Filter accessible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDsByBlockStatus(ctx, &model.FilterAccessibleAccountIDsByBlockStatusParams{
 		ClientAccountID: params.ClientAccountID,
 		AccountIDs: accountIDs,
 	})
@@ -140,7 +140,7 @@ func (s *Service) SearchTweets(ctx context.Context, params *model.SearchTweetsPa
 	}
 
 	// Filter accesible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		AccountIDs:       accountIDs,
 		ClientAccountID:  params.ClientAccountID,
 	})

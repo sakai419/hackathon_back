@@ -473,7 +473,7 @@ func (r *Repository) SearchUsersOrderByCreatedAt(ctx context.Context, params *mo
 	return userInfos, nil
 }
 
-func (r *Repository) FilterAccessibleAccountIDs(ctx context.Context, params *model.FilterAccesibleAccountIDsParams) ([]string, error) {
+func (r *Repository) FilterAccessibleAccountIDs(ctx context.Context, params *model.FilterAccessibleAccountIDsParams) ([]string, error) {
 	// Filter accessible account ids
 	accessibleAccountIDs, err := r.q.FilterAccessibleAccountIDs(ctx, sqlcgen.FilterAccessibleAccountIDsParams{
 		AccountIds: params.AccountIDs,
@@ -483,6 +483,24 @@ func (r *Repository) FilterAccessibleAccountIDs(ctx context.Context, params *mod
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
 				Operation: "filter accessible account ids",
+				Err: err,
+			},
+		)
+	}
+
+	return accessibleAccountIDs, nil
+}
+
+func (r *Repository) FilterAccessibleAccountIDsByBlockStatus(ctx context.Context, params *model.FilterAccessibleAccountIDsByBlockStatusParams) ([]string, error) {
+	// Filter accessible account ids
+	accessibleAccountIDs, err := r.q.FilterAccessibleAccountIDsByBlockStatus(ctx, sqlcgen.FilterAccessibleAccountIDsByBlockStatusParams{
+		AccountIds: params.AccountIDs,
+		ClientAccountID: params.ClientAccountID,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "filter accessible account ids by block status",
 				Err: err,
 			},
 		)

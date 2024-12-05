@@ -224,7 +224,7 @@ func (s *Service) GetUserTweets(ctx context.Context, params *model.GetUserTweets
 	}
 
 	// Filter accesible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		AccountIDs:       accountIDs,
 		ClientAccountID:  params.ClientAccountID,
 	})
@@ -311,7 +311,7 @@ func (s *Service) GetUserLikes(ctx context.Context, params *model.GetUserLikesPa
 	}
 
 	// Filter accessible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		AccountIDs:       accountIDs,
 		ClientAccountID:  params.ClientAccountID,
 	})
@@ -436,7 +436,7 @@ func (s *Service) GetUserRetweets(ctx context.Context, params *model.GetUserRetw
 	}
 
 	// Filter accesible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		AccountIDs:       accountIDs,
 		ClientAccountID:  params.ClientAccountID,
 	})

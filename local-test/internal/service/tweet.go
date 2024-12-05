@@ -571,7 +571,7 @@ func (s *Service) GetTweetInfo(ctx context.Context, params *model.GetTweetInfoPa
 	}
 
 	// Filter accessible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		ClientAccountID: params.ClientAccountID,
 		AccountIDs:      accountIDs,
 	})
@@ -638,7 +638,7 @@ func (s *Service) GetReplyTweetInfos(ctx context.Context, params *model.GetReply
 	}
 
 	// Filter accessible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		ClientAccountID: params.ClientAccountID,
 		AccountIDs:      accountIDs,
 	})
@@ -771,7 +771,7 @@ func (s *Service) GetTimelineTweetInfos(ctx context.Context, params *model.GetTi
 	}
 
 	// filter accessible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		ClientAccountID: params.ClientAccountID,
 		AccountIDs:      accountIDs,
 	})
@@ -868,7 +868,7 @@ func (s *Service) GetRecentTweetInfos(ctx context.Context, params *model.GetRece
 	}
 
 	// Filter accesible account ids
-	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccesibleAccountIDsParams{
+	accessibleAccountIDs, err := s.repo.FilterAccessibleAccountIDs(ctx, &model.FilterAccessibleAccountIDsParams{
 		AccountIDs:       accountIDs,
 		ClientAccountID:  params.ClientAccountID,
 	})

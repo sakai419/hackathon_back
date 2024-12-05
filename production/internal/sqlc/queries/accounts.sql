@@ -95,3 +95,14 @@ LEFT JOIN follows AS f
 WHERE
     b.blocked_account_id IS NULL
     AND (s.is_private = FALSE OR f.follower_account_id IS NOT NULL);
+
+-- name: FilterAccessibleAccountIDsByBlockStatus :many
+SELECT a.id::VARCHAR as account_id
+FROM unnest(@account_ids::VARCHAR[]) AS a(id)
+LEFT JOIN blocks AS b
+    ON (b.blocked_account_id = a.id
+    AND b.blocker_account_id = @client_account_id)
+    OR (b.blocked_account_id = @client_account_id
+    AND b.blocker_account_id = a.id)
+WHERE
+    b.blocked_account_id IS NULL;
