@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"local-test/internal/config"
 	"local-test/pkg/apperrors"
+	"strings"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
@@ -27,7 +28,7 @@ func InitFirebaseClient(c *config.FirebaseConfig) (*auth.Client, error) {
 		"type":                        c.Type,
 		"project_id":                  c.ProjectID,
 		"private_key_id":              c.PrivateKeyID,
-		"private_key":                 c.PrivateKey,
+		"private_key":                 strings.Replace(c.PrivateKey, "\\n", "\n", -1),
 		"client_email":                c.ClientEmail,
 		"client_id":                   c.ClientID,
 		"auth_uri":                    c.AuthURI,
