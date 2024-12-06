@@ -1,0 +1,5 @@
+package: execute
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/execute/schema.gen.go

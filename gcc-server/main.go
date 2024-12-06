@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -100,6 +101,8 @@ func handleCompile(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
+
+	log.Println("Output:", runOut.String())
 
 	// Send the output back to the client
 	resp := CompileResponse{

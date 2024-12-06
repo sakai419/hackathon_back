@@ -8,6 +8,7 @@ import (
 	"local-test/internal/handler/batch"
 	"local-test/internal/handler/block"
 	"local-test/internal/handler/conversation"
+	"local-test/internal/handler/execute"
 	"local-test/internal/handler/follow"
 	"local-test/internal/handler/notification"
 	"local-test/internal/handler/profile"
@@ -281,6 +282,23 @@ func setUpBatchRoutes(r *mux.Router, repo *repository.Repository, svc *service.S
 	batch.HandlerWithOptions(h, opts)
 }
 
+func setUpExecuteRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the execute handler
+	h := execute.NewExecuteHandler(svc)
+
+	// Create options for the execute handler
+	opts := execute.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []execute.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+		},
+	}
+
+	// Register the execute handler
+	execute.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client, corsOrigin string) *mux.Router {
 	r := mux.NewRouter()
 
@@ -312,6 +330,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client, corsOrigin string) *mux.Router
 	setUpSidebarRoutes(apiV1, repo, svc, client)
 	setUpSearchRoutes(apiV1, repo, svc, client)
 	setUpBatchRoutes(apiV1, repo, svc, client)
+	setUpExecuteRoutes(apiV1, repo, svc, client)
 
 	return r
 }
