@@ -37,6 +37,7 @@ func handleCompile(w http.ResponseWriter, r *http.Request) {
 	// Check the Referer header
 	referer := r.Header.Get("Referer")
 	if referer != allowedReferer {
+		log.Printf("Invalid Referer: %s\n", referer)
 		http.Error(w, "Forbidden: Access denied", http.StatusForbidden)
 		return
 	}
