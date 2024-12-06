@@ -11,5 +11,5 @@ RUN apk add --no-cache gcc libc-dev
 WORKDIR /app
 COPY --from=build /app/gcc_server .
 
-EXPOSE 9090
+EXPOSE 9000
 CMD ["./gcc_server"]
