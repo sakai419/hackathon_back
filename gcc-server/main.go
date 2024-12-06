@@ -32,6 +32,14 @@ func main() {
 }
 
 func handleCompile(w http.ResponseWriter, r *http.Request) {
+	allowedReferer := os.Getenv("ALLOWED_REFERER")
+	// Check the Referer header
+	referer := r.Header.Get("Referer")
+	if referer != allowedReferer {
+		http.Error(w, "Forbidden: Access denied", http.StatusForbidden)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
