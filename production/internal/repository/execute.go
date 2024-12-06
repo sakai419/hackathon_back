@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"local-test/internal/model"
 	"local-test/pkg/apperrors"
@@ -39,6 +40,16 @@ func (r *Repository) ExecuteCCode(ctx context.Context, content string) (*model.E
 		)
 	}
 	defer resp.Body.Close()
+
+	// Check response status code
+	if resp.StatusCode != http.StatusOK {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "post to GCC server",
+				Err:       errors.New("status code is not 200"),
+			},
+		)
+	}
 
 	// Decode response
 	body, _ := io.ReadAll(resp.Body)
