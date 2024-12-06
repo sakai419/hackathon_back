@@ -4,7 +4,11 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/server
 
 FROM debian:stable-slim AS app
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    gcc \
+    libc6-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 EXPOSE 8000
 COPY --from=build /go/src/app/app .

@@ -3,8 +3,6 @@ package main
 import (
 	v1 "local-test/api/v1"
 	"local-test/internal/config"
-
-	// "local-test/internal/model"
 	"local-test/pkg/database"
 	"local-test/pkg/firebase"
 	"local-test/pkg/utils"
