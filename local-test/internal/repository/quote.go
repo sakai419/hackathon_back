@@ -143,9 +143,13 @@ func (r *Repository) GetQuotedTweetInfos(ctx context.Context, params *model.GetQ
 	}
 
 	// Extract quoted tweet ids
-	quotedTweetIDs := make([]int64, 0, len(quoteRelations))
+	quotedTweetIDsMap := make(map[int64]struct{}, len(quoteRelations))
 	for _, relation := range quoteRelations {
-		quotedTweetIDs = append(quotedTweetIDs, relation.OriginalTweetID)
+		quotedTweetIDsMap[relation.OriginalTweetID] = struct{}{}
+	}
+	quotedTweetIDs := make([]int64, 0, len(quotedTweetIDsMap))
+	for id := range quotedTweetIDsMap {
+		quotedTweetIDs = append(quotedTweetIDs, id)
 	}
 
 	// Get quoted tweets originals
