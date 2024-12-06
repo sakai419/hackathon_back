@@ -16,8 +16,6 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	// Please deploy !!!
-
 	// Connect to database
 	db, err := database.ConnectToDB(cfg.DBConfig)
 	if err != nil {
