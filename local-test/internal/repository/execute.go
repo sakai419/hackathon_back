@@ -30,7 +30,22 @@ func (r *Repository) ExecuteCCode(ctx context.Context, content string) (*model.E
 	jsonBody, _ := json.Marshal(reqBody)
 
 	// Post to GCC server
-	resp, err := http.Post(gccServerURL+"/compile", "application/json", bytes.NewBuffer(jsonBody))
+	req, err := http.NewRequest("POST", gccServerURL+"/compile", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "create request to GCC server",
+				Err:       err,
+			},
+		)
+	}
+
+	// Set headers including Referer
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Referer", os.Getenv("EXECUTE_PATH"))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, apperrors.WrapRepositoryError(
 			&apperrors.ErrOperationFailed{
