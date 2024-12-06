@@ -79,6 +79,25 @@ paths:
                 "500":
                     description: Internal server error
 
+    /notifications/{notification_id}:
+        delete:
+            summary: Delete a notification
+            operationId: DeleteNotification
+            parameters:
+                - name: notification_id
+                  in: path
+                  required: true
+                  schema:
+                      type: integer
+                      format: int64
+            responses:
+                "200":
+                    description: Notification deleted successfully
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
     /notifications/{notification_id}/read:
         patch:
             summary: Mark a notification as read

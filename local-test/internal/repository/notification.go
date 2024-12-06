@@ -66,6 +66,21 @@ func (r *Repository) GetUnreadNotificationCount(ctx context.Context, accountID s
 	return count, nil
 }
 
+func (r *Repository) GetRecipientID(ctx context.Context, notificationID int64) (string, error) {
+	// Get recipient account ID
+	recipientAccountID, err := r.q.GetRecipientID(ctx, notificationID)
+	if err != nil {
+		return "", apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get recipient account ID",
+				Err:       err,
+			},
+		)
+	}
+
+	return recipientAccountID, nil
+}
+
 func (r *Repository) MarkNotificationAsRead(ctx context.Context, params *model.MarkNotificationAsReadParams) error {
 	// Mark notification as read
 	res, err := r.q.MarkNotificationAsRead(ctx, sqlcgen.MarkNotificationAsReadParams{
@@ -110,6 +125,42 @@ func (r *Repository) MarkAllNotificationsAsRead(ctx context.Context, accountID s
 			&apperrors.ErrOperationFailed{
 				Operation: "mark all notifications as read",
 				Err:       err,
+			},
+		)
+	}
+
+	return nil
+}
+
+func (r *Repository) DeleteNotification(ctx context.Context, params *model.DeleteNotificationParams) error {
+	// Delete notification
+	res, err := r.q.DeleteNotification(ctx, sqlcgen.DeleteNotificationParams{
+		ID:                 params.ID,
+		RecipientAccountID: params.ClientAccountID,
+	})
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "delete notification",
+				Err:       err,
+			},
+		)
+	}
+
+	// Check if notification is not found
+	num, err := res.RowsAffected()
+	if err != nil {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "delete notification",
+				Err:       err,
+			},
+		)
+	}
+	if num == 0 {
+		return apperrors.WrapRepositoryError(
+			&apperrors.ErrRecordNotFound{
+				Condition: "notification",
 			},
 		)
 	}

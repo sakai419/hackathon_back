@@ -146,6 +146,18 @@ func (q *Queries) GetNotifications(ctx context.Context, arg GetNotificationsPara
 	return items, nil
 }
 
+const getRecipientID = `-- name: GetRecipientID :one
+SELECT recipient_account_id FROM notifications
+WHERE id = $1
+`
+
+func (q *Queries) GetRecipientID(ctx context.Context, id int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, getRecipientID, id)
+	var recipient_account_id string
+	err := row.Scan(&recipient_account_id)
+	return recipient_account_id, err
+}
+
 const getUnreadNotificationCount = `-- name: GetUnreadNotificationCount :one
 SELECT COUNT(*) FROM notifications
 WHERE recipient_account_id = $1 AND is_read = FALSE

@@ -123,6 +123,27 @@ func (h *NotificationHandler) MarkAllNotificationsAsRead(w http.ResponseWriter, 
 	utils.Respond(w, nil)
 }
 
+// Delete notification
+// (DELETE /notifications/{notification_id})
+func (h *NotificationHandler) DeleteNotification(w http.ResponseWriter, r *http.Request, notificationID int64) {
+	// Get client account ID
+	clientAccountID, ok := utils.GetClientAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Delete notification
+	if err := h.svc.DeleteNotification(r.Context(), &model.DeleteNotificationParams{
+		ClientAccountID: clientAccountID,
+		ID:                 notificationID,
+	}); err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("delete notification", err))
+		return
+	}
+
+	utils.Respond(w, nil)
+}
+
 // ErrorHandlerFunc is the error handler for the notification handler
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError

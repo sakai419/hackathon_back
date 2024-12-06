@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"local-test/internal/model"
 	"local-test/pkg/apperrors"
 )
@@ -123,6 +124,26 @@ func (s *Service) MarkAllNotificationsAsRead(ctx context.Context, recipientAccou
 	// Mark all notifications as read
 	if err := s.repo.MarkAllNotificationsAsRead(ctx, recipientAccountID); err != nil {
 		return apperrors.NewInternalAppError("mark all notifications as read", err)
+	}
+
+	return nil
+}
+
+func (s *Service) DeleteNotification(ctx context.Context, params *model.DeleteNotificationParams) error {
+	// Get recipient account ID
+	recipientAccountID, err := s.repo.GetRecipientID(ctx, params.ID)
+	if err != nil {
+		return apperrors.NewNotFoundAppError("recipient account ID", "get recipient account ID", err)
+	}
+
+	// Check if the client is the recipient
+	if recipientAccountID != params.ClientAccountID {
+		return apperrors.NewForbiddenAppError("delete notification", errors.New("client is not the recipient"))
+	}
+
+	// Delete notification
+	if err := s.repo.DeleteNotification(ctx, params); err != nil {
+		return apperrors.NewNotFoundAppError("notification", "delete notification", err)
 	}
 
 	return nil

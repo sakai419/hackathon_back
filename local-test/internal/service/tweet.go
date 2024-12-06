@@ -502,34 +502,36 @@ func (s *Service) GetTweetInfo(ctx context.Context, params *model.GetTweetInfoPa
 		return nil, apperrors.NewNotFoundAppError("tweet id", "get account id by tweet id", err)
 	}
 
-	// Check if the client is blocked
-	if isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
-		BlockerAccountID: params.ClientAccountID,
-		BlockedAccountID: accountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if blocked", err)
-	} else if isBlocked {
-		return nil, apperrors.NewBlockedAppError("tweet", errors.New("client is blocked"))
-	}
+	if accountID != params.ClientAccountID {
+		// Check if the client is blocked
+		if isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+			BlockerAccountID: params.ClientAccountID,
+			BlockedAccountID: accountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocked", err)
+		} else if isBlocked {
+			return nil, apperrors.NewBlockedAppError("tweet", errors.New("client is blocked"))
+		}
 
-	// Check if the client is blocked
-	if isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
-		BlockerAccountID: accountID,
-		BlockedAccountID: params.ClientAccountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if blocked", err)
-	} else if isBlocked {
-		return nil, apperrors.NewBlockedAppError("tweet", errors.New("client is blocked"))
-	}
+		// Check if the client is blocked
+		if isBlocked, err := s.repo.IsBlocked(ctx, &model.IsBlockedParams{
+			BlockerAccountID: accountID,
+			BlockedAccountID: params.ClientAccountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if blocked", err)
+		} else if isBlocked {
+			return nil, apperrors.NewBlockedAppError("tweet", errors.New("client is blocked"))
+		}
 
-	// Check if the tweet poster is private and the client is not following
-	if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
-		ClientAccountID: params.ClientAccountID,
-		TargetAccountID: accountID,
-	}); err != nil {
-		return nil, apperrors.NewInternalAppError("check if private and not following", err)
-	} else if isPrivateAndNotFollowing {
-		return nil, apperrors.NewForbiddenAppError("tweet", errors.New("tweet poster is private and client is not following"))
+		// Check if the tweet poster is private and the client is not following
+		if isPrivateAndNotFollowing, err := s.repo.IsPrivateAndNotFollowing(ctx, &model.IsPrivateAndNotFollowingParams{
+			ClientAccountID: params.ClientAccountID,
+			TargetAccountID: accountID,
+		}); err != nil {
+			return nil, apperrors.NewInternalAppError("check if private and not following", err)
+		} else if isPrivateAndNotFollowing {
+			return nil, apperrors.NewForbiddenAppError("tweet", errors.New("tweet poster is private and client is not following"))
+		}
 	}
 
 	// Get quoted tweet info
@@ -917,7 +919,7 @@ func (s *Service) DeleteTweet(ctx context.Context, params *model.DeleteTweetPara
 
 	// Check if client is authorized
 	if accountID != params.ClientAccountID {
-		return apperrors.NewForbiddenAppError("Delete tweet", nil)
+		return apperrors.NewForbiddenAppError("Delete tweet", errors.New("client is not authorized"))
 	}
 
 	// Delete tweet

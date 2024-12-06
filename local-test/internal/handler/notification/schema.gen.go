@@ -106,6 +106,9 @@ type ServerInterface interface {
 	// Get unread notifications count
 	// (GET /notifications/unread/count)
 	GetUnreadNotificationsCount(w http.ResponseWriter, r *http.Request)
+	// Delete a notification
+	// (DELETE /notifications/{notification_id})
+	DeleteNotification(w http.ResponseWriter, r *http.Request, notificationId int64)
 	// Mark a notification as read
 	// (PATCH /notifications/{notification_id}/read)
 	MarkNotificationAsRead(w http.ResponseWriter, r *http.Request, notificationId int64)
@@ -237,6 +240,31 @@ func (siw *ServerInterfaceWrapper) GetUnreadNotificationsCount(w http.ResponseWr
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetUnreadNotificationsCount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteNotification operation middleware
+func (siw *ServerInterfaceWrapper) DeleteNotification(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "notification_id" -------------
+	var notificationId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "notification_id", mux.Vars(r)["notification_id"], &notificationId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "notification_id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteNotification(w, r, notificationId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -391,6 +419,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	r.HandleFunc(options.BaseURL+"/notifications/unread", wrapper.GetUnreadNotifications).Methods("GET")
 
 	r.HandleFunc(options.BaseURL+"/notifications/unread/count", wrapper.GetUnreadNotificationsCount).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/notifications/{notification_id}", wrapper.DeleteNotification).Methods("DELETE")
 
 	r.HandleFunc(options.BaseURL+"/notifications/{notification_id}/read", wrapper.MarkNotificationAsRead).Methods("PATCH")
 

@@ -73,3 +73,8 @@ type MarkNotificationAsReadParams struct {
 	ID                 int64
 	RecipientAccountID string
 }
+
+type DeleteNotificationParams struct {
+	ID                 int64
+	ClientAccountID	   string
+}
