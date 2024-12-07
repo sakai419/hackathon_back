@@ -5,17 +5,33 @@ info:
     description: API for managing sidebar content
 
 paths:
-    /sidebar:
+    /sidebar/left:
         get:
-            summary: Get sidebar information
-            operationId: GetSidebarInfo
+            summary: Get left sidebar information
+            operationId: GetLeftSidebarInfo
             responses:
                 "200":
                     description: Sidebar content retrieved successfully
                     content:
                         application/json:
                             schema:
-                                $ref: "#/components/schemas/SidebarInfo"
+                                $ref: "#/components/schemas/LeftSidebarInfo"
+                "400":
+                    description: Bad request
+                "500":
+                    description: Internal server error
+
+    /sidebar/right:
+        get:
+            summary: Get right sidebar information
+            operationId: GetRightSidebarInfo
+            responses:
+                "200":
+                    description: Sidebar content retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/RightSidebarInfo"
                 "400":
                     description: Bad request
                 "500":
@@ -23,7 +39,7 @@ paths:
 
 components:
     schemas:
-        SidebarInfo:
+        LeftSidebarInfo:
             type: object
             properties:
                 unread_conversation_count:
@@ -35,3 +51,59 @@ components:
             required:
                 - unread_conversation_count
                 - unread_notification_count
+        RightSidebarInfo:
+            type: object
+            properties:
+                recent_labels:
+                    $ref: "#/components/schemas/LabelCounts"
+                follow_suggestions:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/UserInfoWithoutBio"
+            required:
+                - recent_labels
+                - follow_suggestions
+        UserInfoWithoutBio:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+                is_following:
+                    type: boolean
+                is_followed:
+                    type: boolean
+                is_pending:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - is_private
+                - is_admin
+                - is_following
+                - is_followed
+                - is_pending
+        LabelCounts:
+            type: array
+            items:
+                $ref: "#/components/schemas/LabelCount"
+        LabelCount:
+            type: object
+            properties:
+                label:
+                    type: string
+                count:
+                    type: integer
+                    format: int64
+            required:
+                - label
+                - count

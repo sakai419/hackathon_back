@@ -10,17 +10,47 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// SidebarInfo defines model for SidebarInfo.
-type SidebarInfo struct {
+// LabelCount defines model for LabelCount.
+type LabelCount struct {
+	Count int64  `json:"count"`
+	Label string `json:"label"`
+}
+
+// LabelCounts defines model for LabelCounts.
+type LabelCounts = []LabelCount
+
+// LeftSidebarInfo defines model for LeftSidebarInfo.
+type LeftSidebarInfo struct {
 	UnreadConversationCount int64 `json:"unread_conversation_count"`
 	UnreadNotificationCount int64 `json:"unread_notification_count"`
 }
 
+// RightSidebarInfo defines model for RightSidebarInfo.
+type RightSidebarInfo struct {
+	FollowSuggestions []UserInfoWithoutBio `json:"follow_suggestions"`
+	RecentLabels      LabelCounts          `json:"recent_labels"`
+}
+
+// UserInfoWithoutBio defines model for UserInfoWithoutBio.
+type UserInfoWithoutBio struct {
+	IsAdmin         bool   `json:"is_admin"`
+	IsFollowed      bool   `json:"is_followed"`
+	IsFollowing     bool   `json:"is_following"`
+	IsPending       bool   `json:"is_pending"`
+	IsPrivate       bool   `json:"is_private"`
+	ProfileImageUrl string `json:"profile_image_url"`
+	UserId          string `json:"user_id"`
+	UserName        string `json:"user_name"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get sidebar information
-	// (GET /sidebar)
-	GetSidebarInfo(w http.ResponseWriter, r *http.Request)
+	// Get left sidebar information
+	// (GET /sidebar/left)
+	GetLeftSidebarInfo(w http.ResponseWriter, r *http.Request)
+	// Get right sidebar information
+	// (GET /sidebar/right)
+	GetRightSidebarInfo(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -32,11 +62,25 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetSidebarInfo operation middleware
-func (siw *ServerInterfaceWrapper) GetSidebarInfo(w http.ResponseWriter, r *http.Request) {
+// GetLeftSidebarInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetLeftSidebarInfo(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetSidebarInfo(w, r)
+		siw.Handler.GetLeftSidebarInfo(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRightSidebarInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetRightSidebarInfo(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRightSidebarInfo(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -159,7 +203,9 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/sidebar", wrapper.GetSidebarInfo).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/sidebar/left", wrapper.GetLeftSidebarInfo).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/sidebar/right", wrapper.GetRightSidebarInfo).Methods("GET")
 
 	return r
 }

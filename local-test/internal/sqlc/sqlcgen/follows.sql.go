@@ -265,6 +265,46 @@ func (q *Queries) GetFollowStatus(ctx context.Context, arg GetFollowStatusParams
 	return status, err
 }
 
+const getFollowSuggestions = `-- name: GetFollowSuggestions :many
+SELECT DISTINCT f2.following_account_id
+FROM follows f1
+JOIN follows f2
+  ON f1.follower_account_id = f2.follower_account_id
+WHERE f1.following_account_id = $1
+  AND f1.status = 'accepted'
+  AND f2.status = 'accepted'
+  AND f2.following_account_id != $1
+  AND f2.following_account_id NOT IN (
+    SELECT following_account_id
+    FROM follows
+    WHERE follower_account_id = $1
+      AND status = 'accepted'
+  )
+`
+
+func (q *Queries) GetFollowSuggestions(ctx context.Context, clientAccountID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getFollowSuggestions, clientAccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var following_account_id string
+		if err := rows.Scan(&following_account_id); err != nil {
+			return nil, err
+		}
+		items = append(items, following_account_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getFollowerAccountIDs = `-- name: GetFollowerAccountIDs :many
 SELECT follower_account_id
 FROM follows

@@ -111,8 +111,6 @@ SELECT
     ) AS is_pending
 FROM UNNEST(@account_ids::VARCHAR[]) AS account_id;
 
-
-
 -- name: IsPrivateAndNotFollowing :one
 SELECT
     CASE
@@ -129,3 +127,20 @@ ON
     AND f.status = 'accepted'
 WHERE
     s.account_id = @target_account_id;
+
+-- name: GetFollowSuggestions :many
+SELECT DISTINCT f2.following_account_id
+FROM follows f1
+JOIN follows f2
+  ON f1.follower_account_id = f2.follower_account_id
+WHERE f1.following_account_id = @client_account_id
+  AND f1.status = 'accepted'
+  AND f2.status = 'accepted'
+  AND f2.following_account_id != @client_account_id
+  AND f2.following_account_id NOT IN (
+    SELECT following_account_id
+    FROM follows
+    WHERE follower_account_id = @client_account_id
+      AND status = 'accepted'
+  )
+LIMIT 5;
