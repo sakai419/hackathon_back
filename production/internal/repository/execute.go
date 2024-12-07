@@ -94,3 +94,85 @@ func (r *Repository) ExecuteCCode(ctx context.Context, content string) (*model.E
 
 	return ret, nil
 }
+
+func (r *Repository) ExecutePythonCode(ctx context.Context, content string) (*model.ExecuteResult, error) {
+	// Get Python server URL
+	pythonServerURL := os.Getenv("PYTHON_SERVER_URL")
+	if pythonServerURL == "" {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrInvalidInput{
+				Message: "PYTHON_SERVER_URL is not set",
+			},
+		)
+	}
+
+	// Create request body
+	reqBody := map[string]string{
+		"code": content,
+	}
+	jsonBody, _ := json.Marshal(reqBody)
+
+	// Post to Python server
+	req, err := http.NewRequest("POST", pythonServerURL+"/execute", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "create request to Python server",
+				Err:       err,
+			},
+		)
+	}
+
+	// Set headers including Referer
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Referer", os.Getenv("EXECUTE_PATH"))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "post to Python server",
+				Err:       err,
+			},
+		)
+	}
+	defer resp.Body.Close()
+
+	// Decode response
+	body, _ := io.ReadAll(resp.Body)
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "decode response from Python server",
+				Err:       err,
+			},
+		)
+	}
+
+	// Check response status code
+	if resp.StatusCode != http.StatusOK {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "post to Python server",
+				Err:       errors.New("status code is not 200: " + result["message"].(string)),
+			},
+		)
+	}
+
+	// Create ExecuteResult
+	ret := &model.ExecuteResult{
+		Status:  result["status"].(string),
+	}
+	if _, ok := result["output"]; ok {
+		temp := result["output"].(string)
+		ret.Output = &temp
+	}
+	if _, ok := result["message"]; ok {
+		temp := result["message"].(string)
+		ret.Message = &temp
+	}
+
+	return ret, nil
+}

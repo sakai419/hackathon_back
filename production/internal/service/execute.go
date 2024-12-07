@@ -21,6 +21,12 @@ func (s *Service) ExecuteCode(ctx context.Context, params *model.ExecuteCodePara
 		} else {
 			return ret, nil
 		}
+	case "python":
+		if ret, err := s.repo.ExecutePythonCode(ctx, params.Code.Content); err != nil {
+			return nil, apperrors.NewInternalAppError("execute code", err)
+		} else {
+			return ret, nil
+		}
 	default:
 		return nil, apperrors.NewInternalAppError("execute code", errors.New("unsupported language"))
 	}
