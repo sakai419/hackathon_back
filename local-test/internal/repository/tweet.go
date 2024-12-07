@@ -9,6 +9,7 @@ import (
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/apperrors"
+	"log"
 	"time"
 
 	"github.com/sqlc-dev/pqtype"
@@ -330,6 +331,7 @@ func (r *Repository) GetTweetCountByAccountID(ctx context.Context, accountID str
 func (r *Repository) SearchTweetsOrderByCreatedAt(ctx context.Context, params *model.SearchTweetsOrderByCreatedAtParams) ([]*model.TweetInfoInternal, error) {
 	// Search tweets order by created at
 	tweetInfos, err := r.q.SearchTweetsOrderByCreatedAt(ctx, sqlcgen.SearchTweetsOrderByCreatedAtParams{
+		ClientAccountID: params.ClientAccountID,
 		Keyword: params.Keyword,
 		Offset:  params.Offset,
 		Limit:   params.Limit,
@@ -360,6 +362,7 @@ func (r *Repository) SearchTweetsOrderByCreatedAt(ctx context.Context, params *m
 func (r *Repository) SearchTweetsOrderByEngagementScore(ctx context.Context, params *model.SearchTweetsOrderByEngagementScoreParams) ([]*model.TweetInfoInternal, error) {
 	// Search tweets order by created at
 	tweetInfos, err := r.q.SearchTweetsOrderByEngagementScore(ctx, sqlcgen.SearchTweetsOrderByEngagementScoreParams{
+		ClientAccountID: params.ClientAccountID,
 		Keyword: params.Keyword,
 		Offset:  params.Offset,
 		Limit:   params.Limit,
@@ -372,6 +375,70 @@ func (r *Repository) SearchTweetsOrderByEngagementScore(ctx context.Context, par
 			},
 		)
 	}
+
+	// Convert to model
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
+func (r *Repository) SearchTweetsByLabelsOrderByCreatedAt(ctx context.Context, params *model.SearchTweetsByLabelsOrderByCreatedAtParams) ([]*model.TweetInfoInternal, error) {
+	// Search tweets with labels order by created at
+	tweetInfos, err := r.q.SearchTweetsByLabelOrderByCreatedAt(ctx, sqlcgen.SearchTweetsByLabelOrderByCreatedAtParams{
+		ClientAccountID: params.ClientAccountID,
+		Label:  sqlcgen.NullTweetLabel{TweetLabel: sqlcgen.TweetLabel(params.Label), Valid: true},
+		Offset: params.Offset,
+		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "search tweets by labels order by created at",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
+func (r *Repository) SearchTweetsByLabelsOrderByEngagementScore(ctx context.Context, params *model.SearchTweetsByLabelsOrderByEngagementScoreParams) ([]*model.TweetInfoInternal, error) {
+	// Search tweets with labels order by engagement score
+	tweetInfos, err := r.q.SearchTweetsByLabelOrderByEngagementScore(ctx, sqlcgen.SearchTweetsByLabelOrderByEngagementScoreParams{
+		ClientAccountID: params.ClientAccountID,
+		Label:  sqlcgen.NullTweetLabel{TweetLabel: sqlcgen.TweetLabel(params.Label), Valid: true},
+		Offset: params.Offset,
+		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "search tweets by labels order by engagement score",
+				Err: err,
+			},
+		)
+	}
+
+	log.Println("Get: ",len(tweetInfos), "tweets")
 
 	// Convert to model
 	ret, err := convertToTweetInfoInternal(tweetInfos)
@@ -581,6 +648,36 @@ func mapRowToTweetInfoInternal(row interface{}) (*model.TweetInfoInternal, error
 		r.Content = t.Content
 		r.Code = t.Code
 		r.Media = t.Media
+	case sqlcgen.SearchTweetsByLabelOrderByCreatedAtRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
+	case sqlcgen.SearchTweetsByLabelOrderByEngagementScoreRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
 	default:
 		return nil, fmt.Errorf("invalid type: %T", t)
 	}
@@ -659,6 +756,22 @@ func convertToTweetInfoInternal(rows interface{}) ([]*model.TweetInfoInternal, e
 			infos = append(infos, info)
 		}
 	case []sqlcgen.GetRecentTweetInfosRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+	case []sqlcgen.SearchTweetsByLabelOrderByCreatedAtRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+	case []sqlcgen.SearchTweetsByLabelOrderByEngagementScoreRow:
 		for _, r := range typedRows {
 			info, err := mapRowToTweetInfoInternal(r)
 			if err != nil {

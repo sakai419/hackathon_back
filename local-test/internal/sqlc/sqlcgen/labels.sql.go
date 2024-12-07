@@ -7,6 +7,10 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
+	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createLabel = `-- name: CreateLabel :exec
@@ -158,64 +162,6 @@ func (q *Queries) GetRecentLabels(ctx context.Context, limit int32) ([]GetRecent
 	return items, nil
 }
 
-const getTweetsByLabel = `-- name: GetTweetsByLabel :many
-SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at FROM tweets t
-JOIN labels l ON t.id = l.tweet_id
-WHERE l.label1 = $1 OR l.label2 = $2 OR l.label3 = $3
-ORDER BY t.created_at DESC
-LIMIT $4 OFFSET $5
-`
-
-type GetTweetsByLabelParams struct {
-	Label1 NullTweetLabel
-	Label2 NullTweetLabel
-	Label3 NullTweetLabel
-	Limit  int32
-	Offset int32
-}
-
-func (q *Queries) GetTweetsByLabel(ctx context.Context, arg GetTweetsByLabelParams) ([]Tweet, error) {
-	rows, err := q.db.QueryContext(ctx, getTweetsByLabel,
-		arg.Label1,
-		arg.Label2,
-		arg.Label3,
-		arg.Limit,
-		arg.Offset,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Tweet
-	for rows.Next() {
-		var i Tweet
-		if err := rows.Scan(
-			&i.ID,
-			&i.AccountID,
-			&i.IsPinned,
-			&i.Content,
-			&i.Code,
-			&i.LikesCount,
-			&i.RepliesCount,
-			&i.RetweetsCount,
-			&i.IsReply,
-			&i.IsQuote,
-			&i.Media,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getTweetsWithoutLabels = `-- name: GetTweetsWithoutLabels :many
 SELECT t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at FROM tweets t
 LEFT JOIN labels l ON t.id = l.tweet_id
@@ -251,6 +197,198 @@ func (q *Queries) GetTweetsWithoutLabels(ctx context.Context, arg GetTweetsWitho
 			&i.IsQuote,
 			&i.Media,
 			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchTweetsByLabelOrderByCreatedAt = `-- name: SearchTweetsByLabelOrderByCreatedAt :many
+SELECT
+    t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = $3
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = $3
+) AS r ON t.id = r.original_tweet_id
+WHERE t.id IN (
+    SELECT tweet_id FROM labels
+    WHERE label1 = $4 OR label2 = $4 OR label3 = $4
+)
+ORDER BY t.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type SearchTweetsByLabelOrderByCreatedAtParams struct {
+	Limit           int32
+	Offset          int32
+	ClientAccountID string
+	Label           NullTweetLabel
+}
+
+type SearchTweetsByLabelOrderByCreatedAtRow struct {
+	ID            int64
+	AccountID     string
+	IsPinned      bool
+	Content       sql.NullString
+	Code          pqtype.NullRawMessage
+	LikesCount    int32
+	RepliesCount  int32
+	RetweetsCount int32
+	IsReply       bool
+	IsQuote       bool
+	Media         pqtype.NullRawMessage
+	CreatedAt     time.Time
+	HasLiked      bool
+	HasRetweeted  bool
+}
+
+func (q *Queries) SearchTweetsByLabelOrderByCreatedAt(ctx context.Context, arg SearchTweetsByLabelOrderByCreatedAtParams) ([]SearchTweetsByLabelOrderByCreatedAtRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchTweetsByLabelOrderByCreatedAt,
+		arg.Limit,
+		arg.Offset,
+		arg.ClientAccountID,
+		arg.Label,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchTweetsByLabelOrderByCreatedAtRow
+	for rows.Next() {
+		var i SearchTweetsByLabelOrderByCreatedAtRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.IsPinned,
+			&i.Content,
+			&i.Code,
+			&i.LikesCount,
+			&i.RepliesCount,
+			&i.RetweetsCount,
+			&i.IsReply,
+			&i.IsQuote,
+			&i.Media,
+			&i.CreatedAt,
+			&i.HasLiked,
+			&i.HasRetweeted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchTweetsByLabelOrderByEngagementScore = `-- name: SearchTweetsByLabelOrderByEngagementScore :many
+SELECT
+    t.id, t.account_id, t.is_pinned, t.content, t.code, t.likes_count, t.replies_count, t.retweets_count, t.is_reply, t.is_quote, t.media, t.created_at,
+    COALESCE(l.has_liked, FALSE) AS has_liked,
+    COALESCE(r.has_retweeted, FALSE) AS has_retweeted
+FROM tweets AS t
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_liked
+    FROM likes
+    WHERE liking_account_id = $3
+) AS l ON t.id = l.original_tweet_id
+LEFT JOIN (
+    SELECT
+        original_tweet_id,
+        TRUE AS has_retweeted
+    FROM retweets
+    WHERE retweeting_account_id = $3
+) AS r ON t.id = r.original_tweet_id
+WHERE t.id IN (
+    SELECT tweet_id FROM labels
+    WHERE label1 = $4 OR label2 = $4 OR label3 = $4
+)
+ORDER BY
+    (t.likes_count * 30 + t.retweets_count * 20 + t.replies_count * 1) DESC,
+    t.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type SearchTweetsByLabelOrderByEngagementScoreParams struct {
+	Limit           int32
+	Offset          int32
+	ClientAccountID string
+	Label           NullTweetLabel
+}
+
+type SearchTweetsByLabelOrderByEngagementScoreRow struct {
+	ID            int64
+	AccountID     string
+	IsPinned      bool
+	Content       sql.NullString
+	Code          pqtype.NullRawMessage
+	LikesCount    int32
+	RepliesCount  int32
+	RetweetsCount int32
+	IsReply       bool
+	IsQuote       bool
+	Media         pqtype.NullRawMessage
+	CreatedAt     time.Time
+	HasLiked      bool
+	HasRetweeted  bool
+}
+
+func (q *Queries) SearchTweetsByLabelOrderByEngagementScore(ctx context.Context, arg SearchTweetsByLabelOrderByEngagementScoreParams) ([]SearchTweetsByLabelOrderByEngagementScoreRow, error) {
+	rows, err := q.db.QueryContext(ctx, searchTweetsByLabelOrderByEngagementScore,
+		arg.Limit,
+		arg.Offset,
+		arg.ClientAccountID,
+		arg.Label,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchTweetsByLabelOrderByEngagementScoreRow
+	for rows.Next() {
+		var i SearchTweetsByLabelOrderByEngagementScoreRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.IsPinned,
+			&i.Content,
+			&i.Code,
+			&i.LikesCount,
+			&i.RepliesCount,
+			&i.RetweetsCount,
+			&i.IsReply,
+			&i.IsQuote,
+			&i.Media,
+			&i.CreatedAt,
+			&i.HasLiked,
+			&i.HasRetweeted,
 		); err != nil {
 			return nil, err
 		}

@@ -96,7 +96,8 @@ type UserInfos = []UserInfo
 // SearchTweetsParams defines parameters for SearchTweets.
 type SearchTweetsParams struct {
 	SortType SearchTweetsParamsSortType `form:"sort_type" json:"sort_type"`
-	Keyword  string                     `form:"keyword" json:"keyword"`
+	Keyword  *string                    `form:"keyword,omitempty" json:"keyword,omitempty"`
+	Label    *string                    `form:"label,omitempty" json:"label,omitempty"`
 	Limit    int32                      `form:"limit" json:"limit"`
 	Offset   int32                      `form:"offset" json:"offset"`
 }
@@ -157,18 +158,19 @@ func (siw *ServerInterfaceWrapper) SearchTweets(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// ------------- Required query parameter "keyword" -------------
+	// ------------- Optional query parameter "keyword" -------------
 
-	if paramValue := r.URL.Query().Get("keyword"); paramValue != "" {
-
-	} else {
-		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "keyword"})
+	err = runtime.BindQueryParameter("form", true, false, "keyword", r.URL.Query(), &params.Keyword)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keyword", Err: err})
 		return
 	}
 
-	err = runtime.BindQueryParameter("form", true, true, "keyword", r.URL.Query(), &params.Keyword)
+	// ------------- Optional query parameter "label" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "label", r.URL.Query(), &params.Label)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keyword", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "label", Err: err})
 		return
 	}
 

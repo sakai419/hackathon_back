@@ -62,7 +62,10 @@ paths:
                           - oldest
                 - name: keyword
                   in: query
-                  required: true
+                  schema:
+                      type: string
+                - name: label
+                  in: query
                   schema:
                       type: string
                 - name: limit

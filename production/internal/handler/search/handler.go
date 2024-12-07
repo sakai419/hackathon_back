@@ -6,6 +6,7 @@ import (
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
+	"log"
 	"net/http"
 )
 
@@ -70,20 +71,55 @@ func (h *SearchHandler) SearchTweets(w http.ResponseWriter, r *http.Request, par
 	}
 
 	// search tweets
-	tweetNodes, err := h.svc.SearchTweets(r.Context(), &model.SearchTweetsParams{
-		ClientAccountID: clientAccountID,
-		SortType:        model.SortType(params.SortType),
-		Keyword:         params.Keyword,
-		Limit:           params.Limit,
-		Offset:          params.Offset,
-	})
-	if err != nil {
-		utils.RespondError(w, apperrors.NewHandlerError("Failed to search tweets", err))
+	var tweetNodes []*model.TweetNode
+	if params.Keyword != nil && params.Label != nil {
+		if *params.Keyword == "" && *params.Label == "" {
+			utils.RespondError(w, apperrors.NewHandlerError("search tweets", errors.New("keyword or label is required")))
+			return
+		}
+		if (*params.Keyword != "" && *params.Label != "") {
+			utils.RespondError(w, apperrors.NewHandlerError("search tweets", errors.New("keyword and label cannot be used together")))
+			return
+		}
+		if *params.Keyword != "" {
+			log.Println("searching tweets by keyword")
+			temp, err := h.svc.SearchTweets(r.Context(), &model.SearchTweetsParams{
+				ClientAccountID: clientAccountID,
+				Keyword:         *params.Keyword,
+				SortType:        model.SortType(params.SortType),
+				Limit:           params.Limit,
+				Offset:          params.Offset,
+			})
+			if err != nil {
+				utils.RespondError(w, apperrors.NewHandlerError("search tweets", err))
+				return
+			}
+			tweetNodes = temp
+		} else if *params.Label != "" {
+			log.Println("searching tweets by label")
+			temp, err := h.svc.SearchTweetsByLabels(r.Context(), &model.SearchTweetsByLabelsParams{
+				ClientAccountID: clientAccountID,
+				Label:           model.Label(*params.Label),
+				SortType:        model.SortType(params.SortType),
+				Limit:           params.Limit,
+				Offset:          params.Offset,
+			})
+			if err != nil {
+				utils.RespondError(w, apperrors.NewHandlerError("search tweets by labels", err))
+				return
+			}
+			log.Println("tweets: ", len(temp))
+			tweetNodes = temp
+		}
+	} else {
+		utils.RespondError(w, apperrors.NewHandlerError("seatch tweets", errors.New("keyword or label is required")))
 		return
 	}
 
 	// convert to response
 	resp := convertToTweetNodes(tweetNodes)
+
+	log.Println("tweets: ", len(resp))
 
 	utils.Respond(w, resp)
 }

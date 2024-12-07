@@ -92,13 +92,62 @@ func (p *SearchTweetsParams) Validate() error {
 }
 
 type SearchTweetsOrderByCreatedAtParams struct {
+	ClientAccountID string
 	Keyword string
 	Offset int32
 	Limit int32
 }
 
 type SearchTweetsOrderByEngagementScoreParams struct {
+	ClientAccountID string
 	Keyword string
+	Offset int32
+	Limit int32
+}
+
+type SearchTweetsByLabelsParams struct {
+	ClientAccountID string
+	Label Label
+	SortType SortType
+	Offset int32
+	Limit int32
+}
+
+func (p *SearchTweetsByLabelsParams) Validate() error {
+	if err := p.Label.Validate(); err != nil {
+		return &apperrors.ErrInvalidInput{
+			Message: "Label is invalid",
+		}
+	}
+	if !p.SortType.IsValid() {
+		return &apperrors.ErrInvalidInput{
+			Message: "SortType is invalid",
+		}
+	}
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Offset must be greater than or equal to 0",
+		}
+	}
+	if p.Limit < 1 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Limit must be greater than or equal to 1",
+		}
+	}
+
+	return nil
+}
+
+type SearchTweetsByLabelsOrderByCreatedAtParams struct {
+	ClientAccountID string
+	Label Label
+	Offset int32
+	Limit int32
+}
+
+type SearchTweetsByLabelsOrderByEngagementScoreParams struct {
+	ClientAccountID string
+	Label Label
 	Offset int32
 	Limit int32
 }
