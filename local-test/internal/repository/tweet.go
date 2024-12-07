@@ -9,7 +9,6 @@ import (
 	"local-test/internal/model"
 	"local-test/internal/sqlc/sqlcgen"
 	"local-test/pkg/apperrors"
-	"log"
 	"time"
 
 	"github.com/sqlc-dev/pqtype"
@@ -438,7 +437,67 @@ func (r *Repository) SearchTweetsByLabelsOrderByEngagementScore(ctx context.Cont
 		)
 	}
 
-	log.Println("Get: ",len(tweetInfos), "tweets")
+	// Convert to model
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
+func (r *Repository) SearchTweetsByHashtagOrderByCreatedAt(ctx context.Context, params *model.SearchTweetsByHashtagOrderByCreatedAtParams) ([]*model.TweetInfoInternal, error) {
+	// Search tweets with hashtag order by created at
+	tweetInfos, err := r.q.SearchTweetsByHashtagOrderByCreatedAt(ctx, sqlcgen.SearchTweetsByHashtagOrderByCreatedAtParams{
+		ClientAccountID: params.ClientAccountID,
+		Hashtag:  params.Hashtag,
+		Offset: params.Offset,
+		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "search tweets by hashtag order by created at",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to model
+	ret, err := convertToTweetInfoInternal(tweetInfos)
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "convert to tweet infos internal",
+				Err: err,
+			},
+		)
+	}
+
+	return ret, nil
+}
+
+func (r *Repository) SearchTweetsByHashtagOrderByEngagementScore(ctx context.Context, params *model.SearchTweetsByHashtagOrderByEngagementScoreParams) ([]*model.TweetInfoInternal, error) {
+	// Search tweets with hashtag order by engagement score
+	tweetInfos, err := r.q.SearchTweetsByHashtagOrderByEngagementScore(ctx, sqlcgen.SearchTweetsByHashtagOrderByEngagementScoreParams{
+		ClientAccountID: params.ClientAccountID,
+		Hashtag:  params.Hashtag,
+		Offset: params.Offset,
+		Limit:  params.Limit,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "search tweets by hashtag order by engagement score",
+				Err: err,
+			},
+		)
+	}
 
 	// Convert to model
 	ret, err := convertToTweetInfoInternal(tweetInfos)
@@ -678,6 +737,36 @@ func mapRowToTweetInfoInternal(row interface{}) (*model.TweetInfoInternal, error
 		r.Content = t.Content
 		r.Code = t.Code
 		r.Media = t.Media
+	case sqlcgen.SearchTweetsByHashtagOrderByCreatedAtRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
+	case sqlcgen.SearchTweetsByHashtagOrderByEngagementScoreRow:
+		r.ID = t.ID
+		r.AccountID = t.AccountID
+		r.LikesCount = t.LikesCount
+		r.RetweetsCount = t.RetweetsCount
+		r.RepliesCount = t.RepliesCount
+		r.IsQuote = t.IsQuote
+		r.IsReply = t.IsReply
+		r.IsPinned = t.IsPinned
+		r.HasLiked = t.HasLiked
+		r.HasRetweeted = t.HasRetweeted
+		r.CreatedAt = t.CreatedAt
+		r.Content = t.Content
+		r.Code = t.Code
+		r.Media = t.Media
 	default:
 		return nil, fmt.Errorf("invalid type: %T", t)
 	}
@@ -772,6 +861,22 @@ func convertToTweetInfoInternal(rows interface{}) ([]*model.TweetInfoInternal, e
 			infos = append(infos, info)
 		}
 	case []sqlcgen.SearchTweetsByLabelOrderByEngagementScoreRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+	case []sqlcgen.SearchTweetsByHashtagOrderByCreatedAtRow:
+		for _, r := range typedRows {
+			info, err := mapRowToTweetInfoInternal(r)
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+	case []sqlcgen.SearchTweetsByHashtagOrderByEngagementScoreRow:
 		for _, r := range typedRows {
 			info, err := mapRowToTweetInfoInternal(r)
 			if err != nil {

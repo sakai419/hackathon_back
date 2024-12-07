@@ -68,6 +68,10 @@ paths:
                   in: query
                   schema:
                       type: string
+                - name: hashtag
+                  in: query
+                  schema:
+                      type: string
                 - name: limit
                   in: query
                   required: true

@@ -151,3 +151,50 @@ type SearchTweetsByLabelsOrderByEngagementScoreParams struct {
 	Offset int32
 	Limit int32
 }
+
+type SearchTweetsByHashtagParams struct {
+	ClientAccountID string
+	Hashtag string
+	SortType SortType
+	Offset int32
+	Limit int32
+}
+
+func (p *SearchTweetsByHashtagParams) Validate() error {
+	if p.Hashtag == "" {
+		return &apperrors.ErrInvalidInput{
+			Message: "Hashtag is required",
+		}
+	}
+	if !p.SortType.IsValid() {
+		return &apperrors.ErrInvalidInput{
+			Message: "SortType is invalid",
+		}
+	}
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Offset must be greater than or equal to 0",
+		}
+	}
+	if p.Limit < 1 {
+		return &apperrors.ErrInvalidInput{
+			Message: "Limit must be greater than or equal to 1",
+		}
+	}
+
+	return nil
+}
+
+type SearchTweetsByHashtagOrderByCreatedAtParams struct {
+	ClientAccountID string
+	Hashtag string
+	Offset int32
+	Limit int32
+}
+
+type SearchTweetsByHashtagOrderByEngagementScoreParams struct {
+	ClientAccountID string
+	Hashtag string
+	Offset int32
+	Limit int32
+}

@@ -98,6 +98,7 @@ type SearchTweetsParams struct {
 	SortType SearchTweetsParamsSortType `form:"sort_type" json:"sort_type"`
 	Keyword  *string                    `form:"keyword,omitempty" json:"keyword,omitempty"`
 	Label    *string                    `form:"label,omitempty" json:"label,omitempty"`
+	Hashtag  *string                    `form:"hashtag,omitempty" json:"hashtag,omitempty"`
 	Limit    int32                      `form:"limit" json:"limit"`
 	Offset   int32                      `form:"offset" json:"offset"`
 }
@@ -171,6 +172,14 @@ func (siw *ServerInterfaceWrapper) SearchTweets(w http.ResponseWriter, r *http.R
 	err = runtime.BindQueryParameter("form", true, false, "label", r.URL.Query(), &params.Label)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "label", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "hashtag" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "hashtag", r.URL.Query(), &params.Hashtag)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hashtag", Err: err})
 		return
 	}
 

@@ -6,7 +6,6 @@ import (
 	"local-test/internal/service"
 	"local-test/pkg/apperrors"
 	"local-test/pkg/utils"
-	"log"
 	"net/http"
 )
 
@@ -72,17 +71,16 @@ func (h *SearchHandler) SearchTweets(w http.ResponseWriter, r *http.Request, par
 
 	// search tweets
 	var tweetNodes []*model.TweetNode
-	if params.Keyword != nil && params.Label != nil {
-		if *params.Keyword == "" && *params.Label == "" {
+	if params.Keyword != nil && params.Label != nil && params.Hashtag != nil {
+		if *params.Keyword == "" && *params.Label == "" && *params.Hashtag == "" {
 			utils.RespondError(w, apperrors.NewHandlerError("search tweets", errors.New("keyword or label is required")))
 			return
 		}
-		if (*params.Keyword != "" && *params.Label != "") {
+		if (*params.Keyword != "" && *params.Label != "") || (*params.Keyword != "" && *params.Hashtag != "") || (*params.Label != "" && *params.Hashtag != "") {
 			utils.RespondError(w, apperrors.NewHandlerError("search tweets", errors.New("keyword and label cannot be used together")))
 			return
 		}
 		if *params.Keyword != "" {
-			log.Println("searching tweets by keyword")
 			temp, err := h.svc.SearchTweets(r.Context(), &model.SearchTweetsParams{
 				ClientAccountID: clientAccountID,
 				Keyword:         *params.Keyword,
@@ -96,7 +94,6 @@ func (h *SearchHandler) SearchTweets(w http.ResponseWriter, r *http.Request, par
 			}
 			tweetNodes = temp
 		} else if *params.Label != "" {
-			log.Println("searching tweets by label")
 			temp, err := h.svc.SearchTweetsByLabels(r.Context(), &model.SearchTweetsByLabelsParams{
 				ClientAccountID: clientAccountID,
 				Label:           model.Label(*params.Label),
@@ -108,7 +105,19 @@ func (h *SearchHandler) SearchTweets(w http.ResponseWriter, r *http.Request, par
 				utils.RespondError(w, apperrors.NewHandlerError("search tweets by labels", err))
 				return
 			}
-			log.Println("tweets: ", len(temp))
+			tweetNodes = temp
+		} else if *params.Hashtag != "" {
+			temp, err := h.svc.SearchTweetsByHashtag(r.Context(), &model.SearchTweetsByHashtagParams{
+				ClientAccountID: clientAccountID,
+				Hashtag:         *params.Hashtag,
+				SortType:        model.SortType(params.SortType),
+				Limit:           params.Limit,
+				Offset:          params.Offset,
+			})
+			if err != nil {
+				utils.RespondError(w, apperrors.NewHandlerError("search tweets by hashtags", err))
+				return
+			}
 			tweetNodes = temp
 		}
 	} else {
@@ -118,8 +127,6 @@ func (h *SearchHandler) SearchTweets(w http.ResponseWriter, r *http.Request, par
 
 	// convert to response
 	resp := convertToTweetNodes(tweetNodes)
-
-	log.Println("tweets: ", len(resp))
 
 	utils.Respond(w, resp)
 }
