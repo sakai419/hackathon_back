@@ -1,0 +1,84 @@
+openapi: 3.0.0
+info:
+    title: Admin API
+    version: 1.0.0
+    description: API for managing users
+
+paths:
+    /admin/reports/users:
+        get:
+            summary: Get reported users
+            operationId: GetReportedUsers
+            parameters:
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Reports retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ReportedUserInfos"
+                "500":
+                    description: Internal server error
+
+components:
+    schemas:
+        ReportedUserInfos:
+            type: array
+            items:
+                $ref: "#/components/schemas/ReportedUserInfo"
+        ReportedUserInfo:
+            type: object
+            properties:
+                user_info:
+                    type: object
+                    $ref: "#/components/schemas/UserInfo"
+                report_count:
+                    type: integer
+                    format: int64
+            required:
+                - user_info
+                - report_count
+        UserInfo:
+            type: object
+            properties:
+                user_id:
+                    type: string
+                user_name:
+                    type: string
+                profile_image_url:
+                    type: string
+                    format: uri
+                bio:
+                    type: string
+                is_private:
+                    type: boolean
+                is_admin:
+                    type: boolean
+                is_following:
+                    type: boolean
+                is_followed:
+                    type: boolean
+                is_pending:
+                    type: boolean
+            required:
+                - user_id
+                - user_name
+                - profile_image_url
+                - bio
+                - is_private
+                - is_admin
+                - is_following
+                - is_followed
+                - is_pending

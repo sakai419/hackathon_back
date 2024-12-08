@@ -72,6 +72,49 @@ func (q *Queries) GetReportByID(ctx context.Context, id int64) (Report, error) {
 	return i, err
 }
 
+const getReportedAccountIDsOrderByReportCount = `-- name: GetReportedAccountIDsOrderByReportCount :many
+SELECT accounts.id, COUNT(reports.id) AS report_count
+FROM accounts
+LEFT JOIN reports ON accounts.id = reports.reported_account_id
+GROUP BY accounts.id
+HAVING COUNT(reports.id) <> 0
+ORDER BY report_count DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetReportedAccountIDsOrderByReportCountParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type GetReportedAccountIDsOrderByReportCountRow struct {
+	ID          string
+	ReportCount int64
+}
+
+func (q *Queries) GetReportedAccountIDsOrderByReportCount(ctx context.Context, arg GetReportedAccountIDsOrderByReportCountParams) ([]GetReportedAccountIDsOrderByReportCountRow, error) {
+	rows, err := q.db.QueryContext(ctx, getReportedAccountIDsOrderByReportCount, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetReportedAccountIDsOrderByReportCountRow
+	for rows.Next() {
+		var i GetReportedAccountIDsOrderByReportCountRow
+		if err := rows.Scan(&i.ID, &i.ReportCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getReportsByReportedAccount = `-- name: GetReportsByReportedAccount :many
 SELECT id, reporter_account_id, reported_account_id, reason, content, created_at
 FROM reports
@@ -96,49 +139,6 @@ func (q *Queries) GetReportsByReportedAccount(ctx context.Context, reportedAccou
 			&i.Content,
 			&i.CreatedAt,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getUsersOrderByReportCount = `-- name: GetUsersOrderByReportCount :many
-SELECT accounts.id, accounts.user_name, COUNT(reports.id) AS report_count
-FROM accounts
-LEFT JOIN reports ON accounts.id = reports.reported_account_id
-GROUP BY accounts.id
-ORDER BY report_count DESC
-LIMIT $1 OFFSET $2
-`
-
-type GetUsersOrderByReportCountParams struct {
-	Limit  int32
-	Offset int32
-}
-
-type GetUsersOrderByReportCountRow struct {
-	ID          string
-	UserName    string
-	ReportCount int64
-}
-
-func (q *Queries) GetUsersOrderByReportCount(ctx context.Context, arg GetUsersOrderByReportCountParams) ([]GetUsersOrderByReportCountRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUsersOrderByReportCount, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetUsersOrderByReportCountRow
-	for rows.Next() {
-		var i GetUsersOrderByReportCountRow
-		if err := rows.Scan(&i.ID, &i.UserName, &i.ReportCount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

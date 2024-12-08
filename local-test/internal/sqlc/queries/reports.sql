@@ -7,13 +7,15 @@ SELECT *
 FROM reports
 WHERE id = $1;
 
--- name: GetUsersOrderByReportCount :many
-SELECT accounts.id, accounts.user_name, COUNT(reports.id) AS report_count
+-- name: GetReportedAccountIDsOrderByReportCount :many
+SELECT accounts.id, COUNT(reports.id) AS report_count
 FROM accounts
 LEFT JOIN reports ON accounts.id = reports.reported_account_id
 GROUP BY accounts.id
+HAVING COUNT(reports.id) <> 0
 ORDER BY report_count DESC
 LIMIT $1 OFFSET $2;
+
 
 -- name: GetReportsByReportedAccount :many
 SELECT *

@@ -1,0 +1,5 @@
+package: admin
+generate:
+    models: true
+    gorilla-server: true
+output: ./../../internal/handler/admin/schema.gen.go

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"local-test/internal/config"
 	"local-test/internal/handler/account"
+	"local-test/internal/handler/admin"
 	"local-test/internal/handler/batch"
 	"local-test/internal/handler/block"
 	"local-test/internal/handler/conversation"
@@ -259,6 +260,7 @@ func setUpSearchRoutes(r *mux.Router, repo *repository.Repository, svc *service.
 		Middlewares: []search.MiddlewareFunc{
 			middleware.AuthClientAndGetInfoMiddleware(repo, client),
 		},
+		ErrorHandlerFunc: search.ErrorHandlerFunc,
 	}
 
 	// Register the search handler
@@ -299,6 +301,24 @@ func setUpExecuteRoutes(r *mux.Router, repo *repository.Repository, svc *service
 	execute.HandlerWithOptions(h, opts)
 }
 
+func setUpAdminRoutes(r *mux.Router, repo *repository.Repository, svc *service.Service, client *auth.Client) {
+	// Register the admin handler
+	h := admin.NewAdminHandler(svc)
+
+	// Create options for the admin handler
+	opts := admin.GorillaServerOptions{
+		BaseURL: "",
+		BaseRouter: r,
+		Middlewares: []admin.MiddlewareFunc{
+			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+		},
+		ErrorHandlerFunc: admin.ErrorHandlerFunc,
+	}
+
+	// Register the admin handler
+	admin.HandlerWithOptions(h, opts)
+}
+
 func SetupRoutes(db *sql.DB, client *auth.Client, corsOrigin string) *mux.Router {
 	r := mux.NewRouter()
 
@@ -331,6 +351,7 @@ func SetupRoutes(db *sql.DB, client *auth.Client, corsOrigin string) *mux.Router
 	setUpSearchRoutes(apiV1, repo, svc, client)
 	setUpBatchRoutes(apiV1, repo, svc, client)
 	setUpExecuteRoutes(apiV1, repo, svc, client)
+	setUpAdminRoutes(apiV1, repo, svc, client)
 
 	return r
 }

@@ -280,6 +280,7 @@ WHERE f1.following_account_id = $1
     WHERE follower_account_id = $1
       AND status = 'accepted'
   )
+LIMIT 5
 `
 
 func (q *Queries) GetFollowSuggestions(ctx context.Context, clientAccountID string) ([]string, error) {

@@ -35,3 +35,30 @@ func (r *Repository) CreateReport(ctx context.Context, params *model.CreateRepor
 
 	return nil
 }
+
+func (r *Repository) GetReportedAccountIDsOrderByReportCount(ctx context.Context, params *model.GetReportedAccountIDsOrderByReportCountParams) ([]*model.ReportedUserInfoInternal, error) {
+	// Get account IDs order by report count
+	reportedUserInfos, err := r.q.GetReportedAccountIDsOrderByReportCount(ctx, sqlcgen.GetReportedAccountIDsOrderByReportCountParams{
+		Limit:  params.Limit,
+		Offset: params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get account IDs order by report count",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to internal model
+	var internalReportedUserInfos []*model.ReportedUserInfoInternal
+	for _, reportedUserInfo := range reportedUserInfos {
+		internalReportedUserInfos = append(internalReportedUserInfos, &model.ReportedUserInfoInternal{
+			AccountID:   reportedUserInfo.ID,
+			ReportCount: reportedUserInfo.ReportCount,
+		})
+	}
+
+	return internalReportedUserInfos, nil
+}
