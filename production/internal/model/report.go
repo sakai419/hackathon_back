@@ -2,6 +2,7 @@ package model
 
 import (
 	"local-test/pkg/apperrors"
+	"time"
 )
 
 type ReportReason string
@@ -72,6 +73,28 @@ type GetReportedAccountIDsOrderByReportCountParams struct {
 	Offset int32
 }
 
+type GetReportsByReportedAccountIDParams struct {
+	ReportedAccountID string
+	Limit             int32
+	Offset            int32
+}
+
+func (p *GetReportsByReportedAccountIDParams) Validate() error {
+	if p.Limit <= 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "limit must be greater than 0",
+		}
+	}
+
+	if p.Offset < 0 {
+		return &apperrors.ErrInvalidInput{
+			Message: "offset must be greater than or equal to 0",
+		}
+	}
+
+	return nil
+}
+
 type ReportedUserInfoInternal struct {
 	AccountID   string
 	ReportCount int64
@@ -80,4 +103,20 @@ type ReportedUserInfoInternal struct {
 type ReportedUserInfo struct {
 	UserInfo UserInfo
 	ReportCount int64
+}
+
+type ReportInternal struct {
+	ReportID          int64
+	ReporterAccountID string
+	Reason 		      ReportReason
+	Content           *string
+	CreatedAt         time.Time
+}
+
+type Report struct {
+	ReportID          int64
+	ReporterInfo      UserInfo
+	Reason 		 	  ReportReason
+	Content           *string
+	CreatedAt         time.Time
 }

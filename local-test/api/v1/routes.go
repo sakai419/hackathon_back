@@ -311,6 +311,7 @@ func setUpAdminRoutes(r *mux.Router, repo *repository.Repository, svc *service.S
 		BaseRouter: r,
 		Middlewares: []admin.MiddlewareFunc{
 			middleware.AuthClientAndGetInfoMiddleware(repo, client),
+			middleware.GetTargetInfoMiddleware(repo),
 		},
 		ErrorHandlerFunc: admin.ErrorHandlerFunc,
 	}

@@ -57,3 +57,64 @@ func (s *Service) GetReportedUserInfosOrderByReportCount(ctx context.Context, pa
 
 	return reportedUserInfos, nil
 }
+
+func (s *Service) GetReportsByReportedAccountID(ctx context.Context, params *model.GetReportsByReportedAccountIDParams) ([]*model.Report, error) {
+	// Validate input parameters
+	if err := params.Validate(); err != nil {
+		return nil, apperrors.NewValidateAppError(err)
+	}
+
+	// Get reports
+	reports, err := s.repo.GetReportsByReportedAccountID(ctx, &model.GetReportsByReportedAccountIDParams{
+		ReportedAccountID: params.ReportedAccountID,
+		Limit:             params.Limit,
+		Offset:            params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get reports by reported account ID", err)
+	}
+
+	// Extract reporter accountIDs
+	reporterAccountIDsMap := make(map[string]struct{}, len(reports))
+	for _, report := range reports {
+		reporterAccountIDsMap[report.ReporterAccountID] = struct{}{}
+	}
+	reporterAccountIDs := make([]string, 0, len(reports))
+	for reporterAccountID := range reporterAccountIDsMap {
+		reporterAccountIDs = append(reporterAccountIDs, reporterAccountID)
+	}
+
+	// Get user infos
+	userInfos, err := s.repo.GetUserInfos(ctx, &model.GetUserInfosParams{
+		TargetAccountIDs: reporterAccountIDs,
+		ClientAccountID: "dammy",
+	})
+	if err != nil {
+		return nil, apperrors.NewInternalAppError("get user infos by account IDs", err)
+	}
+
+	// Create user info map
+	userInfoMap := make(map[string]*model.UserInfoInternal, len(userInfos))
+	for _, userInfo := range userInfos {
+		userInfoMap[userInfo.ID] = userInfo
+	}
+
+	// Create reports
+	var resultReports []*model.Report
+	for _, report := range reports {
+		userInfo, ok := userInfoMap[report.ReporterAccountID]
+		if !ok {
+			continue
+		}
+
+		resultReports = append(resultReports, &model.Report{
+			ReportID:          report.ReportID,
+			ReporterInfo:      *convertToUserInfo(userInfo),
+			Reason:            report.Reason,
+			Content:           report.Content,
+			CreatedAt:         report.CreatedAt,
+		})
+	}
+
+	return resultReports, nil
+}

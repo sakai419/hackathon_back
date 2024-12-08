@@ -6,10 +6,20 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/oapi-codegen/runtime"
 )
+
+// Report defines model for Report.
+type Report struct {
+	Content      *string   `json:"content,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+	Reason       string    `json:"reason"`
+	ReportId     int64     `json:"report_id"`
+	ReporterInfo UserInfo  `json:"reporter_info"`
+}
 
 // ReportedUserInfo defines model for ReportedUserInfo.
 type ReportedUserInfo struct {
@@ -19,6 +29,9 @@ type ReportedUserInfo struct {
 
 // ReportedUserInfos defines model for ReportedUserInfos.
 type ReportedUserInfos = []ReportedUserInfo
+
+// Reports defines model for Reports.
+type Reports = []Report
 
 // UserInfo defines model for UserInfo.
 type UserInfo struct {
@@ -39,11 +52,20 @@ type GetReportedUsersParams struct {
 	Offset int32 `form:"offset" json:"offset"`
 }
 
+// GetReportsOfUserParams defines parameters for GetReportsOfUser.
+type GetReportsOfUserParams struct {
+	Limit  int32 `form:"limit" json:"limit"`
+	Offset int32 `form:"offset" json:"offset"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get reported users
 	// (GET /admin/reports/users)
 	GetReportedUsers(w http.ResponseWriter, r *http.Request, params GetReportedUsersParams)
+	// Get reported user
+	// (GET /admin/reports/users/{user_id})
+	GetReportsOfUser(w http.ResponseWriter, r *http.Request, userId string, params GetReportsOfUserParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -95,6 +117,64 @@ func (siw *ServerInterfaceWrapper) GetReportedUsers(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetReportedUsers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetReportsOfUser operation middleware
+func (siw *ServerInterfaceWrapper) GetReportsOfUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "user_id" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "user_id", mux.Vars(r)["user_id"], &userId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetReportsOfUserParams
+
+	// ------------- Required query parameter "limit" -------------
+
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Required query parameter "offset" -------------
+
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReportsOfUser(w, r, userId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -218,6 +298,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	}
 
 	r.HandleFunc(options.BaseURL+"/admin/reports/users", wrapper.GetReportedUsers).Methods("GET")
+
+	r.HandleFunc(options.BaseURL+"/admin/reports/users/{user_id}", wrapper.GetReportsOfUser).Methods("GET")
 
 	return r
 }

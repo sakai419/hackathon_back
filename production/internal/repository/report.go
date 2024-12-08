@@ -62,3 +62,38 @@ func (r *Repository) GetReportedAccountIDsOrderByReportCount(ctx context.Context
 
 	return internalReportedUserInfos, nil
 }
+
+func (r *Repository) GetReportsByReportedAccountID(ctx context.Context, params *model.GetReportsByReportedAccountIDParams) ([]*model.ReportInternal, error) {
+	// Get reports by reported account ID
+	reports, err := r.q.GetReportsByReportedAccountID(ctx, sqlcgen.GetReportsByReportedAccountIDParams{
+		ReportedAccountID: params.ReportedAccountID,
+		Limit:             params.Limit,
+		Offset:            params.Offset,
+	})
+	if err != nil {
+		return nil, apperrors.WrapRepositoryError(
+			&apperrors.ErrOperationFailed{
+				Operation: "get reports by reported account ID",
+				Err: err,
+			},
+		)
+	}
+
+	// Convert to internal model
+	var internalReports []*model.ReportInternal
+	for _, report := range reports {
+		temp := &model.ReportInternal{
+			ReportID:           report.ID,
+			ReporterAccountID:  report.ReporterAccountID,
+			Reason:             model.ReportReason(report.Reason),
+			CreatedAt: 	        report.CreatedAt,
+		}
+		if report.Content.Valid {
+			temp.Content = &report.Content.String
+		}
+
+		internalReports = append(internalReports, temp)
+	}
+
+	return internalReports, nil
+}

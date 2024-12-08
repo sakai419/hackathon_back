@@ -17,11 +17,12 @@ ORDER BY report_count DESC
 LIMIT $1 OFFSET $2;
 
 
--- name: GetReportsByReportedAccount :many
+-- name: GetReportsByReportedAccountID :many
 SELECT *
 FROM reports
 WHERE reported_account_id = $1
-ORDER BY created_at DESC;
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3;
 
 -- name: DeleteReport :exec
 DELETE FROM reports

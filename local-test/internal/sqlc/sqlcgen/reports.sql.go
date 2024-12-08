@@ -115,15 +115,22 @@ func (q *Queries) GetReportedAccountIDsOrderByReportCount(ctx context.Context, a
 	return items, nil
 }
 
-const getReportsByReportedAccount = `-- name: GetReportsByReportedAccount :many
+const getReportsByReportedAccountID = `-- name: GetReportsByReportedAccountID :many
 SELECT id, reporter_account_id, reported_account_id, reason, content, created_at
 FROM reports
 WHERE reported_account_id = $1
 ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
 `
 
-func (q *Queries) GetReportsByReportedAccount(ctx context.Context, reportedAccountID string) ([]Report, error) {
-	rows, err := q.db.QueryContext(ctx, getReportsByReportedAccount, reportedAccountID)
+type GetReportsByReportedAccountIDParams struct {
+	ReportedAccountID string
+	Limit             int32
+	Offset            int32
+}
+
+func (q *Queries) GetReportsByReportedAccountID(ctx context.Context, arg GetReportsByReportedAccountIDParams) ([]Report, error) {
+	rows, err := q.db.QueryContext(ctx, getReportsByReportedAccountID, arg.ReportedAccountID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -32,6 +32,40 @@ paths:
                 "500":
                     description: Internal server error
 
+    /admin/reports/users/{user_id}:
+        get:
+            summary: Get reported user
+            operationId: GetReportsOfUser
+            parameters:
+                - name: user_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                - name: limit
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+                - name: offset
+                  in: query
+                  required: true
+                  schema:
+                      type: integer
+                      format: int32
+            responses:
+                "200":
+                    description: Report retrieved successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Reports"
+                "404":
+                    description: Report not found
+                "500":
+                    description: Internal server error
+
 components:
     schemas:
         ReportedUserInfos:
@@ -50,6 +84,31 @@ components:
             required:
                 - user_info
                 - report_count
+        Reports:
+            type: array
+            items:
+                $ref: "#/components/schemas/Report"
+        Report:
+            type: object
+            properties:
+                report_id:
+                    type: integer
+                    format: int64
+                reporter_info:
+                    type: object
+                    $ref: "#/components/schemas/UserInfo"
+                reason:
+                    type: string
+                content:
+                    type: string
+                created_at:
+                    type: string
+                    format: date-time
+            required:
+                - report_id
+                - reporter_info
+                - reason
+                - created_at
         UserInfo:
             type: object
             properties:

@@ -49,6 +49,47 @@ func (h *AdminHandler) GetReportedUsers(w http.ResponseWriter, r *http.Request, 
 	utils.Respond(w, resp)
 }
 
+// Get reports by reported account ID
+// (GET /admin/reports/users/{user_id})
+func (h *AdminHandler) GetReportsOfUser(w http.ResponseWriter, r *http.Request, _ string, params GetReportsOfUserParams) {
+	// Check if client is admin
+	if !utils.IsClientAdmin(w, r) {
+		return
+	}
+
+	// Get target account ID
+	targetAccountID, ok := utils.GetTargetAccountID(w, r)
+	if !ok {
+		return
+	}
+
+	// Get reports by reported account ID
+	reports, err := h.svc.GetReportsByReportedAccountID(r.Context(), &model.GetReportsByReportedAccountIDParams{
+		ReportedAccountID: targetAccountID,
+		Limit:             params.Limit,
+		Offset:            params.Offset,
+	})
+	if err != nil {
+		utils.RespondError(w, apperrors.NewHandlerError("get reports by reported account ID", err))
+		return
+	}
+
+	// Convert to response
+	resp := make([]Report, 0, len(reports))
+	for _, report := range reports {
+		temp := Report{
+			ReportId:           report.ReportID,
+			ReporterInfo:       convertToUserInfo(report.ReporterInfo),
+			Reason:             string(report.Reason),
+			Content:            report.Content,
+			CreatedAt:          report.CreatedAt,
+		}
+		resp = append(resp, temp)
+	}
+
+	utils.Respond(w, resp)
+}
+
 // ErrorHandlerFunc is the error handler for tweet handlers
 func ErrorHandlerFunc(w http.ResponseWriter, r *http.Request, err error) {
 	var invalidParamFormatError *InvalidParamFormatError
